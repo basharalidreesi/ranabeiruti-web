@@ -1,0 +1,22 @@
+---
+import Image from "./Image.astro";
+import PortableText from "./PortableText.astro";
+const value = Astro.props.node;
+---
+
+{value?.asset
+	? (
+		<figure>
+			<Image source={value} />
+			{value.caption && value.caption?.length !== 0
+				? (
+					<figcaption>
+						<PortableText source={value.caption} />
+					</figcaption>
+				)
+				: null
+			}
+		</figure>
+	)
+	: null
+}

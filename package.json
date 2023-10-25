@@ -1,15 +1,19 @@
 {
-  "name": "",
+  "name": "ranabeiruti-web",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --host",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^3.3.0"
+    "@sanity/client": "^6.7.0",
+    "@sanity/image-url": "^1.0.2",
+    "astro": "^3.3.0",
+    "astro-portabletext": "^0.9.6",
+    "sass": "^1.69.4"
   }
 }

@@ -1,0 +1,20 @@
+---
+import type { Props as $, Block as BlockType } from "astro-portabletext/types";
+import { Block } from "astro-portabletext/components";
+import PortableTextNote from "./PortableTextNote.astro"
+import PortableTextHidden from "./PortableTextHidden.astro"
+
+export type Props = $<BlockType>;
+
+const props = Astro.props;
+const styleIs = (style: string) => style === props.node.style;
+
+const Cmp =
+	styleIs("note") ? (PortableTextNote)
+	: styleIs("hidden") ? (PortableTextHidden)
+	: (Block); // fallback to `astro-portabletext`
+---
+
+<Cmp {...props}>
+	<slot />
+</Cmp>

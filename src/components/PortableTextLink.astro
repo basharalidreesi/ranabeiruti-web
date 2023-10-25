@@ -1,0 +1,30 @@
+---
+const { markDef } = Astro.props.node;
+const type = markDef?.type;
+function resolveHref() {
+	const internalTarget = markDef?.internalTarget;
+	const externalTarget = markDef?.externalTarget;
+	if (type === "internal" && internalTarget?.type && internalTarget?.slug?.current) {
+		let route = null;
+		if (internalTarget.type === "project") { route = "projects"; };
+		if (internalTarget.type === "news") { route = "news"; };
+		return (`/${route}/${internalTarget.slug.current}/`);
+	};
+	if (type === "external" && externalTarget) {
+		return externalTarget;
+	};
+	return null;
+};
+const href = resolveHref() || null;
+const target = href?.startsWith("http") ? "_blank" : null;
+const rel = target && target === "_blank" ? "noindex nofollow" : null;
+---
+
+{href
+	? (
+		<a href={href} target={target} rel={rel}>
+			<slot />
+		</a>
+	)
+	: null
+}

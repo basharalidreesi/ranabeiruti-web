@@ -1,0 +1,20 @@
+---
+import type { Props as $, Mark as MarkType } from "astro-portabletext/types";
+import { Mark } from "astro-portabletext/components";
+import PortableTextSup from "./PortableTextSup.astro";
+import PortableTextLink from "./PortableTextLink.astro";
+
+export type Props = $<MarkType<never>>;
+
+const props = Astro.props;
+const markTypeIs = (markType: string) => markType === props.node.markType;
+
+const Cmp =
+	markTypeIs("sup") ? (PortableTextSup)
+	: markTypeIs("link") ? (PortableTextLink)
+	: (Mark); // fallback to `astro-portabletext`
+---
+
+<Cmp {...props}>
+	<slot />
+</Cmp>

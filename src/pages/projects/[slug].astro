@@ -1,0 +1,263 @@
+---
+import PortableText from "../../components/PortableText.astro";
+import Image from "../../components/Image.astro";
+import Main from "../../layouts/Main.astro";
+import sanityClient from "../../sanity";
+
+export async function getStaticPaths() {
+	const portableTextGroqPartial = (`
+		...,
+		_type == "block" => {
+			...,
+			markDefs[] {
+				...,
+				_type == "link" && type == "internal" => {
+					internalTarget -> {
+						"type": _type,
+						slug {
+							current
+						},
+						title,
+					},
+				},
+			},
+		},
+	`);
+	const projects = await sanityClient.fetch(`
+		*[_type == "project" && defined(slug)] {
+			slug {
+				current,
+			},
+			title,
+			subtitle,
+			image.isUsedAsHero == true => {
+				image {
+					asset,
+					caption[] {
+						${portableTextGroqPartial}
+					},
+					displaySize,
+					isUsedAsHero,
+				},
+			},
+			body[] {
+				columnCount,
+				columnCount >= 1 => {
+					col1Body[] {
+						${portableTextGroqPartial}
+					},
+				},
+				columnCount > 1 => {
+					col1Ratio,
+					col1VerticalAlignment,
+				},
+				columnCount >= 2 => {
+					col2Body[] {
+						${portableTextGroqPartial}
+					},
+					col2Ratio,
+					col2VerticalAlignment,
+				},
+				columnCount >= 3 => {
+					col3Body[] {
+						${portableTextGroqPartial}
+					},
+					col3Ratio,
+					col3VerticalAlignment,
+				},
+			},
+			credits[] {
+				${portableTextGroqPartial}
+			},
+		}
+	`);
+	return projects?.map((project: { slug: { current: string; }; }) => {
+		return {
+			params: {
+				slug: project.slug?.current,
+			},
+			props: {
+				...project,
+			},
+		};
+	});
+};
+
+const project = Astro.props;
+---
+
+<Main title={project.title}>
+	<article>
+		<div class="project-header">
+			<div class="project-header-title">
+				<h2>
+					{project.title}
+				</h2>
+			</div>
+			{project.subtitle
+				? (<div class="project-header-subtitle">
+					<p>
+						{project.subtitle}
+					</p>
+				</div>)
+				: null
+			}
+			{project.image?.asset && project.image?.isUsedAsHero === true
+				? (
+					<figure class="project-header-hero" data-size={project.image.displaySize || "medium"}>
+						<Image source={project.image} />
+						{project.image?.caption && project.image?.caption?.length !== 0
+							? (
+								<figcaption>
+									<PortableText source={project.image?.caption} />
+								</figcaption>
+							)
+							: null
+						}
+					</figure>
+				)
+				: null
+			}
+		</div>
+		<div class="project-body">
+			{project.body?.map((segment: any, index: number) => {
+				const columnCount = Math.max(segment.columnCount, 1) || 1;
+				const columnArray = Array.from({ length: columnCount }, (_, index) => 1 + index);
+				return (
+					<div class="project-body-segment" data-index={index + 1} data-subsegment-count={columnArray?.length}>
+						{columnArray?.map((column) => {
+							const correspondingRatio = Math.max(segment[`col${column}Ratio`], 1) || 1;
+							const correspondingBody = segment[`col${column}Body`] || null;
+							const correspondingVerticalAlignment = segment[`col${column}VerticalAlignment`] || null;
+							return (
+								<div class="project-body-subsegment" data-index={column} style={{
+									flex: correspondingRatio,
+									alignSelf: {
+											"top": "flex-start",
+											"middle": "center",
+											"bottom": "flex-end",
+									}[correspondingVerticalAlignment] || null,
+								}}>
+									{correspondingBody && correspondingBody.length !== 0 ? <PortableText source={correspondingBody} /> : null}
+								</div>
+							);
+						})}
+					</div>
+				);
+			})}
+		</div>
+		<div class="project-footer">
+			{project.credits && project.credits?.length !== 0
+				? (
+					<div class="project-footer-credits">
+						<PortableText source={project.credits} />
+					</div>
+				)
+				: null
+			}
+		</div>
+	</article>
+</Main>
+
+<style lang="scss">
+	.project-header {
+		.project-header-title {
+			font-size: var(--font-size-large);
+			font-weight: var(--font-weight-bold);
+		}
+		.project-header-subtitle {
+			font-size: var(--font-size-big);
+		}
+		.project-header-title,
+		.project-header-subtitle {
+			width: 60%;
+			margin-inline: auto;
+			margin-block-end: 1.5rem;
+		}
+		.project-header-title + .project-header-hero {
+			margin-block-start: 0.25rem;
+		}
+		.project-header-hero {
+			margin-inline: auto;
+			margin-block-end: 1.5rem;
+			&:where([data-size="small"]) {
+				width: 60%;
+			}
+			&:where([data-size="medium"]) {
+				width: 80%;
+			}
+			&[data-size="large"] {
+				width: 100%;
+			}
+		}
+		@media (max-width: 640px) {
+			.project-header-title,
+			.project-header-subtitle,
+			.project-header-hero {
+				width: 80%;
+			}
+		}
+		@media (max-width: 512px) {
+			.project-header-title,
+			.project-header-subtitle,
+			.project-header-hero {
+				width: 100%;
+			}
+		}
+	}
+	.project-body {
+		.project-body-segment {
+			display: flex;
+			flex-flow: row nowrap;
+			// gap: 1.5rem;
+		}
+		.project-body-subsegment {
+			margin-block-end: 1.5rem;
+		}
+		@media (max-width: 768px) {
+			.project-body-segment {
+				flex-direction: column;
+				width: 60%;
+				margin-inline: auto;
+			}
+			.project-body-segment[data-subsegments="1"] {
+				// width: 100%;
+			}
+			.project-body-subsegment:empty {
+				display: none;
+			}
+		}
+		@media (max-width: 640px) {
+			.project-body-segment {
+				width: 80%;
+			}
+		}
+		@media (max-width: 512px) {
+			.project-body-segment {
+				width: 100%;
+			}
+		}
+	}
+	.project-footer {
+		background: var(--color-1);
+		margin-inline: calc(-1.5rem - env(safe-area-inset-left, 0px));
+		padding-inline: calc(1.5rem + env(safe-area-inset-left, 0px));
+		padding-block-start: 1.5rem;
+		.project-footer-credits {
+			width: 60%;
+			font-size: var(--font-size-small);
+			margin-inline: auto;
+			--color-text: var(--color-3);
+		}
+		@media (max-width: 640px) {
+			.project-footer-credits {
+				width: 80%;
+			}
+		}
+		@media (max-width: 512px) {
+			.project-footer-credits {
+				width: 100%;
+			}
+		}
+	}
+</style>

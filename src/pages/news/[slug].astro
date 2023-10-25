@@ -1,0 +1,17 @@
+---
+import Main from "../../layouts/Main.astro";
+
+export function getStaticPaths() {
+	return [
+		{params: { slug: "new1" }},
+		{params: { slug: "new2" }},
+		{params: { slug: "new3" }},
+	];
+};
+
+const { slug } = Astro.params;
+---
+
+<Main title={slug}>
+	<h1>{slug}</h1>
+</Main>

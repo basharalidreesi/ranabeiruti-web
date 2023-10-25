@@ -1,0 +1,44 @@
+---
+import "../styles/global.scss";
+
+const { title } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover">
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<header></header>
+		<main>
+			<slot />
+		</main>
+		<footer></footer>
+	</body>
+</html>
+
+<style lang="scss" is:global>
+	body {
+		display: flex;
+		flex-flow: column nowrap;
+		min-height: 100vh;
+		& > * {
+			width: 100%;
+			padding-inline: calc(1.5rem + env(safe-area-inset-left, 0px));
+		}
+		& > header,
+		& > footer {
+			padding-block: 1.5rem;
+		}
+		& > main {
+			flex: 1;
+		}
+		& > footer {
+			background: var(--color-1);
+		}
+	}
+</style>

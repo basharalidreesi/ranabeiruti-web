@@ -1,0 +1,17 @@
+---
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import sanityClient from "../sanity.js";
+import imageUrlBuilder from "@sanity/image-url";
+
+const imageBuilder = imageUrlBuilder(sanityClient);
+function urlFor(source: SanityImageSource) {
+	return imageBuilder.image(source);
+};
+
+const { source } = Astro.props;
+---
+
+<picture>
+	<source srcset={urlFor(source)?.format("webp")?.url()} type="image/webp" />
+	<img src={urlFor(source)?.url()} />
+</picture>

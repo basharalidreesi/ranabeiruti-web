@@ -1,0 +1,208 @@
+@charset "UTF-8";
+
+html,
+body {
+	position: relative;
+	top: 0;
+	left: 0;
+	width: 100%;
+	min-height: 100%;
+	font-size: 18px;
+	font-family: var(--font-family-sans);
+	font-weight: var(--font-weight-normal);
+	font-style: normal;
+	line-height: 1.0;
+	letter-spacing: normal;
+	scroll-behavior: smooth;
+	background: var(--color-background);
+	@media (max-width: 384px) {
+		font-size: 16px;
+	}
+}
+*,
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	font-family: inherit;
+	font-weight: inherit;
+	font-style: inherit;
+	line-height: inherit;
+	color: var(--color-text);
+	// font-synthesis: none;
+	text-align: inherit;
+	text-decoration: inherit;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	// text-rendering: geometricPrecision;
+	-webkit-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	-ms-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	touch-action: manipulation;
+	// margin: 0;
+	// padding: 0;
+	// font-size: inherit;
+	// font-family: inherit;
+	// font-weight: inherit;
+	// font-style: inherit;
+	// line-height: inherit;
+	// color: var(--colour-text);
+	// font-synthesis: none;
+	// text-align: inherit;
+	// text-decoration: inherit;
+	// -webkit-box-sizing: border-box;
+	// -moz-box-sizing: border-box;
+	// box-sizing: border-box;
+	// -webkit-text-size-adjust: none;
+	// -moz-text-size-adjust: none;
+	// -ms-text-size-adjust: none;
+	// text-size-adjust: none;
+	// text-rendering: geometricPrecision;
+	// -webkit-font-smoothing: antialiased;
+	// word-break: normal;
+	// overflow-wrap: break-word;
+	// touch-action: manipulation;
+}
+:root {
+	--color-1: #101010;
+	--color-2: #ffffff;
+	--color-3: #999999;
+	--color-4: #cccccc;
+}
+:root {
+	--color-text: var(--color-1);
+	--color-background: var(--color-2);
+	// --font-family-sans: "Neue Haas Grotesk Display Pro", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+	// --font-family-sans: "Neue Montreal", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+	--font-family-sans: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+	--font-family-serif: "Times", "Times New Roman", serif;
+	--font-weight-normal: 400;
+	--font-weight-bold: 700;
+	--font-size-large: 2.5rem;
+	--font-size-big: 1.25rem;
+	--font-size-normal: 1rem;
+	--font-size-medium: 0.875rem;
+	--font-size-small: 0.75rem;
+	@media (max-width: 384px) {
+		--font-size-small: var(--font-size-medium);
+	}
+}
+figure {
+	img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	figcaption {
+		margin-block-start: 0.5rem;
+		font-size: var(--font-size-small);
+		--color-text: var(--color-3);
+	}
+}
+.rich-text {
+	line-height: 1.3;
+	& h3 {
+		font-size: var(--font-size-big);
+		line-height: 1;
+		font-weight: var(--font-weight-bold);
+	}
+	& blockquote {
+		font-size: var(--font-size-medium);
+		margin-inline: 1.5rem;
+		font-family: var(--font-family-serif);
+	}
+	& .note {
+		font-size: var(--font-size-small);
+		--color-text: var(--color-3);
+	}
+	& strong {
+		font-weight: var(--font-weight-bold);
+	}
+	& em {
+		font-style: italic;
+	}
+	& del {
+		text-decoration: line-through;
+	}
+	& sup {
+		font-size: 0.61875em;
+	}
+	& li {
+		padding-inline-start: 0.5rem;
+		margin-inline-start: 1rem;
+	}
+	& a {
+		background-image: linear-gradient(to bottom, var(--color-4), var(--color-4));
+		background-size: 1px 1px;
+		background-repeat: repeat-x;
+		background-position: 0 97.5%;
+	}
+}
+.rich-text p + p,
+.rich-text h3 + p,
+.rich-text blockquote + p,
+.rich-text .note + p,
+.rich-text figure + p,
+.rich-text ul + p,
+.rich-text ol + p,
+.rich-text p + blockquote,
+.rich-text h3 + blockquote,
+.rich-text blockquote + blockquote,
+.rich-text .note + blockquote,
+.rich-text figure + blockquote,
+.rich-text ul + blockquote,
+.rich-text ol + blockquote,
+.rich-text p + h3,
+.rich-text h3 + h3,
+.rich-text blockquote + h3,
+.rich-text .note + h3,
+.rich-text figure + h3,
+.rich-text ul + h3,
+.rich-text ol + h3,
+.rich-text p + .note,
+.rich-text h3 + .note,
+.rich-text blockquote + .note,
+.rich-text .note + .note,
+.rich-text figure + .note,
+.rich-text ul + .note,
+.rich-text ol + .note,
+.rich-text p + figure,
+.rich-text h3 + figure,
+.rich-text blockquote + figure,
+.rich-text .note + figure,
+.rich-text figure + figure,
+.rich-text ul + figure,
+.rich-text ol + figure,
+.rich-text p + ul,
+.rich-text h3 + ul,
+.rich-text blockquote + ul,
+.rich-text .note + ul,
+.rich-text figure + ul,
+.rich-text ul + ul,
+.rich-text ol + ul,
+.rich-text p + ol,
+.rich-text h3 + ol,
+.rich-text blockquote + ol,
+.rich-text .note + ol,
+.rich-text figure + ol,
+.rich-text ul + ol,
+.rich-text ol + ol {
+	margin-block-start: 0.5rem;
+}
+.link,
+.rich-text a {
+	--color-text: var(--color-1);
+	transition: color 0.125s;
+	@media (any-hover: hover) {
+		&:hover {
+			--color-text: var(--color-3);
+		}
+	}
+}
