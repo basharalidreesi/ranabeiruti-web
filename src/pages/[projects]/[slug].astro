@@ -1,0 +1,315 @@
+---
+import sanityClient from "../../sanity";
+import Main from "../../layouts/Main.astro";
+import ProjectInfo from "../../components/ProjectInfo.astro";
+import PageBuilder from "../../components/PageBuilder.astro";
+import { sortDateGroqPartial, portableTextGroqPartial } from "../../lib/groq";
+
+export type TypeProps = {
+	slug: { current: string; };
+	name: string;
+};
+export type CollectionProps = {
+	slug: { current: string; };
+	name: string;
+};
+export type SubjectProps = {
+	slug: { current: string; };
+	name: string;
+};
+export type LocationProps = {
+	name: string;
+	locale: string;
+};
+
+export type Props = {
+	slug: { current: string; };
+	title: string;
+	subtitle?: string;
+	date: {
+		startDate: string;
+		endDate: string;
+		hasDuration: boolean;
+		isOngoing: boolean;
+		dateFormat: string;
+		sortDate: string;
+	};
+	types: TypeProps[];
+	collections?: CollectionProps[];
+	subjects?: SubjectProps[];
+	locations?: LocationProps[];
+	description?: [];
+	image: any;
+	page: {
+		header: [];
+		hasHeaderBodyBorder: boolean;
+		body: [];
+		hasBodyFooterBorder: boolean;
+		footer: [];
+	};
+};
+
+export async function getStaticPaths() {
+	const relatedProjectsGroqPartial = (condition) => (`
+		"projects": *[_type == "project" && _id != ^.^.^.^.^._id && ${condition} && defined(slug)][0...4] {
+			slug {
+				current,
+			},
+			title,
+		},
+	`);
+	const projects = await sanityClient.fetch(`
+		*[_type == "project" && defined(slug) && defined(date.startDate)] {
+			slug {
+				current,
+			},
+			title,
+			subtitle,
+			image {
+				asset,
+				caption[] {
+					${portableTextGroqPartial}
+				},
+			},
+			description[] {
+				${portableTextGroqPartial}
+			},
+			credits[] {
+				${portableTextGroqPartial}
+			},
+			page {
+				header[] {
+					columns[] {
+						_type,
+						ratio,
+						verticalAlignment,
+						_type == "image_" => {
+							captionPlacement,
+							captionPlacement == "left" || captionPlacement == "right" => {
+								imageRatio,
+								captionRatio,
+								captionVerticalAlignment,
+							},
+						},
+					},
+				},
+				hasHeaderBodyBorder,
+				body[] {
+					columns[] {
+						_type,
+						ratio,
+						verticalAlignment,
+						content[] {
+							${portableTextGroqPartial}
+						},
+					},
+				},
+				hasBodyFooterBorder,
+				footer[] {
+					columns[] {
+						_type,
+						ratio,
+						verticalAlignment,
+						_type == "relatedContent" => {
+							byProfiles == true => {
+								"byProfiles": ^.^.^.profiles[] {
+									_ref,
+									${relatedProjectsGroqPartial(`references(^._ref)`)}
+								},
+							},
+							byTypes == true => {
+								"byTypes": ^.^.^.types[] {
+									_ref,
+									${relatedProjectsGroqPartial(`references(^._ref)`)}
+								},
+							},
+							bySubjects == true => {
+								"bySubjects": ^.^.^.subjects[] {
+									_ref,
+									${relatedProjectsGroqPartial(`references(^._ref)`)}
+								},
+							},
+							byClients == true => {
+								"byClients": ^.^.^.clients[] {
+									_ref,
+									${relatedProjectsGroqPartial(`references(^._ref)`)}
+								},
+							},
+							byLocations == true => {
+								"byLocations": ^.^.^.locations[] {
+									_ref,
+									${relatedProjectsGroqPartial(`references(^._ref)`)}
+								},
+							},
+							byYear,
+						},
+					},
+				},
+			},
+			profiles[] -> {
+				name,
+				isDefault,
+			} | order(lower(name) desc),
+			date {
+				startDate,
+				endDate,
+				hasDuration,
+				isOngoing,
+				dateFormat,
+			},
+			types[] -> {
+				name,
+			},
+			subjects[] -> {
+				name,
+			},
+			clients[] -> {
+				name,
+			},
+			locations[] -> {
+				name,
+				locale,
+			},
+			collections[] -> {
+				name,
+				description[] {
+					${portableTextGroqPartial}
+				},
+				"projects": (*[_type == "project" && _id != ^.^._id && references(^._id) && defined(slug)] {
+					slug {
+						current,
+					},
+					image {
+						asset,
+					},
+					"type": types[0] -> name,
+					title,
+					date {
+						startDate,
+						endDate,
+						hasDuration,
+						isOngoing,
+						dateFormat,
+						${sortDateGroqPartial}
+					},
+				}) | order(date.sortDate desc, date.startDate desc, lower(title) asc),
+			},
+			"newsAndPress": (news[] -> {
+				_type,
+				slug {
+					current,
+				},
+				title,
+				date,
+			} + press[] -> {
+				_type,
+				url,
+				date,
+				title,
+				publisher,
+			}) | order(date desc, lower(title) asc),
+		}
+	`);
+	const projectsListing = await sanityClient.fetch(`
+		*[_id == "projectsListing" && defined(slug)][0] {
+			slug,
+		}
+	`);
+	return projects?.map((project: { slug: { current: string; }; }) => {
+		return {
+			params: {
+				projects: projectsListing.slug?.current,
+				slug: project.slug?.current,
+			},
+			props: {
+				...project,
+			},
+		};
+	});
+};
+
+const project = Astro.props;
+---
+
+<Main title={project.title}>
+	<div class="wrapper">
+		<!-- <aside class="sidebar">
+			<ProjectInfo source={{
+				profiles: project.profiles,
+				types: project.types,
+				subjects: project.subjects,
+				clients: project.clients,
+				locations: project.locations,
+				date: project.date,
+				collections: project.collections,
+				newsAndPress: project.newsAndPress,
+			}} />
+		</aside> -->
+		<article class="project">
+			<div class="header" data-has-border={project.page?.hasHeaderBodyBorder?.toString() || "false"}>
+				<PageBuilder source={project.page?.header} document={project} />
+			</div>
+			<div class="body" data-has-border={project.page?.hasBodyFooterBorder?.toString() || "false"}>
+				<PageBuilder source={project.page?.body} document={project} />
+			</div>
+			<div class="footer">
+				<PageBuilder source={project.page?.footer} document={project} />
+			</div>
+		</article>
+	</div>
+</Main>
+
+<style lang="scss">
+	.wrapper {
+		flex: 1;
+		display: flex;
+		flex-flow: row nowrap;
+	}
+	.sidebar {
+		position: sticky;
+		top: 4rem;
+		overflow: auto;
+		// width: calc(10rem + 1.5rem + 1.5rem);
+		width: calc(15% + 1.5rem);
+		max-height: calc(100dvh - 4rem - 1.5rem);
+		padding-inline: 1.5rem;
+		margin-inline-end: 1.5rem;
+		margin-inline-start: -1.5rem;
+		border-inline-end: 1px solid var(--color-text-x-light);
+		padding-block: 0.5rem;
+		mask: linear-gradient(to bottom, transparent, black 0.5rem, black calc(100% - 0.5rem), transparent);
+		@media (max-width: 1380px) {
+			width: 1.5rem;
+		}
+	}
+	.project,
+	.body {
+		flex: 1;
+		display: flex;
+		flex-flow: column nowrap;
+	}
+	.header, .body {
+		&[data-has-border="true"] {
+			margin-block-end: 1.5rem;
+			border-block-end: 1px solid var(--color-text-x-light);
+		}
+	}
+	.header {}
+	.footer {
+		margin-inline: -1.5rem;
+		margin-block-end: -1.5rem;
+		padding-inline: 1.5rem;
+		padding-block-start: 1.5rem;
+		background: var(--color-text-normal);
+	}
+	.footer {}
+	.header,
+	.body,
+	.footer > :global(*) {
+		max-width: 80%;
+		margin-inline: auto;
+		@media (max-width: 768px) {
+			max-width: 100%;
+		}
+	}
+</style>

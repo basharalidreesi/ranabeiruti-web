@@ -1,0 +1,100 @@
+---
+import Row from "./Row.astro";
+import Column from "./Column.astro";
+import PortableText from "./PortableText.astro";
+import Figure from "./Figure.astro";
+
+const { source, document } = Astro.props;
+---
+
+{source ? source?.map((row: { columns: any[]; }, index: number) => {
+	if (row.columns.filter((column) => {
+		switch (column._type) {
+			case "column": return (!column.content || column.content?.length === 0) ? true : false;
+			case "title": return !document.title ? true : false;
+			case "image_": return (!document.image || !document.image?.asset) ? true : false;
+			case "description": return (!document.description || document.description?.length === 0) ? true : false;
+			case "credits": return (!document.credits || document.credits?.length === 0) ? true : false;
+			case "relatedContent": return true;
+			default: return true;
+		};
+	})?.length === row.columns.length) {
+		return null;
+	};
+	return (
+		<Row index={index + 1}>
+			{row.columns?.map((column, index) => {
+				const ratio = Math.max(column.ratio, 1) || 1;
+				const verticalAlignment = column.verticalAlignment;
+				switch (column._type) {
+					case "column": {
+						if (column.content && column.content.length !== 0) {
+							return (
+								<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+									<PortableText source={column.content} />
+								</Column>
+							);
+						};
+						return (
+							<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1} />
+						);
+					};
+					case "title": return (
+						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+							{document.title && <div class="title">
+								<h1 class="fwb fsxl lhn">{document.title}</h1>
+							</div>}
+							{document.subtitle && (<div class="subtitle">
+								<p class="fwb fsl clt lhl">{document.subtitle}</p>
+							</div>)}
+						</Column>
+					);
+					case "image_": return (
+						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+							<Figure source={document.image} />
+						</Column>
+					);
+					case "description": return (
+						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+							<PortableText source={document.description} small={true} muted={true} />
+						</Column>
+					);
+					case "credits": return (
+						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+							<PortableText source={document.credits} small={true} muted={true} />
+						</Column>
+					);
+					// case "relatedContent": return (
+					// 	<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+					// 		<p>
+					// 			{JSON.stringify(column.byProfiles)}
+					// 		</p>
+					// 		<p>
+					// 			{JSON.stringify(column.byTypes)}
+					// 		</p>
+					// 		<p>
+					// 			{JSON.stringify(column.bySubjects)}
+					// 		</p>
+					// 		<p>
+					// 			{JSON.stringify(column.byClients)}
+					// 		</p>
+					// 		<p>
+					// 			{JSON.stringify(column.byLocations)}
+					// 		</p>
+					// 		<p>
+					// 			{JSON.stringify(column.byYear)}
+					// 		</p>
+					// 	</Column>
+					// );
+					default: return null;
+				};
+			})}
+		</Row>
+	);
+}) : null}
+
+<style>
+	.title + .subtitle {
+		margin-block-start: 1.5rem;
+	}
+</style>

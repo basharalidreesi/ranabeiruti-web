@@ -1,0 +1,27 @@
+---
+const { index } = Astro.props;
+---
+
+<div class="row" data-index={index}>
+	<slot />
+</div>
+
+<style lang="scss">
+	.row {
+		display: flex;
+		flex-flow: row nowrap;
+		margin-block-end: 1.5rem;
+		gap: 1.5rem;
+		@media (max-width: 768px) {
+			flex-direction: column;
+			margin-inline: auto;
+			width: 60%;
+		}
+		@media (max-width: 640px) {
+			width: 80%;
+		}
+		@media (max-width: 512px) {
+			width: 100%;
+		}
+	}
+</style>

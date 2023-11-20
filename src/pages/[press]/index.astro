@@ -1,0 +1,31 @@
+---
+import sanityClient from "../../sanity";
+import Main from "../../layouts/Main.astro";
+
+export async function getStaticPaths() {
+	const pressListing = await sanityClient.fetch(`
+		*[_id == "pressListing" && defined(slug)][0] {
+			slug {
+				current,
+			},
+			title,
+		}
+	`);
+	return [{
+		params: {
+			press: pressListing.slug?.current,
+		},
+		props: {
+			...pressListing,
+		},
+	}];
+};
+
+const listing = Astro.props;
+---
+
+<Main title={listing.title}>
+	<article>
+		{listing.title}
+	</article>
+</Main>

@@ -1,0 +1,513 @@
+---
+import Main from "@layouts/Main.astro";
+import ProjectGrouping from "@components/ProjectGrouping.astro";
+import { projectsListingGroqQuery } from "@lib/groq";
+import type { Props as ProjectProps } from "@projects/[slug].astro";
+import sanityClient from "@root/sanity";
+import Link from "@components/Link.astro";
+import { LOCALES } from "@lib/locales";
+
+export type Props = {
+	slug: { current: string; };
+	title: string;
+	allProjects: ProjectProps[];
+	quicklinks?: {
+		title: string;
+		items: ({
+			_type: "linkToItem";
+			slug: { current: string; };
+			title: string;
+		} | {
+			_type: "filterByTag";
+			schemaType: "type_" | "collection" | "subject" | "location";
+			slug: { current: string; };
+			name: string;
+		} | {
+			_type: "filterByDate";
+			year: number;
+		} | {
+			_type: "customFilter";
+			label: string;
+			tags: {
+				schemaType: "type_" | "collection" | "subject" | "location";
+				slug: { current: string; };
+			}[];
+		})[];
+	}[];
+};
+
+export type ProjectGroupingProps = { [key: string]: { title: string; projects: ProjectProps[]; description: string; }; };
+
+export async function getStaticPaths() {
+	const projectsListing = await sanityClient.fetch(projectsListingGroqQuery);
+	return [{
+		params: {
+			projects: projectsListing.slug?.current,
+		},
+		props: {
+			...projectsListing,
+		},
+	}];
+};
+
+const listing = Astro.props;
+
+const projectsByPeriod: ProjectGroupingProps = { "upcoming": { title: "Upcoming", projects: [], description: "Upcoming projects", }, };
+const projectsByType: ProjectGroupingProps = {};
+const projectsByCollection: ProjectGroupingProps = {};
+const projectsBySubject: ProjectGroupingProps = {};
+const projectsByLocation: ProjectGroupingProps = {};
+
+listing.allProjects.forEach((project) => {
+	const assignProjectToGrouping = (project: ProjectProps, params: { grouping: ProjectGroupingProps; key: string; title: string; description: string; }) => {
+		const { grouping, key, title, description } = params;
+		if (!grouping[key]) {
+			grouping[key] = {
+				title: title,
+				projects: [],
+				description: description,
+			};
+		};
+		if (grouping[key] && grouping[key].projects) {
+			grouping[key].projects.push(project);
+		};
+	};
+	assignProjectToGrouping(project, {
+		grouping: projectsByPeriod,
+		key: project.date.sortDate === "ongoing" ? project.date.sortDate : project.date.sortDate.split("-")[0],
+		title: project.date.sortDate === "ongoing" ? "Now" : project.date.sortDate.split("-")[0],
+		description: project.date.sortDate === "ongoing" ? "Ongoing projects" : `Projects from ${project.date.sortDate.split("-")[0]}`,
+	});
+	project.types && project.types.length !== 0
+		? project.types?.forEach((type) => assignProjectToGrouping(project, {
+			grouping: projectsByType,
+			key: type.slug.current,
+			title: type.name,
+			description: `${type} projects`,
+		})) : assignProjectToGrouping(project, {
+			grouping: projectsByType,
+			key: "other",
+			title: "Other",
+			description: "Other projects",
+		});
+	project.collections && project.collections.length !== 0
+		? project.collections?.forEach((collection) => assignProjectToGrouping(project, {
+			grouping: projectsByCollection,
+			key: collection.slug.current,
+			title: collection.name,
+			description: `Projects from ${collection}`,
+		})) : assignProjectToGrouping(project, {
+			grouping: projectsByCollection,
+			key: "other",
+			title: "Other",
+			description: "Other projects",
+		});
+	project.subjects && project.subjects.length !== 0
+		? project.subjects?.forEach((subject) => assignProjectToGrouping(project, {
+			grouping: projectsBySubject,
+			key: subject.slug.current,
+			title: subject.name,
+			description: `${subject} projects`,
+		})) : assignProjectToGrouping(project, {
+			grouping: projectsBySubject,
+			key: "other",
+			title: "Other",
+			description: "Other projects",
+		});
+	project.locations?.forEach((location) => assignProjectToGrouping(project, {
+		grouping: projectsByLocation,
+		key: location.locale,
+		title: LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale,
+		description: `${location} projects`,
+	}));
+});
+---
+
+<Main title={listing.title}>
+	<h1 class="dn">
+		Projects
+	</h1>
+	<div id="dataset" class="lhl" data-view="cards"> <!-- data-view: "cards" | "list" | "table" -->
+		<aside id="controls" class="fss">
+			<div id="quicklink-controls">
+				{listing.quicklinks && listing.quicklinks.length !== 0 && (listing.quicklinks?.map((group, outerIndex) => (
+					<fieldset class="quicklink-group" id={`quicklink-group-${outerIndex}`} data-expanded="false">
+						<legend class="clt toe">{group.title}</legend>
+						<ul class="ln">
+							{group.items.map((item, innerIndex) => {
+								return [
+									innerIndex === 3 && group.items.length > 4 ? (
+										<li class="more toe">
+											<button class="checkbox ht" name="expand-quicklink-group" aria-expanded="false" aria-controls={`quicklink-group-${outerIndex}`} aria-label="Expand">{group.items.length - innerIndex} more</button>
+										</li>
+									) : null,
+									item._type === "linkToItem" ? (
+										<li class="toe">
+											<Link class="ht" href={`/${listing.slug.current}/${item.slug.current}/`}>
+												{item.title}
+											</Link>
+										</li>
+									) : item._type === "filterByTag" ? (
+										<li class="toe">
+											<Link class="ht" href={`?${item.schemaType}=${item.slug.current}`}>
+												{item.name}
+											</Link>
+										</li>
+									) : item._type === "filterByDate" ? (
+										<li class="toe">
+											<Link class="ht" href={`?period=${item.year}`}>
+												{item.year}
+											</Link>
+										</li>
+									) : item._type === "customFilter" ? (
+										<li class="toe">
+											<Link class="ht" href={`?${item.tags.map((tag) => `${tag.schemaType?.replaceAll("_", "")}=${tag.slug.current}`).join("&")}`}>
+												{item.label}
+											</Link>
+										</li>
+									) : null,
+								];
+							})}
+						</ul>
+					</fieldset>
+				)))}
+			</div>
+			<div id="filtering-controls">
+				<fieldset>
+					<legend class="clt toe">Filter by</legend>
+					<div class="control-group">
+						<div class="control ht">
+							<input class="vh" type="checkbox" name="filter-by" id="filter-by-type" value="type" aria-expanded="false" aria-controls="filter-by-type" />
+							<label class="checkbox ht toe" for="filter-by-type">Type</label>
+						</div>
+						<div class="control ht">
+							<input class="vh" type="checkbox" name="filter-by" id="filter-by-collection" value="collection" aria-expanded="false" aria-controls="filter-by-collection" />
+							<label class="checkbox ht toe" for="filter-by-collection">Collection</label>
+						</div>
+						<div class="control ht">
+							<input class="vh" type="checkbox" name="filter-by" id="filter-by-subject" value="subject" aria-expanded="false" aria-controls="filter-by-subject" />
+							<label class="checkbox ht toe" for="filter-by-subject">Subject</label>
+						</div>
+						<div class="control ht">
+							<input class="vh" type="checkbox" name="filter-by" id="filter-by-location" value="location" aria-expanded="false" aria-controls="filter-by-location" />
+							<label class="checkbox ht toe" for="filter-by-location">Location</label>
+						</div>
+					</div>
+					<div class="filtering-group" id="filter-by-type" data-method="type" data-expanded="false">
+						<p class="clt">Filter by Type</p>
+						<ul class="ln">
+							<li class="toe" data-size={listing.allProjects.length}>
+								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
+							</li>
+							{Object.keys(projectsByType).sort().map((type) => (
+								<li class="toe" data-size={projectsByType[type].projects.length}>
+									<a href={`?type=${type}`} class="ht">{projectsByType[type].title}</a>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div class="filtering-group" id="filter-by-collection" data-method="collection" data-expanded="false">
+						<p class="clt">Filter by Collection</p>
+						<ul class="ln">
+							<li class="toe" data-size={listing.allProjects.length}>
+								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
+							</li>
+							{Object.keys(projectsByCollection).filter((key) => key !== "other").sort().map((collection) => (
+								<li class="toe" data-size={projectsByCollection[collection].projects.length}>
+									<a href={`?collection=${collection}`} class="ht">{projectsByCollection[collection].title}</a>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div class="filtering-group" id="filter-by-subject" data-method="subject" data-expanded="false">
+						<p class="clt">Filter by Subject</p>
+						<ul class="ln">
+							<li class="toe" data-size={listing.allProjects.length}>
+								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
+							</li>
+							{Object.keys(projectsBySubject).filter((key) => key !== "other").sort().map((subject) => (
+								<li class="toe" data-size={projectsBySubject[subject].projects.length}>
+									<a href={`?subject=${subject}`} class="ht">{projectsBySubject[subject].title}</a>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div class="filtering-group" id="filter-by-location" data-method="location" data-expanded="false">
+						<p class="clt">Filter by Location</p>
+						<ul class="ln">
+							<li class="toe" data-size={listing.allProjects.length}>
+								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
+							</li>
+							{Object.keys(projectsByLocation).sort().map((location) => (
+								<li class="toe" data-size={projectsByLocation[location].projects.length}>
+									<a href={`?location=${location}`} class="ht">{projectsByLocation[location].title}</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				</fieldset>
+			</div>
+			<div id="view-controls">
+				<fieldset>
+					<legend class="clt toe">View as</legend>
+					<div class="control-group">
+						<div class="control ht">
+							<input class="dn" type="radio" name="view-as" id="view-as-cards" value="cards" checked />
+							<label class="radio ht toe" for="view-as-cards">Images</label>
+						</div>
+						<div class="control ht">
+							<input class="dn" type="radio" name="view-as" id="view-as-list" value="list" />
+							<label class="radio ht toe" for="view-as-list">List</label>
+						</div>
+					</div>
+				</fieldset>
+			</div>
+		</aside>
+		<section class="listing" data-method="date" aria-labelledby="listing-by-date-title">
+			<h2 id="listing-by-date-title" class="dn" aria-hidden="true">List of Projects</h2>
+			<ProjectGrouping source={projectsByPeriod} keys={Object.keys(projectsByPeriod).sort().reverse()} baseUrl={listing.slug.current} />
+		</section>
+	</div>
+</Main>
+
+<style lang="scss">
+	:root {
+		--_columns: [all-start] var(--_breakout) [content-start] 1fr [content-end] 0 [all-end];
+		--_breakout: calc(15% + 1.5rem);
+		@media (max-width: 896px) {
+			--_breakout: 0;
+		}
+	}
+	* {
+		min-width: 0;
+		min-height: 0;
+	}
+	fieldset {
+		border: none;
+	}
+	legend {
+		display: block;
+		width: 100%;
+		margin-block-end: 0.75rem;
+	}
+	#controls {
+		& {
+			display: grid;
+			grid-template-columns: var(--_columns);
+		}
+		& > * {
+			grid-column: content;
+		}
+		& > * + * {
+			margin-block-start: 0.75rem;
+			padding-block-start: 0.75rem;
+			border-block-start: 1px solid var(--color-text-xx-light);
+		}
+		& > *:last-child {
+			padding-block-end: 0.75rem;
+			border-block-end: 1px solid var(--color-text-xx-light);
+		}
+		.control-group {
+			display: flex;
+			flex-wrap: wrap;
+			column-gap: 1.5rem;
+			row-gap: 0.75rem;
+		}
+	}
+	#quicklink-controls {
+		& {
+			display: flex;
+			flex-wrap: wrap;
+			column-gap: 1.5rem;
+			row-gap: 0.75rem;
+		}
+		.quicklink-group {
+			--_columns: 5;
+			flex-basis: calc((100% - (1.5rem * (var(--_columns) - 1))) / var(--_columns));
+			@media (max-width: 1152px) {
+				--_columns: 4;
+			}
+			@media (max-width: 896px) {
+				--_columns: 3;
+			}
+			@media (max-width: 640px) {
+				--_columns: 2;
+			}
+		}
+		legend {
+			margin-block-end: 0.5rem;
+		}
+		li {
+			padding-block: 0.25rem;
+		}
+		li:not(.more)::before {
+			content: "•";
+			display: inline-block;
+			width: 0.75rem;
+			height: 0.75rem;
+			line-height: 0.75;
+			margin-right: 0.25rem;
+			margin-bottom: -1px;
+			text-align: center;
+			font-family: monospace;
+			color: var(--color-text-x-light);
+		}
+		button {
+			appearance: unset;
+			background: none;
+			border: none;
+			display: block;
+			cursor: pointer;
+		}
+		.quicklink-group[data-expanded="true"] {
+			.more {
+				display: none;
+			}
+		}
+		.quicklink-group:not([data-expanded="true"]) {
+			.more ~ li {
+				display: none;
+			}
+		}
+	}
+	#filtering-controls {
+		.filtering-group {
+			margin-block-start: 0.75rem;
+			padding-block-start: 0.75rem;
+			border-block-start: 1px solid var(--color-text-xx-light);
+		}
+		.filtering-group p {
+			margin-block-end: 0.5rem;
+		}
+		.filtering-group ul {
+			columns: 5;
+			column-gap: 1.5rem;
+			&, * {
+				break-inside: avoid;
+			}
+			@media (max-width: 1152px) {
+				columns: 4;
+			}
+			@media (max-width: 896px) {
+				columns: 3;
+			}
+			@media (max-width: 640px) {
+				columns: 2;
+			}
+		}
+		.filtering-group li {
+			padding-block: 0.25rem;
+		}
+		.filtering-group li::before {
+			content: attr(data-size) / "";
+			display: inline-block;
+			margin-inline-end: 0.75rem;
+			color: var(--color-text-x-light);
+		}
+		.filtering-group[data-expanded="false"] {
+			display: none;
+		}
+	}
+</style>
+
+<script>
+	const expandQuicklinkGroupButtons = document.querySelectorAll(`button[name="expand-quicklink-group"]`);
+	expandQuicklinkGroupButtons.forEach((button) => {
+		button.addEventListener("click", handleExpandButtonClick);
+	});
+	function handleExpandButtonClick(event: Event) {
+		const target = event.target as HTMLButtonElement;
+		const closestQuicklinkGroup = target.closest(".quicklink-group");
+		if (target.getAttribute("aria-expanded") === "false") {
+			closestQuicklinkGroup.setAttribute("data-expanded", "true");
+			target.setAttribute("aria-expanded", "true");
+		} else {
+			closestQuicklinkGroup.setAttribute("data-expanded", "false");
+			target.setAttribute("aria-expanded", "false");
+		};
+	};
+
+	const dataset = document.querySelector("#dataset");
+	const viewInputs = document.querySelectorAll(`input[name="view-as"]`);
+	viewInputs?.forEach((input) => {
+		return input.addEventListener("change", handleViewChange);
+	});
+	function handleViewChange(event: Event) {
+		const selectedView = (event.target as HTMLInputElement).value;
+		dataset.setAttribute("data-view", selectedView);
+		return;
+	};
+
+	const filteringInputs = document.querySelectorAll(`input[name="filter-by"]`);
+	filteringInputs?.forEach((input) => {
+		return input.addEventListener("change", handleFilteringChange);
+	});
+	function handleFilteringChange(event: Event) {
+		const selectedFilter = (event.target as HTMLInputElement);
+		const selectedFilterValue = selectedFilter.value;
+		const targetFilteringGroup = document.querySelector(`.filtering-group[data-method="${selectedFilterValue}"]`);
+		if (selectedFilter.getAttribute("aria-expanded") === "true") {
+			selectedFilter.setAttribute("aria-expanded", "false");
+			targetFilteringGroup.setAttribute("data-expanded", "false");
+		} else {
+			selectedFilter.setAttribute("aria-expanded", "true");
+			targetFilteringGroup.setAttribute("data-expanded", "true");
+		};
+		return;
+	};
+
+	var upcomingRecords = []
+	var ongoingRecords = [];
+	const upcomingRecordsGroup = document.querySelector("#upcoming");
+	const ongoingRecordsGroup = document.querySelector("#ongoing");
+	const recordsWithStartDates = document.querySelectorAll(`.listing[data-method="date"] .record[data-start-date]`);
+	recordsWithStartDates.forEach((record) => {
+		const startDateString = record.getAttribute("data-start-date");
+		const endDateString = record.getAttribute("data-end-date");
+		const startDate = new Date(startDateString);
+		const endDate = endDateString && new Date(endDateString) || null;
+		const now = new Date();
+		if (startDate > now) {
+			updateRecordGroupSize(record, -1);
+			upcomingRecords.push(record);
+			record.remove();
+			return;
+		};
+		if (endDate && startDate < now && endDate > now) {
+			updateRecordGroupSize(record, -1);
+			ongoingRecords.push(record);
+			record.remove();
+			return;
+		};
+	});
+	upcomingRecords.forEach((record) => {
+		upcomingRecordsGroup.appendChild(record);
+		updateRecordGroupSize(record, 1);
+		return;
+	});
+	ongoingRecords.forEach((record) => {
+		ongoingRecordsGroup.appendChild(record);
+		updateRecordGroupSize(record, 1);
+		return;
+	});
+	function updateRecordGroupSize (record: Element, modifier: 1 | -1) {
+		if (!record || !modifier) { return; };
+		const group = record.closest(`.listing[data-method="date"] .record-group[data-size]`);
+		if (!group) { return; };
+		return group.setAttribute("data-size", (parseFloat(group.getAttribute("data-size")) + modifier)?.toString());
+	};
+
+	/** Misc */
+	const tags = document.querySelectorAll(".tag");
+	tags?.forEach((tag) => {
+		tag.addEventListener("click", handleTagClick);
+	});
+	
+	function handleTagClick(event: any) {
+		event.preventDefault();
+		const closestTag = event.target.closest(".tag");
+		return closestTag.getAttribute("aria-selected") === "false"
+			? closestTag.setAttribute("aria-selected", "true")
+			: closestTag.setAttribute("aria-selected", "false");
+	};
+</script>

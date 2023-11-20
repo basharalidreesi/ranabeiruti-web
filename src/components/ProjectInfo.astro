@@ -1,0 +1,200 @@
+---
+import sanityClient from "../sanity";
+import ComplexDate from "./ComplexDate.astro";
+import { LOCALES } from "../lib/locales.js";
+import PortableText from "./PortableText.astro";
+import Card from "./Card.astro";
+import Image from "./Image.astro";
+
+const projectsListing = await sanityClient.fetch(`
+	*[_id == "projectsListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
+	}
+`);
+
+const pressListing = await sanityClient.fetch(`
+	*[_id == "pressListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
+	}
+`);
+
+const { source } = Astro.props;
+---
+
+<div class="info">
+	<!-- {
+		source.profiles
+		&& source.profiles.length !== 0
+		&& (source.profiles.length !== source.profiles.filter((profile) => profile.isDefault).length)
+		? (
+			<div class="profiles">
+				<h2>
+					By {new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(source.profiles.filter((profile) => !profile.isDefault).map((profile) => profile.name))}
+				</h2>
+			</div>
+		)
+		: null
+	} -->
+	<div class="tags">
+		<dl>
+			{source.types && source.types.length !== 0 ? (<>
+				<dt>
+					{source.types.length > 1 ? "Types" : "Type"}
+				</dt>
+				{source.types.map((type) => (
+					<dd>
+						<a href="/" class="link">
+							{type.name}
+						</a>
+					</dd>
+				))}
+			</>) : null}
+			{source.subjects && source.subjects.length !== 0 ? (<>
+				<dt>
+					{source.subjects.length > 1 ? "Subjects" : "Subject"}
+				</dt>
+				{source.subjects.map((subject) => (
+					<dd>
+						<a href="/" class="link">
+							{subject.name}
+						</a>
+					</dd>
+				))}
+			</>) : null}
+			{source.clients && source.clients.length !== 0 ? (<>
+				<dt>
+					{source.clients.length > 1 ? "Clients" : "Client"}
+				</dt>
+				{source.clients.map((client) => (
+					<dd>
+						<a href="/" class="link">
+							{client.name}
+						</a>
+					</dd>
+				))}
+			</>) : null}
+			{source.locations && source.locations.length !== 0 ? (<>
+				<dt>
+					{source.locations.length > 1 ? "Locations" : "Location"}
+				</dt>
+				{source.locations.map((location) => (
+					<dd>
+						<a href="/" class="link">
+							{[location.name, LOCALES.find((locale) => locale.value === location.locale)?.title]?.filter(Boolean)?.join(", ")}
+						</a>
+					</dd>
+				))}
+			</>) : null}
+			<dt>
+				{source.date.dateFormat === "yearOnly" ? "Year" : "Date"}
+			</dt>
+			<dd>
+				<a href="/" class="link">
+					<ComplexDate source={source.date} />
+				</a>
+			</dd>
+		</dl>
+	</div>
+	{source.collections?.map((collection) => {
+		if ((!collection.description || collection.description.length === 0) && (!collection.projects || collection.projects.length === 0)) { return null; };
+		return (
+			<div class="collection">
+				<h2>
+					{collection.projects && collection.projects.length !== 0 ? "More from " : "About "} <a href="/" class="link">{collection.name}</a>
+				</h2>
+				<PortableText source={collection.description} />
+				{collection.projects?.map((project) => {
+					return (
+						<Card href={`/${projectsListing.slug.current}/${project.slug.current}/`} hasHoverEffect={true}>
+							<Image source={project.image} />
+							<h3>
+								{project.title}
+							</h3>
+							<p class="tagline">
+								{project.type.trim()}, <time datetime={project.date.startDate}><ComplexDate source={project.date} length="short" format="yearOnly" /></time>
+							</p>
+						</Card>
+					);
+				})}
+			</div>
+		);
+	})}
+	{source.newsAndPress?.map((entry) => {
+		return (
+			<div class="press">
+				<Card href={entry._type === "press" ? entry.url : entry._type === "news" ? `/${pressListing.slug.current}/${entry.slug.current}/` : null}>
+					<p class="date">
+						<time datetime="entry.date">
+							{new Date(entry.date).toLocaleDateString("en-gb", {
+								day: "numeric",
+								month: "short",
+								year: "numeric",
+							})}
+						</time>
+					</p>
+					<h2>
+						{entry._type === "press" ? `${entry.title} → ${entry.publisher.toUpperCase()}` : entry.title}
+					</h2>
+				</Card>
+			</div>
+		);
+	})}
+</div>
+
+<style lang="scss">
+	.info {
+		font-size: var(--font-size-x-small);
+		line-height: 1.15;
+		--color-text-normal: var(--color-text-light);
+	}
+	.info > * {
+		// margin-block-end: 1rem;
+		border-block-end: 1px solid var(--color-text-x-light);
+		padding-block-end: 0.75rem;
+		&:not(:last-child) {
+			margin-block-end: 0.75rem;
+		}
+	}
+	:is(.tags dl, .collection, .press) > :global(*):not(:last-child) {
+		margin-block-end: 0.5rem;
+	}
+	h2, h3 {
+		font-weight: var(--fwbold);
+		font-size: var(--fssmall);
+	}
+	dt {
+		font-weight: var(--fwbold);
+	}
+	dd + dt {
+		padding-block-start: 0.25rem;
+	}
+	:global(.info article) {
+		:global(picture) + h3 {
+			padding-block-start: 0.25rem;
+		}
+		.tagline + *,
+		* + .tagline {
+			padding-block-start: 0.25rem;
+		}
+		& + :global(article) {
+			padding-block-start: 0.25rem;
+		}
+		// padding-block-end: 0.25rem;
+		// &:global(:first-of-type) {
+		// 	padding-block-start: 0.25rem;
+		// }
+		// &:not(:last-child) {
+		// 	padding-block-start: 0.25rem;
+		// }
+		// :global(picture + *) {
+		// 	padding-block-start: 0.25rem;
+		// }
+	}
+	.link {
+		padding-block: 0.25rem;
+	}
+</style>

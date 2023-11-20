@@ -1,13 +1,14 @@
 ---
 import { PortableText as SanityPortableText } from "astro-portabletext";
-import PortableTextImage from "./PortableTextImage.astro";
-import PortableTextMark from "./PortableTextMark.astro";
-import PortableTextBlock from "./PortableTextBlock.astro";
+import PortableTextImage from "./PortableTextCmps/PortableTextImage.astro";
+import PortableTextMark from "./PortableTextCmps/PortableTextMark.astro";
+import PortableTextBlock from "./PortableTextCmps/PortableTextBlock.astro";
+import Text from "./Text.astro";
 
 const components = {
 	type: {
 		image: PortableTextImage,
-		// object
+		// object TODO
 	},
 	mark: {
 		// strong (default)
@@ -18,11 +19,10 @@ const components = {
 		link: PortableTextMark,
 	},
 	block: {
-		// normal (default)
+		normal: PortableTextBlock,
 		// h3 (default)
 		// blockquote (default)
 		note: PortableTextBlock,
-		hidden: PortableTextBlock,
 	},
 	list: {
 		// bullet (default)
@@ -30,9 +30,20 @@ const components = {
 	},
 };
 
-const { source } = Astro.props;
+const {
+	// PortableText props
+	source,
+	// Text props
+	small,
+	muted,
+} = Astro.props;
 ---
 
-<div class="rich-text">
-	<SanityPortableText value={source} components={components} />
-</div>
+{source && source.length !== 0
+	? (
+		<Text rich={true} small={small} muted={muted}>
+			<SanityPortableText value={source} components={components} />
+		</Text>
+	)
+	: null
+}

@@ -1,0 +1,25 @@
+---
+const { ratio, verticalAlignment, index } = Astro.props;
+---
+
+<div class="column"
+	data-index={index}
+	style={{
+		flex: ratio,
+		alignSelf: {
+			"top": "flex-start",
+			"middle": "center",
+			"bottom": "flex-end",
+		}[verticalAlignment] || null,
+	}}
+>
+	<slot />
+</div>
+
+<style lang="scss">
+	@media (max-width: 768px) {
+		.column:empty {
+			display: none;
+		}
+	}
+</style>

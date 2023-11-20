@@ -1,0 +1,67 @@
+---
+import Image from "./Image.astro";
+import PortableText from "./PortableText.astro";
+
+const { source } = Astro.props;
+---
+
+{source?.asset
+	? (
+		<figure data-caption-placement={source.captionPlacement || "bottom"}>
+			<Image
+				source={source}
+				style={{
+					flex: Math.max(source.imageRatio, 1) || 1,
+				}}
+			/>
+			{source.caption && source.caption?.length !== 0
+				? (
+					<figcaption style={{
+						flex: Math.max(source.captionRatio, 1) || 1,
+						alignSelf: {
+								"top": "flex-start",
+								"middle": "center",
+								"bottom": "flex-end",
+						}[source.captionVerticalAlignment] || null,
+					}}>
+						<PortableText source={source.caption} small={true} muted={true} />
+					</figcaption>
+				)
+				: null
+			}
+		</figure>
+	)
+	: null
+}
+
+<style lang="scss">
+	figure {
+		display: flex;
+		figcaption {
+			font-size: var(--fssmall);
+			--color-text-normal: var(--color-text-light);
+		}
+	}
+	figure:where([data-caption-placement="left"]) {
+		flex-flow: row-reverse nowrap;
+		gap: 0.75rem;
+	}
+	figure:where([data-caption-placement="top"]) {
+		flex-flow: column-reverse nowrap;
+		gap: 0.5rem;
+	}
+	figure:where([data-caption-placement="right"]) {
+		flex-flow: row nowrap;
+		gap: 0.75rem;
+	}
+	figure:where([data-caption-placement="bottom"]) {
+		flex-flow: column nowrap;
+		gap: 0.5rem;
+	}
+	@media (max-width: 768px) {
+		figure {
+			flex-flow: column nowrap;
+			gap: 0.5rem;
+		}
+	}
+</style>

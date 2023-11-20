@@ -1,0 +1,33 @@
+---
+import sanityClient from "../sanity";
+import Main from "../layouts/Main.astro";
+
+export async function getStaticPaths() {
+	const pages = await sanityClient.fetch(`
+		*[_type == "simplePage" && defined(slug)] {
+			slug {
+				current,
+			},
+			title,
+		}
+	`);
+	return pages?.map((page: { slug: { current: string; }; }) => {
+		return {
+			params: {
+				slug: page.slug?.current,
+			},
+			props: {
+				...page,
+			},
+		};
+	});
+};
+
+const page = Astro.props;
+---
+
+<Main title={page.title}>
+	<article>
+		{page.title}
+	</article>
+</Main>

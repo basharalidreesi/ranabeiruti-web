@@ -2,7 +2,7 @@ import { createClient } from "@sanity/client";
 
 const sanityClient = createClient({
 	projectId: "rtlbcvty",
-	dataset: "staging",
+	dataset: "production",
 	useCdn: false,
 	apiVersion: "2023-10-01",
 });

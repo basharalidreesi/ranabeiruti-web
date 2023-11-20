@@ -1,5 +1,31 @@
 ---
-import "../styles/global.scss";
+import sanityClient from "@root/sanity";
+import Link from "@components/Link.astro";
+import "@styles/global.scss";
+
+interface Props {
+	title: string;
+	children: any;
+};
+
+const settings = await sanityClient.fetch(`
+	*[_id == "settings"][0] {
+		title,
+		navigationItems[] -> {
+			title,
+			_id != "homepage" => {
+				slug {
+					current,
+				},
+			},
+			_id == "homepage" => {
+				"slug": {
+					"current": "/",
+				},
+			},
+		},
+	}
+`);
 
 const { title } = Astro.props;
 ---
@@ -10,14 +36,36 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover">
 		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
+		<title>{[title, settings.title]?.filter(Boolean)?.join(" • ")}</title>
 	</head>
 	<body>
-		<header></header>
+		<header class="fss bgn cxlt">
+			<h1 class="cn">
+				<Link class="ht" href="/">
+					{settings.title}
+				</Link>
+			</h1>
+			<nav class="cn" aria-labelledby="navigation-title">
+				<h2 id="navigation-title" class="dn">Menu</h2>
+				<ul>
+					{settings.navigationItems.map((item: { slug: { current: string; }; title: string; }) => {
+						const slug = item.slug.current;
+						const isCurrent = slug.replaceAll("/", "") === Astro.url.pathname.replaceAll("/", "");
+						return (
+							<li class="toe">
+								<Link class="ht" href={(`/${slug}/`).replace("///", "/")} {...isCurrent && { "aria-current": "page" }}>
+									{item.title}
+								</Link>
+							</li>
+						);
+					})}
+				</ul>
+			</nav>
+		</header>
 		<main>
 			<slot />
 		</main>
-		<footer></footer>
+		<footer class="bgi ci"></footer>
 	</body>
 </html>
 
@@ -30,15 +78,34 @@ const { title } = Astro.props;
 			width: 100%;
 			padding-inline: calc(1.5rem + env(safe-area-inset-left, 0px));
 		}
-		& > header,
-		& > footer {
-			padding-block: 1.5rem;
+		& > header {
+			position: sticky;
+			top: -1.125rem;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1.5rem;
+			height: 4rem;
+			border-block-end: 1px solid;
+			z-index: 100;
+			& > * {
+				position: sticky;
+				top: 1rem;
+			}
+			ul {
+				list-style: none;
+				display: flex;
+				gap: 1.5rem;
+			}
 		}
 		& > main {
 			flex: 1;
+			display: flex;
+			flex-flow: column nowrap;
+			padding-block: 1.5rem;
 		}
 		& > footer {
-			background: var(--color-1);
+			padding: 1.5rem;
 		}
 	}
 </style>

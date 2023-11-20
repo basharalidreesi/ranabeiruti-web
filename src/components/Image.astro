@@ -8,10 +8,27 @@ function urlFor(source: SanityImageSource) {
 	return imageBuilder.image(source);
 };
 
-const { source } = Astro.props;
+const {
+	source,
+	alt = "",
+	width,
+	height,
+	...rest
+} = Astro.props;
+
+const srcset =
+	width && !height ? urlFor(source)?.format("webp")?.width(width)?.url()
+	: width && height ? urlFor(source)?.format("webp")?.width(width)?.height(height)?.url()
+	: !width && height ? urlFor(source)?.format("webp")?.height(height)?.url()
+	: urlFor(source)?.format("webp")?.url()
+const src =
+	width && !height ? urlFor(source)?.width(width)?.url()
+	: width && height ? urlFor(source)?.width(width)?.height(height)?.url()
+	: !width && height ? urlFor(source)?.height(height)?.url()
+	: urlFor(source)?.url()
 ---
 
 <picture>
-	<source srcset={urlFor(source)?.format("webp")?.url()} type="image/webp" />
-	<img src={urlFor(source)?.url()} />
+	<source srcset={srcset} type="image/webp" />
+	<img loading="lazy" src={src} alt={alt} {...rest} />
 </picture>

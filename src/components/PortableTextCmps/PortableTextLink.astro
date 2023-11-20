@@ -1,6 +1,10 @@
 ---
+import Link from "../Link.astro";
+
 const { markDef } = Astro.props.node;
+
 const type = markDef?.type;
+
 function resolveHref() {
 	const internalTarget = markDef?.internalTarget;
 	const externalTarget = markDef?.externalTarget;
@@ -15,16 +19,10 @@ function resolveHref() {
 	};
 	return null;
 };
+
 const href = resolveHref() || null;
-const target = href?.startsWith("http") ? "_blank" : null;
-const rel = target && target === "_blank" ? "noindex nofollow" : null;
 ---
 
-{href
-	? (
-		<a href={href} target={target} rel={rel}>
-			<slot />
-		</a>
-	)
-	: null
-}
+<Link href={resolveHref()} textHover={true}>
+	<slot />
+</Link>
