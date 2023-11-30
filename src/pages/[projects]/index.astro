@@ -1,45 +1,14 @@
 ---
 import Main from "@layouts/Main.astro";
-import ProjectGrouping from "@components/ProjectGrouping.astro";
-import { projectsListingGroqQuery } from "@lib/groq";
-import type { Props as ProjectProps } from "@projects/[slug].astro";
-import sanityClient from "@root/sanity";
 import Link from "@components/Link.astro";
+import ProjectGrouping from "@components/ProjectGrouping.astro";
+import { ProjectsListingGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-
-export type Props = {
-	slug: { current: string; };
-	title: string;
-	allProjects: ProjectProps[];
-	quicklinks?: {
-		title: string;
-		items: ({
-			_type: "linkToItem";
-			slug: { current: string; };
-			title: string;
-		} | {
-			_type: "filterByTag";
-			schemaType: "type_" | "collection" | "subject" | "location";
-			slug: { current: string; };
-			name: string;
-		} | {
-			_type: "filterByDate";
-			year: number;
-		} | {
-			_type: "customFilter";
-			label: string;
-			tags: {
-				schemaType: "type_" | "collection" | "subject" | "location";
-				slug: { current: string; };
-			}[];
-		})[];
-	}[];
-};
-
-export type ProjectGroupingProps = { [key: string]: { title: string; projects: ProjectProps[]; description: string; }; };
+import type { ProjectsListingProps, ProjectGroupingProps, ProjectProps } from "@lib/types";
+import sanityClient from "@root/sanity";
 
 export async function getStaticPaths() {
-	const projectsListing = await sanityClient.fetch(projectsListingGroqQuery);
+	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingGroqQuery);
 	return [{
 		params: {
 			projects: projectsListing.slug?.current,
@@ -52,26 +21,34 @@ export async function getStaticPaths() {
 
 const listing = Astro.props;
 
+const projectsByTitle: ProjectGroupingProps = {};
 const projectsByPeriod: ProjectGroupingProps = { "upcoming": { title: "Upcoming", projects: [], description: "Upcoming projects", }, };
 const projectsByType: ProjectGroupingProps = {};
 const projectsByCollection: ProjectGroupingProps = {};
 const projectsBySubject: ProjectGroupingProps = {};
 const projectsByLocation: ProjectGroupingProps = {};
 
-listing.allProjects.forEach((project) => {
-	const assignProjectToGrouping = (project: ProjectProps, params: { grouping: ProjectGroupingProps; key: string; title: string; description: string; }) => {
-		const { grouping, key, title, description } = params;
-		if (!grouping[key]) {
-			grouping[key] = {
-				title: title,
-				projects: [],
-				description: description,
-			};
-		};
-		if (grouping[key] && grouping[key].projects) {
-			grouping[key].projects.push(project);
+function assignProjectToGrouping(project: ProjectProps, params: { grouping: ProjectGroupingProps; key: string; title: string; description?: string; }) {
+	const { grouping, key, title, description } = params;
+	if (!grouping[key]) {
+		grouping[key] = {
+			title: title,
+			projects: [],
+			description: description,
 		};
 	};
+	if (grouping[key] && grouping[key].projects) {
+		grouping[key].projects.push(project);
+	};
+};
+
+listing.allProjects.forEach((project) => {
+	assignProjectToGrouping(project, {
+		grouping: projectsByTitle,
+		key: Array.from(project.title.replace(/^(a |the |an )/gi, ""))[0].toLowerCase(),
+		title: Array.from(project.title.replace(/^(a |the |an )/gi, ""))[0].toUpperCase(),
+		description: `Projects beginning with ${Array.from(project.title.replace(/^(a |the |an )/gi, ""))[0].toUpperCase()}`,
+	});
 	assignProjectToGrouping(project, {
 		grouping: projectsByPeriod,
 		key: project.date.sortDate === "ongoing" ? project.date.sortDate : project.date.sortDate.split("-")[0],
@@ -124,335 +101,378 @@ listing.allProjects.forEach((project) => {
 ---
 
 <Main title={listing.title}>
-	<h1 class="dn">
+	<h1 class="display-none">
 		Projects
 	</h1>
-	<div id="dataset" class="lhl" data-view="cards"> <!-- data-view: "cards" | "list" | "table" -->
-		<aside id="controls" class="fss">
-			<div id="quicklink-controls">
-				{listing.quicklinks && listing.quicklinks.length !== 0 && (listing.quicklinks?.map((group, outerIndex) => (
-					<fieldset class="quicklink-group" id={`quicklink-group-${outerIndex}`} data-expanded="false">
-						<legend class="clt toe">{group.title}</legend>
-						<ul class="ln">
-							{group.items.map((item, innerIndex) => {
-								return [
-									innerIndex === 3 && group.items.length > 4 ? (
-										<li class="more toe">
-											<button class="checkbox ht" name="expand-quicklink-group" aria-expanded="false" aria-controls={`quicklink-group-${outerIndex}`} aria-label="Expand">{group.items.length - innerIndex} more</button>
-										</li>
-									) : null,
-									item._type === "linkToItem" ? (
-										<li class="toe">
-											<Link class="ht" href={`/${listing.slug.current}/${item.slug.current}/`}>
-												{item.title}
-											</Link>
-										</li>
-									) : item._type === "filterByTag" ? (
-										<li class="toe">
-											<Link class="ht" href={`?${item.schemaType}=${item.slug.current}`}>
-												{item.name}
-											</Link>
-										</li>
-									) : item._type === "filterByDate" ? (
-										<li class="toe">
-											<Link class="ht" href={`?period=${item.year}`}>
-												{item.year}
-											</Link>
-										</li>
-									) : item._type === "customFilter" ? (
-										<li class="toe">
-											<Link class="ht" href={`?${item.tags.map((tag) => `${tag.schemaType?.replaceAll("_", "")}=${tag.slug.current}`).join("&")}`}>
-												{item.label}
-											</Link>
-										</li>
-									) : null,
-								];
-							})}
-						</ul>
-					</fieldset>
-				)))}
-			</div>
-			<div id="filtering-controls">
-				<fieldset>
-					<legend class="clt toe">Filter by</legend>
+	<div id="dataset" data-view="cards" data-sort="date">
+		<aside id="controls" aria-labelledby="controls-title">
+			<h2 id="controls-title" class="display-none">Filtering and Viewing Options</h2>
+			<div id="controls-inner">
+				<section id="filters">
+					<h3 class="control-group-title">Filter by</h3>
 					<div class="control-group">
-						<div class="control ht">
-							<input class="vh" type="checkbox" name="filter-by" id="filter-by-type" value="type" aria-expanded="false" aria-controls="filter-by-type" />
-							<label class="checkbox ht toe" for="filter-by-type">Type</label>
+						<div class="control">
+							<input type="checkbox" name="filter-by" id="filter-by-type" value="type" autocomplete="off" />
+							<label class="hover-text" for="filter-by-type">Type</label>
 						</div>
-						<div class="control ht">
-							<input class="vh" type="checkbox" name="filter-by" id="filter-by-collection" value="collection" aria-expanded="false" aria-controls="filter-by-collection" />
-							<label class="checkbox ht toe" for="filter-by-collection">Collection</label>
+						<div class="control">
+							<input type="checkbox" name="filter-by" id="filter-by-collection" value="collection" autocomplete="off" />
+							<label class="hover-text" for="filter-by-collection">Collection</label>
 						</div>
-						<div class="control ht">
-							<input class="vh" type="checkbox" name="filter-by" id="filter-by-subject" value="subject" aria-expanded="false" aria-controls="filter-by-subject" />
-							<label class="checkbox ht toe" for="filter-by-subject">Subject</label>
+						<div class="control">
+							<input type="checkbox" name="filter-by" id="filter-by-subject" value="subject" autocomplete="off" />
+							<label class="hover-text" for="filter-by-subject">Subject</label>
 						</div>
-						<div class="control ht">
-							<input class="vh" type="checkbox" name="filter-by" id="filter-by-location" value="location" aria-expanded="false" aria-controls="filter-by-location" />
-							<label class="checkbox ht toe" for="filter-by-location">Location</label>
+						<div class="control">
+							<input type="checkbox" name="filter-by" id="filter-by-location" value="location" autocomplete="off" />
+							<label class="hover-text" for="filter-by-location">Location</label>
 						</div>
 					</div>
-					<div class="filtering-group" id="filter-by-type" data-method="type" data-expanded="false">
-						<p class="clt">Filter by Type</p>
-						<ul class="ln">
-							<li class="toe" data-size={listing.allProjects.length}>
-								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
-							</li>
-							{Object.keys(projectsByType).sort().map((type) => (
-								<li class="toe" data-size={projectsByType[type].projects.length}>
-									<a href={`?type=${type}`} class="ht">{projectsByType[type].title}</a>
-								</li>
-							))}
-						</ul>
-					</div>
-					<div class="filtering-group" id="filter-by-collection" data-method="collection" data-expanded="false">
-						<p class="clt">Filter by Collection</p>
-						<ul class="ln">
-							<li class="toe" data-size={listing.allProjects.length}>
-								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
-							</li>
-							{Object.keys(projectsByCollection).filter((key) => key !== "other").sort().map((collection) => (
-								<li class="toe" data-size={projectsByCollection[collection].projects.length}>
-									<a href={`?collection=${collection}`} class="ht">{projectsByCollection[collection].title}</a>
-								</li>
-							))}
-						</ul>
-					</div>
-					<div class="filtering-group" id="filter-by-subject" data-method="subject" data-expanded="false">
-						<p class="clt">Filter by Subject</p>
-						<ul class="ln">
-							<li class="toe" data-size={listing.allProjects.length}>
-								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
-							</li>
-							{Object.keys(projectsBySubject).filter((key) => key !== "other").sort().map((subject) => (
-								<li class="toe" data-size={projectsBySubject[subject].projects.length}>
-									<a href={`?subject=${subject}`} class="ht">{projectsBySubject[subject].title}</a>
-								</li>
-							))}
-						</ul>
-					</div>
-					<div class="filtering-group" id="filter-by-location" data-method="location" data-expanded="false">
-						<p class="clt">Filter by Location</p>
-						<ul class="ln">
-							<li class="toe" data-size={listing.allProjects.length}>
-								<a href={`/${listing.slug.current}/`} class="ht" aria-current="true">All</a>
-							</li>
-							{Object.keys(projectsByLocation).sort().map((location) => (
-								<li class="toe" data-size={projectsByLocation[location].projects.length}>
-									<a href={`?location=${location}`} class="ht">{projectsByLocation[location].title}</a>
-								</li>
-							))}
-						</ul>
-					</div>
-				</fieldset>
-			</div>
-			<div id="view-controls">
-				<fieldset>
-					<legend class="clt toe">View as</legend>
+				</section>
+				<section id="views">
+					<h3 class="control-group-title">View as</h3>
 					<div class="control-group">
-						<div class="control ht">
-							<input class="dn" type="radio" name="view-as" id="view-as-cards" value="cards" checked />
-							<label class="radio ht toe" for="view-as-cards">Images</label>
+						<div class="control">
+							<input type="radio" name="view-as" id="view-as-cards" value="cards" autocomplete="off" checked />
+							<label class="hover-text" for="view-as-cards">Images</label>
 						</div>
-						<div class="control ht">
-							<input class="dn" type="radio" name="view-as" id="view-as-list" value="list" />
-							<label class="radio ht toe" for="view-as-list">List</label>
+						<div class="control">
+							<input type="radio" name="view-as" id="view-as-list" value="list" autocomplete="off" />
+							<label class="hover-text" for="view-as-list">List</label>
 						</div>
 					</div>
-				</fieldset>
+				</section>
+				<section id="tags" data-current="none">
+					<h3 class="display-none">Tags</h3>
+					<ul data-filter-method="type">
+						<li>
+							<Link href={`/${listing.slug.current}/`} class="hover-text" data-size={listing.allProjects.length}>All</Link>
+						</li>
+						{Object.keys(projectsByType).sort().map((type) => (
+							<li>
+								<Link href={`?type=${type}`} class="hover-text" data-size={projectsByType[type].projects.length}>{projectsByType[type].title}</Link>
+							</li>
+						))}
+					</ul>
+					<ul data-filter-method="collection">
+						<li>
+							<Link href={`/${listing.slug.current}/`} class="hover-text" data-size={listing.allProjects.length}>All</Link>
+						</li>
+						{Object.keys(projectsByCollection).filter((key) => key !== "other").sort().map((collection) => (
+							<li>
+								<Link href={`?collection=${collection}`} class="hover-text" data-size={projectsByCollection[collection].projects.length}>{projectsByCollection[collection].title}</Link>
+							</li>
+						))}
+					</ul>
+					<ul data-filter-method="subject">
+						<li>
+							<Link href={`/${listing.slug.current}/`} class="hover-text" data-size={listing.allProjects.length}>All</Link>
+						</li>
+						{Object.keys(projectsBySubject).filter((key) => key !== "other").sort().map((subject) => (
+							<li>
+								<Link href={`?subject=${subject}`} class="hover-text" data-size={projectsBySubject[subject].projects.length}>{projectsBySubject[subject].title}</Link>
+							</li>
+						))}
+					</ul>
+					<ul data-filter-method="location">
+						<li>
+							<Link href={`/${listing.slug.current}/`} class="hover-text" data-size={listing.allProjects.length}>All</Link>
+						</li>
+						{Object.keys(projectsByLocation).sort().map((location) => (
+							<li>
+								<Link href={`?location=${location}`} class="hover-text" data-size={projectsByLocation[location].projects.length}>{projectsByLocation[location].title}</Link>
+							</li>
+						))}
+					</ul>
+				</section>
+				<section id="pills" class="display-none">
+					<h3 class="display-none">Active Tags</h3>
+					<template></template>
+					<ul class="ln"></ul>
+				</section>
 			</div>
 		</aside>
-		<section class="listing" data-method="date" aria-labelledby="listing-by-date-title">
-			<h2 id="listing-by-date-title" class="dn" aria-hidden="true">List of Projects</h2>
-			<ProjectGrouping source={projectsByPeriod} keys={Object.keys(projectsByPeriod).sort().reverse()} baseUrl={listing.slug.current} />
+		<section id="sorts" aria-labelledby="sorts-title">
+			<h2 id="sorts-title" class="display-none">Sorting Options</h2>
+			<div id="sorts-inner">
+				<div class="sort control">
+					<input type="radio" name="sort-by" id="sort-by-title" value="title" autocomplete="off" />
+					<label for="sort-by-title">Project</label>
+				</div>
+				<div class="sort control">
+					<input type="radio" name="sort-by" id="sort-by-date" value="date" autocomplete="off" checked />
+					<label for="sort-by-date">Date</label>
+				</div>
+				<div class="sort control">
+					<input type="radio" name="sort-by" id="sort-by-type" value="type" autocomplete="off" />
+					<label for="sort-by-type">Type</label>
+				</div>
+				<div class="sort control">
+					<input type="radio" name="sort-by" id="sort-by-collection" value="collection" autocomplete="off" />
+					<label for="sort-by-collection">Collection</label>
+				</div>
+			</div>
+		</section>
+		<section class="listing" data-sort-method="title" data-view-mode="list" aria-label="List of Projects, Grouped Alphabetically">
+			<h2 class="display-none" aria-hidden="true">List of Projects, Grouped Alphabetically</h2>
+			<ProjectGrouping source={projectsByTitle} keys={Object.keys(projectsByTitle).sort()} baseUrl={listing.slug.current} />
+		</section>
+		<section class="listing" data-sort-method="date" data-view-mode="cards list" aria-label="List of Projects, Grouped by Date">
+			<h2 class="display-none" aria-hidden="true">List of Projects, Grouped by Date</h2>
+			<ProjectGrouping source={projectsByPeriod} keys={["ongoing", "upcoming", ...Object.keys(projectsByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()]} baseUrl={listing.slug.current} />
+		</section>
+		<section class="listing" data-sort-method="type" data-view-mode="list" aria-label="List of Projects, Grouped by Type">
+			<h2 class="display-none" aria-hidden="true">List of Projects, Grouped by Type</h2>
+			<ProjectGrouping source={projectsByType} keys={[...Object.keys(projectsByType).filter((key) => !["other"].includes(key)).sort(), "other"]} baseUrl={listing.slug.current} />
+		</section>
+		<section class="listing" data-sort-method="collection" data-view-mode="list" aria-label="List of Projects, Grouped by Collection">
+			<h2 class="display-none" aria-hidden="true">List of Projects, Grouped by Collection</h2>
+			<ProjectGrouping source={projectsByCollection} keys={[...Object.keys(projectsByCollection).filter((key) => !["other"].includes(key)).sort((a, b) => projectsByCollection[b].projects?.length - projectsByCollection[a].projects?.length || a.localeCompare(b)), "other"]} baseUrl={listing.slug.current} />
 		</section>
 	</div>
 </Main>
 
-<style lang="scss">
-	:root {
-		--_columns: [all-start] var(--_breakout) [content-start] 1fr [content-end] 0 [all-end];
-		--_breakout: calc(15% + 1.5rem);
-		@media (max-width: 896px) {
-			--_breakout: 0;
-		}
+<style lang="scss" is:global>
+	#dataset[data-view="cards"] .listing:not([data-view-mode~="cards"]),
+	#dataset[data-view="list"][data-sort="title"] .listing:not([data-view-mode~="list"][data-sort-method="title"]),
+	#dataset[data-view="list"][data-sort="date"] .listing:not([data-view-mode~="list"][data-sort-method="date"]),
+	#dataset[data-view="list"][data-sort="type"] .listing:not([data-view-mode~="list"][data-sort-method="type"]),
+	#dataset[data-view="list"][data-sort="collection"] .listing:not([data-view-mode~="list"][data-sort-method="collection"]),
+	#dataset:not([data-view="list"]) #sorts {
+		display: none;
 	}
-	* {
-		min-width: 0;
-		min-height: 0;
+	#tags[data-current="none"],
+	#tags[data-current="type"] > ul:not([data-filter-method="type"]),
+	#tags[data-current="collection"] > ul:not([data-filter-method="collection"]),
+	#tags[data-current="subject"] > ul:not([data-filter-method="subject"]),
+	#tags[data-current="location"] > ul:not([data-filter-method="location"]) {
+		display: none;
 	}
-	fieldset {
-		border: none;
-	}
-	legend {
-		display: block;
-		width: 100%;
-		margin-block-end: 0.75rem;
+	#controls, #sorts {
+		line-height: 1;
 	}
 	#controls {
-		& {
-			display: grid;
-			grid-template-columns: var(--_columns);
+		position: sticky;
+		top: var(--header-height);
+		z-index: 98;
+		padding-inline: calc(15% + 1.5rem + 1.5rem);
+		margin-inline: -1.5rem;
+		background: var(--color-7);
+		font-size: var(--font-size-medium);
+		@media (max-width: 1280px) {
+			padding-inline-end: 1.5rem;
 		}
-		& > * {
-			grid-column: content;
-		}
-		& > * + * {
-			margin-block-start: 0.75rem;
-			padding-block-start: 0.75rem;
-			border-block-start: 1px solid var(--color-text-xx-light);
-		}
-		& > *:last-child {
-			padding-block-end: 0.75rem;
-			border-block-end: 1px solid var(--color-text-xx-light);
-		}
-		.control-group {
-			display: flex;
-			flex-wrap: wrap;
-			column-gap: 1.5rem;
-			row-gap: 0.75rem;
+		@media (max-width: 1024px) {
+			padding-inline-start: 1.5rem;
 		}
 	}
-	#quicklink-controls {
-		& {
-			display: flex;
+	#controls-inner {
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 1.5rem;
+		row-gap: 1rem;
+		padding-block: 1rem;
+		border-block-end: 1px solid var(--color-5);
+	}
+	.control-group-title {
+		color: var(--color-2);
+	}
+	.control-group {
+		display: flex;
+		column-gap: 0.75rem;
+		row-gap: 0.75rem;
+		@media (max-width: 512px) {
+			flex-direction: column;
 			flex-wrap: wrap;
-			column-gap: 1.5rem;
-			row-gap: 0.75rem;
+			max-height: calc(2em + 0.75rem + 1px);
 		}
-		.quicklink-group {
-			--_columns: 5;
-			flex-basis: calc((100% - (1.5rem * (var(--_columns) - 1))) / var(--_columns));
-			@media (max-width: 1152px) {
-				--_columns: 4;
-			}
-			@media (max-width: 896px) {
-				--_columns: 3;
-			}
-			@media (max-width: 640px) {
-				--_columns: 2;
-			}
+	}
+	.control {
+		position: relative;
+		input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
 		}
-		legend {
-			margin-block-end: 0.5rem;
-		}
-		li {
-			padding-block: 0.25rem;
-		}
-		li:not(.more)::before {
-			content: "•";
-			display: inline-block;
-			width: 0.75rem;
-			height: 0.75rem;
-			line-height: 0.75;
-			margin-right: 0.25rem;
-			margin-bottom: -1px;
-			text-align: center;
-			font-family: monospace;
-			color: var(--color-text-x-light);
-		}
-		button {
-			appearance: unset;
-			background: none;
-			border: none;
-			display: block;
+		input,
+		input + label {
 			cursor: pointer;
 		}
-		.quicklink-group[data-expanded="true"] {
-			.more {
-				display: none;
-			}
+		input + label {
+			position: relative;
 		}
-		.quicklink-group:not([data-expanded="true"]) {
-			.more ~ li {
-				display: none;
+		input + label::before {
+			display: inline-block;
+			margin-inline-end: 0.25rem;
+			font-family: var(--font-family-mono);
+			line-height: 1;
+		}
+		input:not(:checked) + label::before {
+			color: var(--color-3);
+		}
+		input:checked + label::before {
+			color: currentColor;
+		}
+	}
+	#filters,
+	#views {
+		display: flex;
+		align-items: baseline;
+		column-gap: 0.75rem;
+		row-gap: 0.75rem;
+		@media (max-width: 768px) {
+			flex-direction: column;
+		}
+	}
+	#filters {
+		flex: 1;
+		label::before {
+			content: "+";
+			content: "+" / "";
+		}
+		input:checked + label::before {
+			content: "×";
+			content: "×" / "";
+		}
+		input:checked + label::after {
+			content: "";
+			position: absolute;
+			display: block;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 1em;
+			height: 0.5em;
+			background: var(--color-7);
+			top: calc(100% + 1rem - 0.5em - 1px);
+			border-inline-start: 0.5em solid var(--color-7);
+			border-inline-end: 0.5em solid var(--color-7);
+			border-block-end: 0.5em solid var(--color-6);
+			pointer-events: none;
+			@media (max-width: 512px) {
+				content: none;
 			}
 		}
 	}
-	#filtering-controls {
-		.filtering-group {
-			margin-block-start: 0.75rem;
-			padding-block-start: 0.75rem;
-			border-block-start: 1px solid var(--color-text-xx-light);
+	#views {
+		min-width: 3.75rem;
+		input:checked + label::before {
+			content: "✓";
+			content: "✓" / "";
 		}
-		.filtering-group p {
-			margin-block-end: 0.5rem;
-		}
-		.filtering-group ul {
-			columns: 5;
+	}
+	#tags {
+		flex-basis: calc(100% + 1.5rem);
+		ul {
+			display: flex;
+			flex-wrap: wrap;
 			column-gap: 1.5rem;
-			&, * {
-				break-inside: avoid;
-			}
-			@media (max-width: 1152px) {
-				columns: 4;
-			}
-			@media (max-width: 896px) {
-				columns: 3;
-			}
-			@media (max-width: 640px) {
-				columns: 2;
-			}
+			row-gap: 0.75rem;
+			padding: 0.75rem;
+			background: var(--color-6);
+			list-style: none;
 		}
-		.filtering-group li {
-			padding-block: 0.25rem;
+		a {
+			display: flex;
 		}
-		.filtering-group li::before {
+		a::before {
+			content: attr(data-size);
 			content: attr(data-size) / "";
 			display: inline-block;
-			margin-inline-end: 0.75rem;
-			color: var(--color-text-x-light);
+			margin-inline-end: 0.5rem;
+			color: var(--color-3);
 		}
-		.filtering-group[data-expanded="false"] {
-			display: none;
+	}
+	#sorts {
+		position: sticky;
+		top: calc(var(--header-height) + (var(--font-size-medium) + 1rem + 1rem + 1px));
+		z-index: 97;
+		margin-inline: -1.5rem;
+		padding-inline: calc(15% + 1.5rem + 1.5rem);
+		background: var(--color-7);
+		font-size: var(--font-size-medium);
+		@media (max-width: 1280px) {
+			padding-inline-end: 1.5rem;
+		}
+		@media (max-width: 1024px) {
+			padding-inline-start: 1.5rem;
+		}
+	}
+	#sorts-inner {
+		display: flex;
+		border-block-end: 1px solid var(--color-5);
+	}
+	.sort {
+		position: relative;
+		padding-block: 1rem;
+		padding-inline: 0.75rem;
+		background: transparent;
+		transition: background-color 0.125s;
+		--width-expand: (1ch + 0.75rem + 0.75rem);
+		&:nth-of-type(1) {
+			flex-basis: calc(100% / 4 * 2 - (var(--width-expand) / 3 * 1));
+			@media (max-width: 1024px) {
+				flex-basis: calc(100% / 4 * 1 - (var(--width-expand) / 3 * 1));
+			}
+		}
+		&:nth-of-type(2) {
+			flex-basis: calc(100% / 4 * 1 - (var(--width-expand) / 3 * 1));
+		}
+		&:nth-of-type(3) {
+			flex-basis: calc(100% / 4 * 1 - (var(--width-expand) / 3 * 1));
+		}
+		&:nth-of-type(4) {
+			flex-basis: calc(100% / 4 * 1 + var(--width-expand));
+		}
+		input:checked + label::before {
+			content: "↓";
+			content: "↓" / "";
+		}
+		@media (any-hover: hover) {
+			&:hover {
+				background: var(--color-6);
+			}
+		}
+		@media (max-width: 1024px) {
+			--width-expand: 0px;
 		}
 	}
 </style>
 
 <script>
-	const expandQuicklinkGroupButtons = document.querySelectorAll(`button[name="expand-quicklink-group"]`);
-	expandQuicklinkGroupButtons.forEach((button) => {
-		button.addEventListener("click", handleExpandButtonClick);
-	});
-	function handleExpandButtonClick(event: Event) {
-		const target = event.target as HTMLButtonElement;
-		const closestQuicklinkGroup = target.closest(".quicklink-group");
-		if (target.getAttribute("aria-expanded") === "false") {
-			closestQuicklinkGroup.setAttribute("data-expanded", "true");
-			target.setAttribute("aria-expanded", "true");
-		} else {
-			closestQuicklinkGroup.setAttribute("data-expanded", "false");
-			target.setAttribute("aria-expanded", "false");
-		};
-	};
-
 	const dataset = document.querySelector("#dataset");
 	const viewInputs = document.querySelectorAll(`input[name="view-as"]`);
+	const sortInputs = document.querySelectorAll(`input[name="sort-by"]`);
 	viewInputs?.forEach((input) => {
 		return input.addEventListener("change", handleViewChange);
+	});
+	sortInputs?.forEach((input) => {
+		return input.addEventListener("change", handleSortChange);
 	});
 	function handleViewChange(event: Event) {
 		const selectedView = (event.target as HTMLInputElement).value;
 		dataset.setAttribute("data-view", selectedView);
 		return;
 	};
+	function handleSortChange(event: Event) {
+		const selectedSort = (event.target as HTMLInputElement).value;
+		dataset.setAttribute("data-sort", selectedSort);
+		return;
+	};
 
-	const filteringInputs = document.querySelectorAll(`input[name="filter-by"]`);
-	filteringInputs?.forEach((input) => {
+	const filterInputs = document.querySelectorAll(`input[name="filter-by"]`);
+	filterInputs?.forEach((input) => {
 		return input.addEventListener("change", handleFilteringChange);
 	});
 	function handleFilteringChange(event: Event) {
-		const selectedFilter = (event.target as HTMLInputElement);
-		const selectedFilterValue = selectedFilter.value;
-		const targetFilteringGroup = document.querySelector(`.filtering-group[data-method="${selectedFilterValue}"]`);
-		if (selectedFilter.getAttribute("aria-expanded") === "true") {
-			selectedFilter.setAttribute("aria-expanded", "false");
-			targetFilteringGroup.setAttribute("data-expanded", "false");
+		const selectedFilter = (event.target as HTMLInputElement).value;
+		const tagsList = document.querySelector("#tags");
+		const otherFilters = document.querySelectorAll(`input[name="filter-by"]:not([value="${selectedFilter}"])`);
+		if ((event.target as HTMLInputElement).checked === true) {
+			tagsList.setAttribute("data-current", selectedFilter);
 		} else {
-			selectedFilter.setAttribute("aria-expanded", "true");
-			targetFilteringGroup.setAttribute("data-expanded", "true");
+			tagsList.setAttribute("data-current", "none");
 		};
+		otherFilters.forEach((filter: HTMLInputElement) => filter.checked = false );
 		return;
 	};
 
@@ -460,7 +480,7 @@ listing.allProjects.forEach((project) => {
 	var ongoingRecords = [];
 	const upcomingRecordsGroup = document.querySelector("#upcoming");
 	const ongoingRecordsGroup = document.querySelector("#ongoing");
-	const recordsWithStartDates = document.querySelectorAll(`.listing[data-method="date"] .record[data-start-date]`);
+	const recordsWithStartDates = document.querySelectorAll(`.listing[data-sort-method="date"] .record[data-start-date]`);
 	recordsWithStartDates.forEach((record) => {
 		const startDateString = record.getAttribute("data-start-date");
 		const endDateString = record.getAttribute("data-end-date");
@@ -492,22 +512,8 @@ listing.allProjects.forEach((project) => {
 	});
 	function updateRecordGroupSize (record: Element, modifier: 1 | -1) {
 		if (!record || !modifier) { return; };
-		const group = record.closest(`.listing[data-method="date"] .record-group[data-size]`);
+		const group = record.closest(".record-group[data-size]");
 		if (!group) { return; };
 		return group.setAttribute("data-size", (parseFloat(group.getAttribute("data-size")) + modifier)?.toString());
-	};
-
-	/** Misc */
-	const tags = document.querySelectorAll(".tag");
-	tags?.forEach((tag) => {
-		tag.addEventListener("click", handleTagClick);
-	});
-	
-	function handleTagClick(event: any) {
-		event.preventDefault();
-		const closestTag = event.target.closest(".tag");
-		return closestTag.getAttribute("aria-selected") === "false"
-			? closestTag.setAttribute("aria-selected", "true")
-			: closestTag.setAttribute("aria-selected", "false");
 	};
 </script>

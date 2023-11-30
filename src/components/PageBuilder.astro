@@ -1,10 +1,24 @@
 ---
-import Row from "./Row.astro";
-import Column from "./Column.astro";
-import PortableText from "./PortableText.astro";
-import Figure from "./Figure.astro";
+import Column from "@components/Column.astro";
+import ComplexDate from "@components/ComplexDate.astro";
+import Row from "@components/Row.astro";
+import Figure from "@components/Figure.astro";
+import Link from "@components/Link.astro";
+import PortableText from "@components/PortableText.astro";
+import { LOCALES } from "@lib/locales";
+import type { ProjectProps } from "@lib/types";
 
-const { source, document } = Astro.props;
+export type Props = {
+	source: [];
+	document: ProjectProps;
+	baseUrl?: string;
+};
+
+const {
+	source,
+	document,
+	baseUrl,
+} = Astro.props;
 ---
 
 {source ? source?.map((row: { columns: any[]; }, index: number) => {
@@ -13,9 +27,9 @@ const { source, document } = Astro.props;
 			case "column": return (!column.content || column.content?.length === 0) ? true : false;
 			case "title": return !document.title ? true : false;
 			case "image_": return (!document.image || !document.image?.asset) ? true : false;
-			case "description": return (!document.description || document.description?.length === 0) ? true : false;
-			case "credits": return (!document.credits || document.credits?.length === 0) ? true : false;
-			case "relatedContent": return true;
+			// case "description": return (!document.description || document.description?.length === 0) ? true : false;
+			// case "credits": return (!document.credits || document.credits?.length === 0) ? true : false;
+			// case "relatedContent": return true;
 			default: return true;
 		};
 	})?.length === row.columns.length) {
@@ -41,12 +55,26 @@ const { source, document } = Astro.props;
 					};
 					case "title": return (
 						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
-							{document.title && <div class="title">
-								<h1 class="fwb fsxl lhn">{document.title}</h1>
-							</div>}
-							{document.subtitle && (<div class="subtitle">
-								<p class="fwb fsl clt lhl">{document.subtitle}</p>
-							</div>)}
+							<div id="document-title">
+								<h1 id="document-title-baseline">{document.title?.trim()}</h1>
+								{document.subtitle && (
+									<p id="document-subtitle">{document.subtitle?.trim()}</p>
+								)}
+							</div>
+							<div id="document-date">
+								<ComplexDate source={document.date} />
+							</div>
+							<div id="document-tags">
+								<ul>
+									{[...(document.types || []), ...(document.collections || []), ...(document.subjects || []), ...(document.locations || [])]?.filter(Boolean)?.map((tag) => (
+										<li>
+											<Link class="tag" href={`/${baseUrl}/?${tag.type}=${tag.type === "location" ? tag.locale?.toLowerCase() : tag.slug.current}`}>
+												{tag.type === "location" ? `${tag.name?.trim()}, ${LOCALES.find((locale) => locale.value === tag.locale)?.title}` : tag.name?.trim()}
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
 						</Column>
 					);
 					case "image_": return (
@@ -54,16 +82,16 @@ const { source, document } = Astro.props;
 							<Figure source={document.image} />
 						</Column>
 					);
-					case "description": return (
-						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
-							<PortableText source={document.description} small={true} muted={true} />
-						</Column>
-					);
-					case "credits": return (
-						<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
-							<PortableText source={document.credits} small={true} muted={true} />
-						</Column>
-					);
+					// case "description": return (
+					// 	<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+					// 		<PortableText source={document.description} small={true} muted={true} />
+					// 	</Column>
+					// );
+					// case "credits": return (
+					// 	<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+					// 		<PortableText source={document.credits} small={true} muted={true} />
+					// 	</Column>
+					// );
 					// case "relatedContent": return (
 					// 	<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
 					// 		<p>
@@ -93,8 +121,40 @@ const { source, document } = Astro.props;
 	);
 }) : null}
 
-<style>
-	.title + .subtitle {
-		margin-block-start: 1.5rem;
+<style lang="scss">
+	#document-title-baseline {
+		font-weight: var(--font-weight-bold);
+	}
+	#document-subtitle {
+		margin-block-start: 0.5rem;
+	}
+	#document-date {
+		margin-block-start: 1rem;
+		font-size: var(--font-size-small);
+	}
+	#document-tags {
+		margin-block-start: 1rem;
+		font-size: var(--font-size-small);
+	}
+	#document-tags ul {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 0.5rem;
+		row-gap: 0.5rem;
+		margin-inline-start: -0.5rem;
+	}
+	#document-tags .tag {
+		display: block;
+		padding-block: 0.25rem;
+		padding-inline: 0.5rem;
+		border-radius: 9999px;
+		background: var(--color-7);
+		transition: background-color 0.125s;
+		@media (any-hover: hover) {
+			&:hover {
+				background: var(--color-5);
+			}
+		}
 	}
 </style>

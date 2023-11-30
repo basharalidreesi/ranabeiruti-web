@@ -23,6 +23,6 @@ function resolveHref() {
 const href = resolveHref() || null;
 ---
 
-<Link href={resolveHref()} textHover={true}>
+<Link class="hover-text" href={href}>
 	<slot />
 </Link>

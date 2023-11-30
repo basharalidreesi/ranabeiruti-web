@@ -1,5 +1,15 @@
 ---
-const { ratio, verticalAlignment, index } = Astro.props;
+export type Props = {
+	ratio: number;
+	verticalAlignment: "top" | "middle" | "bottom";
+	index: number;
+};
+
+const {
+	ratio,
+	verticalAlignment,
+	index
+} = Astro.props;
 ---
 
 <div class="column"
@@ -17,7 +27,7 @@ const { ratio, verticalAlignment, index } = Astro.props;
 </div>
 
 <style lang="scss">
-	@media (max-width: 768px) {
+	@media (max-width: 896px) {
 		.column:empty {
 			display: none;
 		}

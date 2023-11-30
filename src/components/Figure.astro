@@ -38,8 +38,8 @@ const { source } = Astro.props;
 	figure {
 		display: flex;
 		figcaption {
-			font-size: var(--fssmall);
-			--color-text-normal: var(--color-text-light);
+			font-size: var(--font-size-small);
+			color: var(--color-2)
 		}
 	}
 	figure:where([data-caption-placement="left"]) {
@@ -48,7 +48,7 @@ const { source } = Astro.props;
 	}
 	figure:where([data-caption-placement="top"]) {
 		flex-flow: column-reverse nowrap;
-		gap: 0.5rem;
+		gap: calc(0.5rem + 0.15em);
 	}
 	figure:where([data-caption-placement="right"]) {
 		flex-flow: row nowrap;
@@ -56,12 +56,12 @@ const { source } = Astro.props;
 	}
 	figure:where([data-caption-placement="bottom"]) {
 		flex-flow: column nowrap;
-		gap: 0.5rem;
+		gap: calc(0.5rem + 0.15em);
 	}
 	@media (max-width: 768px) {
 		figure {
 			flex-flow: column nowrap;
-			gap: 0.5rem;
+			gap: calc(0.5rem + 0.15em);
 		}
 	}
 </style>

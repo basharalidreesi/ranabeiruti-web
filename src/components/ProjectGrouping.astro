@@ -1,10 +1,9 @@
 ---
-import Link from "@components/Link.astro";
 import ComplexDate from "@components/ComplexDate.astro";
 import Image from "@components/Image.astro";
+import Link from "@components/Link.astro";
 import { LOCALES } from "@lib/locales";
-import type { Props as ProjectProps } from "@projects/[slug].astro";
-import type { ProjectGroupingProps } from "@projects/index.astro";
+import type { ProjectGroupingProps } from "@lib/types";
 
 export type Props = {
 	source: ProjectGroupingProps;
@@ -22,72 +21,66 @@ const resolvedSource = keys ? keys : Object.keys(source);
 ---
 
 {resolvedSource?.map((key) => (<>
-	<section id={key} class="record-group" data-size={source[key].projects.length || "0"} aria-label={source[key].description}>
-		<h3 class="record-group-title clt" role="presentation" aria-hidden="true">{source[key].title}</h3>
-		{source[key].projects.map((project: ProjectProps) => {
+	<section id={key} class="record-group" data-size={source[key]?.projects?.length || "0"} aria-label={source[key]?.description ? source[key]?.description : null}>
+		<h3 class="record-group-title" role="presentation" aria-hidden="true">{source[key]?.title}</h3>
+		{source[key]?.projects?.map((project) => {
 			return (
-				<article class="record" id={project.slug.current} data-start-date={project.date.startDate} data-end-date={project.date.endDate} data-expanded="false" aria-label={project.title}>
+				<article class="record" data-start-date={project.date.startDate} data-end-date={project.date.endDate} data-expanded="false" aria-label={project.title}>
 					<div class="record-title">
 						<h4>
-							<Link class="ht" href={`/${baseUrl}/${project.slug.current}/`}>
-								<strong class="fwb ttuc">{project.title}{project.subtitle && (<span class="record-title-colon">:&nbsp;</span>)}</strong>{project.subtitle && (<span class="record-subtitle">{project.subtitle}</span>)}
+							<Link href={`/${baseUrl}/${project.slug.current}/`} class="hover-text">
+								<strong class="record-title-baseline">{project.title?.trim()}{project.subtitle && (<span class="record-title-colon">:&nbsp;</span>)}</strong>{project.subtitle && (<span class="record-subtitle">{project.subtitle?.trim()}</span>)}
 							</Link>
 						</h4>
 					</div>
-					<div class="record-date fsxs" data-format={project.date.dateFormat}>
-						<ComplexDate source={project.date} class="clt" aria-describedby="field-date" />
+					<div class="record-date" data-format={project.date.dateFormat}>
+						<ComplexDate source={project.date} />
 					</div>
-					<dl class="record-tags fsxs" aria-label="Tags">
+					<dl class="record-tags" aria-label="Tags">
 						<div class="record-types" data-has-value={project.types && project.types.length !== 0 ? "true" : "false"}>
-							<dt class="dn">Types</dt>
+							<dt class="display-none">Types</dt>
 							{project.types?.map((type) => (
-								<dd aria-describedby="field-types">
-									<Link class="tag toe" href={`?type=${type.slug.current}`} role="option" aria-selected="false">{type.name}</Link>
-								</dd>
+								<dd>{type.name?.trim()}</dd>
 							)) || (
 								<dd aria-hidden="true">∅</dd>
 							)}
 						</div>
 						<div class="record-collections" data-has-value={project.collections && project.collections.length !== 0 ? "true" : "false"}>
-							<dt class="dn">Collections</dt>
+							<dt class="display-none">Collections</dt>
 							{project.collections?.map((collection) => (
-								<dd aria-describedby="field-collections">
-									<Link class="tag toe" href={`?collection=${collection.slug.current}`} role="option" aria-selected="false">{collection.name}</Link>
-								</dd>
+								<dd>{collection.name?.trim()}</dd>
 							)) || (
 								<dd aria-hidden="true">∅</dd>
 							)}
 						</div>
 						<div class="record-subjects" data-has-value={project.subjects && project.subjects.length !== 0 ? "true" : "false"}>
-							<dt class="dn">Subjects</dt>
+							<dt class="display-none">Subjects</dt>
 							{project.subjects?.map((subject) => (
-								<dd aria-describedby="field-subjects">
-									<Link class="tag toe" href={`?subject=${subject.slug.current}`} role="option" aria-selected="false">{subject.name}</Link>
-								</dd>
+								<dd>{subject.name?.trim()}</dd>
 							)) || (
 								<dd aria-hidden="true">∅</dd>
 							)}
 						</div>
 						<div class="record-locations" data-has-value={project.locations && project.locations.length !== 0 ? "true" : "false"}>
-							<dt class="dn">Locations</dt>
+							<dt class="display-none">Locations</dt>
 							{project.locations?.map((location) => (
-								<dd aria-describedby="field-locations">
-									<Link class="tag toe" href={`?location=${location.locale}`} role="option" aria-selected="false">{location.name}, {LOCALES.find((locale) => locale.value === location.locale)?.title}</Link>
-								</dd>
+								<dd>{location.name?.trim()}, {LOCALES.find((locale) => locale.value === location.locale)?.title}</dd>
 							)) || (
 								<dd aria-hidden="true">∅</dd>
 							)}
 						</div>
 					</dl>
-					<div class="record-expand fsxs">
-						<button class="ht" name="expand-record" aria-expanded="false" aria-controls={project.slug.current} aria-label="Expand project">+</button>
+					<div class="record-description" data-contains={[project.description ? "project" : null, project.collections && project.collections.length !== 0 && project.collections.filter((collection) => collection.description).length !== 0 ? "collection" : null]?.filter(Boolean)?.join(" ")}>
+						{project.description && (
+							<p class="project-description">{project.description}</p>
+						)}
+						{project.collections && project.collections.length !== 0 && project.collections.filter((collection) => collection.description).length !== 0 && (
+							project.collections.map((collection) => (
+								<p class="collection-description">{collection.description}</p>
+							))
+						)}
 					</div>
-					<div class="record-description fsxs" aria-describedby="field-description">
-						<p class="clt">
-							{project.description}
-						</p>
-					</div>
-					<div class="record-image fsi" aria-describedby="field-image">
+					<div class="record-image">
 						<Image source={project.image} />
 					</div>
 				</article>
@@ -96,102 +89,102 @@ const resolvedSource = keys ? keys : Object.keys(source);
 	</section>
 </>))}
 
-<style lang="scss">
-	:global(#dataset .listing) {
+<style lang="scss" is:global>
+	.record-group {
+		display: grid;
+		grid-template-columns: 15% 1fr 15%;
+		column-gap: 1.5rem;
+		&[data-size="0"] {
+			display: none;
+		}
 		* {
 			min-width: 0;
 			min-height: 0;
 		}
 	}
-	:global(#dataset[data-view="cards"] .listing) {
+	.record-group-title {
+		grid-column: 1/2;
+		position: sticky;
+		top: var(--header-height);
+		z-index: 99;
+		height: fit-content;
+		padding-block: 0.75rem;
+		color: var(--color-2);
+		text-wrap: balance;
+	}
+	.record {
+		grid-column: 2/3;
+	}
+	#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
+	#project #project-related[data-view-mode="cards"] {
 		& {
-			padding-block-start: 1.5rem;
+			padding-block: 0.75rem;
 		}
-		.record-tags,
-		.record-expand {
+		.record-collections,
+		.record-subjects,
+		.collection-description {
 			display: none;
-		}
-		.record-group {
-			display: grid;
-			grid-template-columns: [all-start] 0 [title-start] 15% [title-end] var(--_interstice-outer) [content-start] 1fr [content-end] var(--_breakout) [all-end];
-			row-gap: 1.5rem;
-			--_interstice-outer: 1.5rem;
-			--_breakout: calc(15% + var(--_interstice-outer));
-			& + .record-group {
-				padding-block-start: 1.5rem;
-			}
-			&[data-size="0"] {
-				display: none;
-			}
-		}
-		.record-group-title {
-			grid-column: title;
-			position: sticky;
-			top: calc(2.875rem + 1.5rem);
-			height: calc(1rem * 1.15);
 		}
 		.record {
 			position: relative;
-			grid-column: content;
 			display: grid;
-			grid-template-columns: [all-start] 0 [col1-start] 2fr [col1-end] var(--_interstice-inner) [col2-start] 3fr [col2-end] 0 [all-end];
-			grid-template-rows: auto auto 1fr;
+			grid-template-columns: 2fr 3fr;
+			grid-template-rows: auto auto 1fr auto;
+			column-gap: 1.5rem;
 			row-gap: 0.75rem;
-			--_interstice-inner: 1.5rem;
-			margin: -0.75rem;
 			padding: 0.75rem;
-			background: var(--color-background-normal);
+			background: transparent;
 			transition: background-color 0.125s;
 			@media (any-hover: hover) {
 				&:hover {
-					background: var(--color-background-distinct);
-					img {
-						// filter: grayscale(0);
-					}
+					background: var(--color-6);
 				}
 			}
 		}
 		.record-image {
-			grid-column: col1;
+			grid-column: 1/2;
 		}
 		.record-title,
+		.record-tags,
 		.record-date,
 		.record-description {
-			grid-column: col2;
+			grid-column: 2/3;
 		}
 		.record-title {
 			grid-row: 1/2;
-			.record-title-colon {
-				opacity: 0;
-			}
-			.record-subtitle {
-				display: block;
-				margin-block-start: 0.5rem;
-			}
-			a {
-				--color-link-hover: var(--color-text-normal);
-			}
-			a::after {
-				content: "";
-				position: absolute;
-				inset: 0;
-				z-index: 1;
-			}
+		}
+		.record-title a {
+			color: var(--color-1);
+		}
+		.record-title a::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+		}
+		.record-title-baseline {
+			text-transform: uppercase;
+			font-weight: var(--font-weight-bold);
+		}
+		.record-title-colon {
+			opacity: 0;
+			position: absolute;
+		}
+		.record-subtitle {
+			display: block;
+			margin-block-start: 0.5rem;
 		}
 		.record-date {
 			grid-row: 2/3;
-			&[data-format="yearOnly"] {
-				clip: rect(0 0 0 0); 
-				clip-path: inset(50%);
-				height: 1px;
-				overflow: hidden;
-				white-space: nowrap; 
-				width: 1px;
-			}
-			&[data-format="yearOnly"] ~ .record-description {
-				margin-block-start: -0.75rem;
-				min-height: calc(100% + 0.75rem);
-			}
+			font-size: var(--font-size-small);
+			color: var(--color-2);
+		}
+		.record-date[data-format="yearOnly"] {
+			display: none;
+		}
+		.record-date[data-format="yearOnly"] ~ .record-description {
+			margin-block-start: -0.75rem;
+			min-height: calc(100% + 0.75rem);
 		}
 		.record-description {
 			grid-row: 3/4;
@@ -201,340 +194,337 @@ const resolvedSource = keys ? keys : Object.keys(source);
 			overflow: clip;
 			-webkit-mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
 			mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+			font-size: var(--font-size-small);
+			color: var(--color-2);
+		}
+		.record-description:not([data-contains="project"]) {
+			display: none;
+		}
+		.record-tags {
+			grid-row: 4/5;
+			padding-block-end: 0.75rem;
+			font-size: var(--font-size-small);
+			color: var(--color-1);
+			[data-has-value="false"] {
+				display: none;
+			}
+		}
+		.record-tags,
+		.record-types,
+		.record-locations {
+			display: flex;
+			flex-wrap: wrap;
+			column-gap: 0.75rem;
+			row-gap: 0.25rem;
 		}
 		.record-image {
-			grid-row: 1/4;
-			aspect-ratio: 16/9;
+			grid-row: 1/5;
 			img {
 				display: block;
 				height: 100%;
 				width: 100%;
 				object-fit: cover;
-				// filter: grayscale(1);
-				transition: filter 0.125;
-			}
-		}
-		@media (max-width: 1152px) {
-			.record-group {
-				--_breakout: 0;
-			}
-		}
-		@media (max-width: 896px) {
-			& {
-				padding-block-start: 0.75rem;
-			}
-			.record-group-title,
-			.record {
-				grid-column: all;
-			}
-			.record-group {
-				row-gap: 0.75rem;
-				& + .record-group {
-					margin-block-start: 0.75rem;
-					padding-block-start: 0.75rem;
-				}
-			}
-			.record {
-				margin-block: 0;
-				--_interstice-inner: 0.75rem;
-				& + .record {
-					margin-block-start: -0.75rem;
-				}
-			}
-			.record-group-title {
-				position: revert;
-				inset: revert;
-				height: revert;
-				padding-block-end: 0.75rem;
-				border-block-end: 1px solid var(--color-text-xx-light);
-			}
-		}
-		@media (max-width: 640px) {
-			.record-title,
-			.record-date,
-			.record-description,
-			.record-image {
-				grid-column: all;
-			}
-			.record-image {
-				grid-row: 1/2;
-				aspect-ratio: revert;
-				img {
-					height: auto;
-					width: auto;
-					max-height: 25rem;
-					max-width: 100%;
-					margin: auto;
-					object-fit: unset;
-				}
-			}
-			.record-title {
-				grid-row: 2/3;
-				.record-title-colon {
-					opacity: 1;
-				}
-				.record-subtitle {
-					display: inline;
-					margin: unset;
-				}
-			}
-			.record-date {
-				grid-row: 3/4;
-			}
-			.record-description {
-				grid-row: 4/5;
-				height: revert;
-				min-height: revert;
-				overflow: revert;
-				-webkit-mask: revert;
-				mask: revert;
+				aspect-ratio: 16/9;
 			}
 		}
 	}
-	:global(#dataset[data-view="list"] .listing) {
-		[data-has-value="false"] {
-			display: none !important;
-		}
+	@media (max-width: 1280px) {
 		.record-group {
-			display: grid;
-			grid-template-columns: [all-start] 0 [title-start] 15% [title-end] 0.75rem [content-start] 1fr [content-end] 0 [all-end];
-			&[data-size="0"] {
+			grid-template-columns: 15% 1fr;
+		}
+	}
+	@media (min-width: 1025px) {
+		#dataset[data-view="list"] .listing[data-view-mode~="list"],
+		#project #project-related[data-view-mode="list"] {
+			.record {
+				position: relative;
+				display: grid;
+				grid-template-columns: 2fr 1fr 2fr auto;
+				border-block-end: 1px solid var(--color-6);
+				background: transparent;
+				transition: background-color 0.125s;
+				&::after {
+					grid-column: 4/5;
+					width: 1ch;
+					height: 1.3rem;
+					margin: 0.75rem;
+					color: var(--color-4);
+					font-size: var(--font-size-medium);
+					font-family: var(--font-family-mono);
+					line-height: 1.6;
+				}
+				@media (any-hover: hover) {
+					&:hover {
+						background: var(--color-6);
+					}
+				}
+			}
+			.record-subjects,
+			.record-locations {
 				display: none;
 			}
-		}
-		.record-group-title {
-			display: block;
-			grid-column: title;
-			padding-block: 0.75rem;
-			position: sticky;
-			top: calc(2.875rem + 0.75rem);
-			height: calc(1rem * 1.15 + 0.75rem + 0.75rem);
-		}
-		.record {
-			grid-column: content;
-			display: grid;
-			grid-template-columns: [all-start] 0 [col1-start] 3fr [col1-end] 0.75rem [col2-start] 2fr [col2-end] 0.75rem [col3-start] auto [col3-end] 0 [all-end];
-			row-gap: 0.75rem;
-			padding: 0.75rem;
-			background: var(--color-background-normal);
-			transition: background-color 0.125s;
-			border-block-end: 1px solid var(--color-text-xx-light);
-			&::before, &::after {
+			.record[data-expanded="true"] {
+				margin-block-start: -1px;
+				background: var(--color-6);
+				border-block-end: 1px solid var(--color-5);
+				border-block-start: 1px solid var(--color-5);
+				&::after {
+					content: "×";
+					content: "×" / "";
+					color: var(--color-3);
+				}
+			}
+			.record:not([data-expanded="true"]) {
+				.record-description,
+				.record-image {
+					display: none;
+				}
+				&::after {
+					content: "+";
+					content: "+" / "";
+				}
+			}
+			.record-title,
+			.record-date,
+			.record-tags {
+				padding: 0.75rem;
+			}
+			.record-date,
+			.record-tags {
+				color: var(--color-2);
+			}
+			.record-title {
+				position: relative;
+				grid-column: 1/2;
+			}
+			.record-title a::after {
 				content: "";
 				display: block;
 				position: absolute;
-				left: 0;
-				right: 0;
-				height: 1px;
-				background: transparent;
-				transition: background-color 0.125s;
-			}
-			&::before {
-				top: -1px;
-			}
-			&::after {
+				inset: 0;
 				bottom: -1px;
 			}
-		}
-		.record-title,
-		.record-date,
-		.record-description {
-			grid-column: col1;
-		}
-		.record-tags,
-		.record-image {
-			grid-column: col2;
-		}
-		.record-tags,
-		.record-types,
-		.record-collections,
-		.record-subjects,
-		.record-locations {
-			display: flex;
-			align-items: baseline;
-			gap: 0.5rem;
-		}
-		.record-description {
-			height: 0;
-			min-height: 100%;
-			overflow: hidden;
-			overflow: clip;
-			-webkit-mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
-			mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
-		}
-		.record-image img {
-			width: 100%;
-			height: 100%;
-			max-height: 25rem;
-		}
-		.record-expand {
-			grid-column: col3;
-			height: calc(1rem * 1.15);
-			font-family: monospace;
-			text-align: end;
-			button {
-				appearance: unset;
-				background: none;
-				border: none;
-				display: block;
-				height: 100%;
-				aspect-ratio: 1/1;
-				cursor: pointer;
-			}
-		}
-		.record[data-expanded="true"] {
-			& {
-				grid-template-rows: auto auto 1fr;
-				position: relative;
-				background: var(--color-background-distinct);
-			}
-			&::before, &::after {
-				background: var(--color-text-x-light);
-			}
-			.record-tags,
-			.record-types,
-			.record-collections,
-			.record-subjects,
-			.record-locations {
-				flex-wrap: wrap;
-			}
-			.record-subjects,
-			.record-locations {
-				display: flex;
-			}
-			.record-date,
-			.record-description,
-			.record-image {
-				display: block;
-			}
-			.record-title {
-				grid-row: 1/2;
+			.record-title-baseline {
+				font-weight: var(--font-weight-bold);
 			}
 			.record-date {
-				grid-row: 2/3;
+				grid-column: 2/3;
+				padding: 0.75rem;
+				.date-baseline {
+					display: none;
+				}
 			}
 			.record-tags {
-				grid-row: 1/3;
-				height: min-content;
+				grid-column: 3/4;
+				padding: 0.75rem;
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 1.5rem;
 			}
-			.record-description {
-				grid-row: 3/4;
+			.record-types {
+				grid-column: 1/2;
 			}
-			.record-image {
-				grid-row: 3/4;
+			.record-collections {
+				grid-column: 2/3;
 			}
-		}
-		.record:not([data-expanded="true"]) {
-			.record-date,
-			.record-subjects,
-			.record-locations,
-			.record-description,
-			.record-image {
-				display: none;
-			}
-			@media (any-hover: hover) {
-				&:hover {
-					background: var(--color-background-distinct);
-				}
-			}
-		}
-		@media (max-width: 768px) {
-			.record-title,
-			.record-date,
-			.record-tags,
-			.record-description,
-			.record-image {
-				grid-column: col1/col2;
-			}
-			.record-expand {
-				grid-row: 1/2;
-			}
-			.record-description {
-				height: revert;
-				min-height: revert;
-				overflow: revert;
-				-webkit-mask: revert;
-				mask: revert;
-			}
-			.record-tags,
 			.record-types,
-			.record-collections,
-			.record-subjects,
-			.record-locations {
-				flex-wrap: wrap;
-			}
-			.record[data-expanded="true"] {
-				grid-template-rows: auto auto auto auto auto;
-				.record-title {
-					grid-row: 1/2;
+			.record-collections {
+				dd {
+					display: inline;
 				}
-				.record-tags {
-					grid-row: 2/3;
-				}
-				.record-date {
-					grid-row: 3/4;
-				}
-				.record-description {
-					grid-row: 4/5;
-				}
-				.record-image {
-					grid-row: 5/6;
+				dd:not(:last-of-type)::after {
+					content: ", ";
 				}
 			}
-		}
-		@media (max-width: 640px) {
-			.record,
-			.record-group-title {
-				grid-column: all;
+			.record-image {
+				grid-column: 1/2;
+				grid-row: 2/3;
+				padding-inline: 0.75rem;
+				padding-block-end: 1.15rem;
 			}
-			.record-group-title {
-				border-block-end: 1px solid var(--color-text-xx-light);
-				position: revert;
-				inset: revert;
-				height: revert;
+			.record-description {
+				grid-column: 2/5;
+				grid-row: 2/3;
+				padding-inline: 0.75rem;
+				padding-block-end: 1.15rem;
+				color: var(--color-2);
+				font-size: var(--font-size-small);
 			}
-			.record-image img {
-				margin-inline: auto;
+			.record-description p + p {
+				margin-block-start: 0.5rem;
 			}
 		}
 	}
-	.tag {
-		display: block;
-		padding-block: 0.25em;
-		padding-inline: 0.625em;
-		border-radius: 9999px;
-		transition: background-color 0.125s, color 0.1s;
-		&[aria-selected="false"] {
-			background: var(--color-background-normal);
-			@media (any-hover: hover) {
-				&:hover {
-					background: var(--color-text-x-light);
+	@media (max-width: 1024px) {
+		.record-group {
+			grid-template-columns: unset;
+		}
+		.record-group-title {
+			grid-column: unset;
+			position: revert;
+			top: revert;
+			z-index: revert;
+		}
+		.record {
+			grid-column: unset;
+		}
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
+		#project #project-related[data-view-mode="cards"] {
+			.record {
+				column-gap: 1rem;
+				row-gap: 0.5rem;
+				padding-inline: 0;
+				@media (any-hover: hover) {
+					&:hover {
+						background: transparent;
+					}
 				}
 			}
+			.record-subtitle {
+				margin-block-start: 0.25rem;
+			}
+			.record-date[data-format="yearOnly"] ~ .record-description {
+				margin-block-start: -0.5rem;
+				min-height: calc(100% + 0.5rem);
+			}
+			.record-tags {
+				padding-block-end: 0.5rem;
+			}
 		}
-		&[aria-selected="true"] {
-			background: var(--color-text-normal);
-			color: var(--color-background-normal);
+		#dataset[data-view="list"] .listing[data-view-mode~="list"],
+		#project #project-related[data-view-mode="list"] {
+			& {
+				padding-block: 0.75rem;
+			}
+			.record {
+				padding-block: 0.75rem;
+				margin-inline-start: 1.5rem;
+			}
+			.record::before {
+				content: "•";
+				content: "•" / "";
+				display: inline-block;
+				margin-inline-start: -1.5rem;
+				margin-block-start: 0.1ch;
+				padding-inline-end: calc(1.5rem - 1ch);
+				font-family: var(--font-family-mono);
+				vertical-align: top;
+				color: var(--color-3);
+			}
+			.record-title {
+				display: inline-block;
+				width: 100%;
+				margin-block-end: 0.25rem;
+				text-wrap: balance;
+			}
+			.record-title-baseline {
+				font-weight: var(--font-weight-bold);
+			}
+			.record-date,
+			.record-date * {
+				display: inline;
+			}
+			.record-date::after {
+				content: ", ";
+			}
+			.record-types[data-has-value="true"] + .record-collections[data-has-value="true"]::before {
+				content: ", ";
+			}
+			.record-tags > [data-has-value="false"] {
+				display: none;
+			}
+			.record-tags,
+			.record-types,
+			.record-types dd,
+			.record-collections,
+			.record-collections dd {
+				display: inline;
+			}
+			.record-types > dd:not(:last-of-type)::after,
+			.record-collections > dd:not(:last-of-type)::after {
+				content: ", ";
+			}
+			.record-subjects,
+			.record-locations {
+				display: none;
+			}
+			.record-description {
+				display: none;
+			}
+			.record-image {
+				display: none;
+			}
+			.record-date,
+			.record-tags {
+				color: var(--color-2);
+				font-size: var(--font-size-medium);
+			}
+		}
+	}
+	@media (max-width: 768px) {
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
+		#project #project-related[data-view-mode="cards"] {
+			.record {
+				grid-template-columns: 3fr 2fr;
+			}
+		}
+		#dataset[data-view="list"] .listing[data-view-mode~="list"],
+		#project #project-related[data-view-mode="list"] {
+			.record {
+				grid-template-columns: 1fr 1fr 2fr;
+			}
+		}
+	}
+	@media (max-width: 640px) {
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
+		#project #project-related[data-view-mode="cards"] {
+			.record {
+				grid-template-columns: unset;
+				grid-template-rows: unset;
+				display: flex;
+				flex-direction: column;
+			}
+			.record-image {
+				order: 1;
+			}
+			.record-title {
+				order: 2;
+			}
+			.record-date {
+				order: 3;
+			}
+			.record-date[data-format="yearOnly"] ~ .record-description {
+				min-height: revert;
+				margin-block-start: revert;
+			}
+			.record-description {
+				order: 4;
+				max-height: calc(3em * 1.3);
+				height: revert;
+				min-height: revert;
+			}
+			.record-tags {
+				order: 5;
+				padding: 0;
+			}
 		}
 	}
 </style>
 
 <script>
-	const expandRecordButons = document.querySelectorAll(`button[name="expand-record"]`);
-	expandRecordButons.forEach((button) => {
-		button.addEventListener("click", handleExpandButtonClick);
+	const records = document.querySelectorAll(".record");
+	records.forEach((record) => {
+		record.addEventListener("click", handleRecordClick);
 	});
-	function handleExpandButtonClick(event: Event) {
-		const target = event.target as HTMLButtonElement;
-		const closestRecord = target.closest(".record");
-		if (target.getAttribute("aria-expanded") === "false") {
+	function handleRecordClick(event: Event) {
+		if ((event.target as HTMLElement).closest("a")) { return; };
+		const closestRecord = (event.target as HTMLElement).closest(".record");
+		if (closestRecord.getAttribute("data-expanded") === "false") {
 			closestRecord.setAttribute("data-expanded", "true");
-			target.setAttribute("aria-expanded", "true");
-			target.innerHTML = "-";
 		} else {
+			if ((event.target as HTMLElement).closest("p, img, span, dd, time")) { return; };
 			closestRecord.setAttribute("data-expanded", "false");
-			target.setAttribute("aria-expanded", "false");
-			target.innerHTML = "+";
 		};
+		return;
 	};
 </script>
