@@ -1,8 +1,16 @@
 ---
-const { index } = Astro.props;
+export type Props = {
+	index: number;
+	doesBreakout?: boolean;
+};
+
+const {
+	index,
+	doesBreakout,
+} = Astro.props;
 ---
 
-<div class="row" data-index={index}>
+<div class:list={["row", { breakout: doesBreakout }]} data-index={index}>
 	<slot />
 </div>
 

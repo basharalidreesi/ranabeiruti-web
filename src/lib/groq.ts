@@ -14,6 +14,18 @@ export const SortDateGroqPartial = (`
 	),
 `);
 
+export const ImageMetadataGroqPartial = (`
+	"metadata": asset -> metadata {
+		lqip,
+		isOpaque,
+		dimensions {
+			height,
+			width,
+			aspectRatio,
+		},
+	},
+`);
+
 const PortableTextTypeBlock = (`
 	_type == "block" => {
 		...,
@@ -230,26 +242,28 @@ export const ProjectGroqQuery = (`
 		credits[] {
 			${PortableTextGroqPartial}
 		},
-		"newsAndPress": (news[] -> {
+		relatedProjects[] -> {
+			${ProjectBaseGroqPartial}
+			"description": pt::text(description[0]),
+		},
+		relatedNews[] -> {
 			_type,
 			slug {
 				current,
 			},
 			title,
 			date,
-		} + press[] -> {
+		},
+		relatedPress[] -> {
 			_type,
 			url,
 			date,
 			title,
 			publisher,
-		}) | order(date desc, lower(title) asc),
-		relatedProjects[] -> {
-			${ProjectBaseGroqPartial}
-			"description": pt::text(description[0]),
 		},
 		page {
 			header[] {
+				doesBreakout,
 				columns[] {
 					_type,
 					ratio,
@@ -265,7 +279,9 @@ export const ProjectGroqQuery = (`
 				},
 			},
 			doesIncludeDescription,
+			doesIncludeCollections,
 			body[] {
+				doesBreakout,
 				columns[] {
 					_type,
 					ratio,
@@ -276,13 +292,9 @@ export const ProjectGroqQuery = (`
 				},
 			},
 			doesIncludeCredits,
-			footer[] {
-				columns[] {
-					_type,
-					ratio,
-					verticalAlignment,
-				},
-			},
+			doesIncludeRelatedProjects,
+			doesIncludeRelatedNews,
+			doesIncludeRelatedPress,
 		},
 	}
 `);

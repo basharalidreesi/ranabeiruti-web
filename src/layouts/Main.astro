@@ -72,7 +72,7 @@ const { title } = Astro.props;
 	}
 	#header-outer {
 		position: sticky;
-		top: 0;
+		top: -1.5rem;
 		z-index: 100;
 		padding-inline: var(--spacing-inline);
 		background: var(--color-7);
@@ -86,7 +86,12 @@ const { title } = Astro.props;
 		column-gap: 1.5rem;
 		row-gap: 1rem;
 		padding-block: 1rem;
+		height: calc(var(--header-height) + 1.5rem);
 		border-block-end: 1px solid var(--color-4);
+		& > * {
+			position: sticky;
+			top: 1rem;
+		}
 	}
 	@media (min-width: 641px) {
 		#header-expand {

@@ -21,7 +21,7 @@ const {
 } = Astro.props;
 ---
 
-{source ? source?.map((row: { columns: any[]; }, index: number) => {
+{source ? source?.map((row: { columns: any[]; doesBreakout: boolean; }, index: number) => {
 	if (row.columns.filter((column) => {
 		switch (column._type) {
 			case "column": return (!column.content || column.content?.length === 0) ? true : false;
@@ -36,7 +36,7 @@ const {
 		return null;
 	};
 	return (
-		<Row index={index + 1}>
+		<Row index={index + 1} doesBreakout={row.doesBreakout}>
 			{row.columns?.map((column, index) => {
 				const ratio = Math.max(column.ratio, 1) || 1;
 				const verticalAlignment = column.verticalAlignment;
@@ -126,7 +126,7 @@ const {
 		font-weight: var(--font-weight-bold);
 	}
 	#document-subtitle {
-		margin-block-start: 0.5rem;
+		margin-block-start: 0.75rem;
 	}
 	#document-date {
 		margin-block-start: 1rem;
@@ -142,18 +142,18 @@ const {
 		flex-wrap: wrap;
 		column-gap: 0.5rem;
 		row-gap: 0.5rem;
-		margin-inline-start: -0.5rem;
+		margin-inline-start: -0.5625rem;
 	}
 	#document-tags .tag {
 		display: block;
-		padding-block: 0.25rem;
-		padding-inline: 0.5rem;
+		padding-block: 0.1875rem;
+		padding-inline: 0.5625rem;
 		border-radius: 9999px;
-		background: var(--color-7);
+		background: var(--color-5);
 		transition: background-color 0.125s;
 		@media (any-hover: hover) {
 			&:hover {
-				background: var(--color-5);
+				background: var(--color-6);
 			}
 		}
 	}

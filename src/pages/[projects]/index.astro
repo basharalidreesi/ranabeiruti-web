@@ -60,7 +60,7 @@ listing.allProjects.forEach((project) => {
 			grouping: projectsByType,
 			key: type.slug.current,
 			title: type.name,
-			description: `${type} projects`,
+			description: `${type.name?.trim()} projects`,
 		})) : assignProjectToGrouping(project, {
 			grouping: projectsByType,
 			key: "other",
@@ -72,7 +72,7 @@ listing.allProjects.forEach((project) => {
 			grouping: projectsByCollection,
 			key: collection.slug.current,
 			title: collection.name,
-			description: `Projects from ${collection}`,
+			description: `Projects from ${collection.name?.trim()}`,
 		})) : assignProjectToGrouping(project, {
 			grouping: projectsByCollection,
 			key: "other",
@@ -84,7 +84,7 @@ listing.allProjects.forEach((project) => {
 			grouping: projectsBySubject,
 			key: subject.slug.current,
 			title: subject.name,
-			description: `${subject} projects`,
+			description: `${subject.name?.trim()} projects`,
 		})) : assignProjectToGrouping(project, {
 			grouping: projectsBySubject,
 			key: "other",
@@ -95,7 +95,7 @@ listing.allProjects.forEach((project) => {
 		grouping: projectsByLocation,
 		key: location.locale,
 		title: LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale,
-		description: `${location} projects`,
+		description: `Projects in ${LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale}`,
 	}));
 });
 ---

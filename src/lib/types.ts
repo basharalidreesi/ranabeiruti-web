@@ -49,21 +49,30 @@ export type ProjectProps = {
 	title: string;
 	subtitle?: string;
 	date: ProjectDateProps;
-	types: TypeProps[];
-	collections?: CollectionProps[];
-	subjects?: SubjectProps[];
 	locations?: LocationProps[];
-	description?: [];
-	credits?: [];
+	types: TypeProps[];
+	subjects?: SubjectProps[];
+	collections?: CollectionProps[];
 	image: any;
-	page: {
-		header: [];
-		doesIncludeDescription: boolean;
-		body: [];
-		doesIncludeCredits: boolean;
-		footer: [];
-	};
-	relatedProjects: {
+	description?: PortableTextProps;
+	credits?: PortableTextProps;
+	relatedNews?: {
+		_type: "news";
+		slug: { current: string; };
+		title: string;
+		date: string;
+		description: PortableTextProps;
+		body: PortableTextProps;
+	}[];
+	relatedPress?: {
+		_type: "press";
+		url: string;
+		title: string;
+		publisher: string;
+		date: string;
+		description: PortableTextProps;
+	}[];
+	relatedProjects?: {
 		slug: { current: string; };
 		title: string;
 		subtitle?: string;
@@ -75,6 +84,16 @@ export type ProjectProps = {
 		description?: string;
 		image: any;
 	}[];
+	page: {
+		header: [];
+		doesIncludeDescription: boolean;
+		doesIncludeCollections: boolean;
+		body: [];
+		doesIncludeCredits: boolean;
+		doesIncludeRelatedProjects: boolean;
+		doesIncludeRelatedNews: boolean;
+		doesIncludeRelatedPress: boolean;
+	};
 };
 export interface ProjectDateProps extends ComplexDateProps {
 	sortDate: string;
@@ -98,7 +117,7 @@ export type CollectionProps = {
 	type: "collection";
 	slug: { current: string; };
 	name: string;
-	description: [];
+	description: PortableTextProps;
 };
 export type SubjectProps = {
 	type: "subject";
@@ -110,3 +129,5 @@ export type LocationProps = {
 	name: string;
 	locale: string;
 };
+
+export type PortableTextProps = [];

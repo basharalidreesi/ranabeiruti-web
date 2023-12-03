@@ -37,9 +37,19 @@ const project = Astro.props;
 		</header>
 		<section id="project-body">
 			<h2 class="display-none">Body</h2>
-			{project.page.doesIncludeDescription && project.description && project.description.length !== 0 && (
+			{(
+				(project.page.doesIncludeDescription && project.description && project.description.length !== 0)
+				|| (project.page.doesIncludeCollections && project.collections && project.collections.length !== 0 && project.collections.filter((collection) => collection.description && collection.description.length !== 0).length !== 0)
+			) && (
 				<div id="description">
-					<PortableText source={project.description} />
+					{project.page.doesIncludeDescription && project.description && project.description.length !== 0 && (
+						<PortableText source={project.description} />
+					)}
+					{project.page.doesIncludeCollections && project.collections && project.collections.length !== 0 && (
+						project.collections.filter((collection) => collection.description && collection.description.length !== 0).map((collection) => (
+							<PortableText source={collection.description} />
+						))
+					)}
 				</div>
 			)}
 			<PageBuilder source={project.page?.body} document={project} />
@@ -51,10 +61,14 @@ const project = Astro.props;
 					<PortableText source={project.credits} />
 				</section>
 			)}
-			{project.relatedProjects && project.relatedProjects.length !== 0 && (
+			{(
+				(project.page.doesIncludeRelatedProjects && project.relatedProjects && project.relatedProjects.length !== 0)
+				|| (project.page.doesIncludeRelatedNews && project.relatedNews && project.relatedNews.length !== 0)
+				|| (project.page.doesIncludeRelatedPress && project.relatedPress && project.relatedPress.length !== 0)
+			) && (
 				<section id="related-content" aria-label="Related Content">
 					<h2 id="related-content-title">Related</h2>
-					{project.relatedProjects.map((relatedProject) => (
+					{project.page.doesIncludeRelatedProjects && project.relatedProjects && project.relatedProjects.length !== 0 && project.relatedProjects.map((relatedProject) => (
 						<article class="related-project">
 							<h3 class="related-project-title">
 								<Link href={`/${Astro.params.projects}/${relatedProject.slug.current}/`}>
@@ -74,6 +88,11 @@ const project = Astro.props;
 							</div>
 						</article>
 					))}
+					<!-- {[...(project.page.doesIncludeRelatedNews && project.relatedNews && project.relatedNews.length !== 0 ? project.relatedNews : []), ...(project.page.doesIncludeRelatedPress && project.relatedPress && project.relatedPress.length !== 0 ? project.relatedPress : [])].map((relatedNewsOrPressItem) => (
+						<article class={`related-${relatedNewsOrPressItem._type}-item`}>
+							{relatedNewsOrPressItem.title}
+						</article>
+					))} -->
 				</section>
 			)}
 		</footer>
@@ -82,33 +101,44 @@ const project = Astro.props;
 
 <style lang="scss" is:global>
 	#project {
-		padding-block-start: 1.5rem;
-		line-height: var(--line-height-large);
-	}
-	#project,
-	#project-body {
 		flex: 1;
 		display: flex;
 		flex-flow: column nowrap;
+		padding-block-start: 1.5rem;
+		line-height: var(--line-height-large);
+	}
+	#project-header,
+	#project-body {
+		display: grid;
+		grid-template-columns: [all-start] 10% [content-start] 1fr [content-end] 10% [all-end];
+		column-gap: 1.5rem;
+		* {
+			min-width: 0;
+			min-height: 0;
+		}
+		& > * {
+			grid-column: content;
+		}
+		& > *.breakout {
+			grid-column: all;
+		}
+		@media (max-width: 1024px) {
+			display: flex;
+			flex-direction: column;
+			column-gap: 0;
+			grid-template-columns: unset;
+		}
 	}
 	#project-header {
-		display: flex;
-		flex-flow: column nowrap;
-		padding-inline: calc(10% + 1.5rem);
+		padding-inline: 1.5rem;
 		padding-block-start: 1.5rem;
 		margin-block-end: 1.5rem;
+		margin-inline: -1.5rem;
+		margin-block-start: -1.5rem;
 		background: var(--color-6);
-		@media (max-width: 1024px) {
-			padding-inline: 1.5rem;
-			margin-inline: -1.5rem;
-			margin-block-start: -1.5rem;
-		}
 	}
 	#project-body {
-		margin-inline: calc(10% + 1.5rem);
-		@media (max-width: 1024px) {
-			margin-inline: 0;
-		}
+		flex: 1;
 	}
 	#description {
 		margin-block-end: 1.5rem;
@@ -132,14 +162,14 @@ const project = Astro.props;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 1.5rem;
-		padding-inline: calc(10% + 1.5rem);
+		padding-inline: calc(10% + 1.5rem + 1.5rem);
 		padding-block: 1.5rem;
+		margin-inline: -1.5rem;
 		margin-block-end: 1.5rem;
 		background: var(--color-6);
 		--related-project-columns: 3;
 		@media (max-width: 1024px) {
 			padding-inline: 1.5rem;
-			margin-inline: -1.5rem;
 		}
 		@media (max-width: 896px) {
 			--related-project-columns: 2;
@@ -177,7 +207,7 @@ const project = Astro.props;
 	}
 	.related-project-title {
 		order: 2;
-		// font-size: var(--font-size-medium);
+		font-size: var(--font-size-medium);
 		a::after {
 			content: "";
 			position: absolute;
@@ -187,6 +217,7 @@ const project = Astro.props;
 	}
 	.related-project-title-baseline {
 		font-weight: var(--font-weight-bold);
+		// text-transform: uppercase;
 	}
 	.related-project-title-colon {
 		opacity: 0;
@@ -194,7 +225,7 @@ const project = Astro.props;
 	}
 	.related-project-subtitle {
 		display: block;
-		margin-block-start: 0.25rem;
+		margin-block-start: 0.15rem;
 	}
 	.related-project-tagline {
 		order: 3;

@@ -115,10 +115,9 @@ const resolvedSource = keys ? keys : Object.keys(source);
 	.record {
 		grid-column: 2/3;
 	}
-	#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
-	#project #project-related[data-view-mode="cards"] {
+	#dataset[data-view="cards"] .listing[data-view-mode~="cards"] {
 		& {
-			padding-block: 0.75rem;
+			margin-block: 0.75rem;
 		}
 		.record-collections,
 		.record-subjects,
@@ -197,7 +196,7 @@ const resolvedSource = keys ? keys : Object.keys(source);
 			font-size: var(--font-size-small);
 			color: var(--color-2);
 		}
-		.record-description:not([data-contains="project"]) {
+		.record-description:not([data-contains~="project"]) {
 			display: none;
 		}
 		.record-tags {
@@ -234,8 +233,10 @@ const resolvedSource = keys ? keys : Object.keys(source);
 		}
 	}
 	@media (min-width: 1025px) {
-		#dataset[data-view="list"] .listing[data-view-mode~="list"],
-		#project #project-related[data-view-mode="list"] {
+		#dataset[data-view="list"] .listing[data-view-mode~="list"] {
+			& {
+				margin-block-end: 1.5rem;
+			}
 			.record {
 				position: relative;
 				display: grid;
@@ -256,6 +257,9 @@ const resolvedSource = keys ? keys : Object.keys(source);
 				@media (any-hover: hover) {
 					&:hover {
 						background: var(--color-6);
+					}
+					&:hover:not(:has(a:hover))::after {
+						color: var(--color-3);
 					}
 				}
 			}
@@ -368,8 +372,7 @@ const resolvedSource = keys ? keys : Object.keys(source);
 		.record {
 			grid-column: unset;
 		}
-		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
-		#project #project-related[data-view-mode="cards"] {
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"] {
 			.record {
 				column-gap: 1rem;
 				row-gap: 0.5rem;
@@ -391,10 +394,9 @@ const resolvedSource = keys ? keys : Object.keys(source);
 				padding-block-end: 0.5rem;
 			}
 		}
-		#dataset[data-view="list"] .listing[data-view-mode~="list"],
-		#project #project-related[data-view-mode="list"] {
+		#dataset[data-view="list"] .listing[data-view-mode~="list"] {
 			& {
-				padding-block: 0.75rem;
+				margin-block-end: 0.75rem;
 			}
 			.record {
 				padding-block: 0.75rem;
@@ -462,22 +464,19 @@ const resolvedSource = keys ? keys : Object.keys(source);
 		}
 	}
 	@media (max-width: 768px) {
-		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
-		#project #project-related[data-view-mode="cards"] {
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"] {
 			.record {
 				grid-template-columns: 3fr 2fr;
 			}
 		}
-		#dataset[data-view="list"] .listing[data-view-mode~="list"],
-		#project #project-related[data-view-mode="list"] {
+		#dataset[data-view="list"] .listing[data-view-mode~="list"] {
 			.record {
 				grid-template-columns: 1fr 1fr 2fr;
 			}
 		}
 	}
 	@media (max-width: 640px) {
-		#dataset[data-view="cards"] .listing[data-view-mode~="cards"],
-		#project #project-related[data-view-mode="cards"] {
+		#dataset[data-view="cards"] .listing[data-view-mode~="cards"] {
 			.record {
 				grid-template-columns: unset;
 				grid-template-rows: unset;
