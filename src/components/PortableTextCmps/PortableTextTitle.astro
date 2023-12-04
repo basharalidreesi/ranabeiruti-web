@@ -1,0 +1,74 @@
+---
+import ComplexDate from "@components/ComplexDate.astro";
+import Link from "@components/Link.astro";
+import { LOCALES } from "@lib/locales";
+
+const { node } = Astro.props;
+---
+
+{node.title && (<>
+	<div class="document-title">
+		<h1 class="document-title-baseline">{node.title?.trim()}</h1>
+		{node.subtitle && (
+			<p class="document-subtitle">{node.subtitle?.trim()}</p>
+		)}
+	</div>
+	{node.date && node.date.startDate && node.date.dateFormat && (
+		<div class="document-date">
+			<ComplexDate source={node.date} />
+		</div>
+	)}
+	<div class="document-tags">
+		<ul>
+			{[...(node.types || []), ...(node.collections || []), ...(node.subjects || []), ...(node.locations || [])]?.filter(Boolean)?.map((tag) => (
+				<li>
+					<Link class="tag link" href={`/${node.baseUrl}/?${tag.type}=${tag.type === "location" ? tag.locale?.toLowerCase() : tag.slug.current}`}>
+						{tag.type === "location" ? `${tag.name?.trim()}, ${LOCALES.find((locale) => locale.value === tag.locale)?.title}` : tag.name?.trim()}
+					</Link>
+				</li>
+			))}
+		</ul>
+	</div>
+</>)}
+
+<style lang="scss">
+	.document-title-baseline {
+		font-weight: var(--font-weight-bold);
+	}
+	.document-subtitle {
+		margin-block-start: 0.75rem;
+	}
+	.document-date {
+		margin-block-start: 1rem;
+		font-size: var(--font-size-small);
+	}
+	.document-tags {
+		margin-block-start: 1rem;
+		font-size: var(--font-size-small);
+	}
+	.document-tags ul {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 0.5rem;
+		row-gap: 0.5rem;
+		// margin-inline-start: -0.5625rem;
+	}
+	.document-tags li {
+		padding: 0;
+		margin: 0;
+	}
+	.document-tags .tag {
+		display: block;
+		padding-block: 0.1875rem;
+		padding-inline: 0.5625rem;
+		border-radius: 9999px;
+		border: 1px solid var(--color-3);
+		transition: background-color 0.125s;
+		@media (any-hover: hover) {
+			&:hover {
+				background-color: var(--color-6);
+			}
+		}
+	}
+</style>

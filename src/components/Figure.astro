@@ -1,38 +1,43 @@
 ---
-import Image from "./Image.astro";
-import PortableText from "./PortableText.astro";
+import Image from "@components/Image.astro";
+import PortableText from "@components/PortableText.astro";
+import type { CaptionPlacements, SanityImageMetadataObject, VerticalAlignments } from "@lib/types";
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
+import type { TypedObject } from "astro-portabletext/types";
+
+type Props = {
+	source: SanityImageObject & SanityImageMetadataObject & {
+		caption: TypedObject[];
+		captionPlacement: CaptionPlacements;
+		captionVerticalAlignment: VerticalAlignments;
+		imageRatio: number;
+		captionRatio: number;
+	};
+};
 
 const { source } = Astro.props;
 ---
 
-{source?.asset
-	? (
-		<figure data-caption-placement={source.captionPlacement || "bottom"}>
-			<Image
-				source={source}
-				style={{
-					flex: Math.max(source.imageRatio, 1) || 1,
-				}}
-			/>
-			{source.caption && source.caption?.length !== 0
-				? (
-					<figcaption style={{
-						flex: Math.max(source.captionRatio, 1) || 1,
-						alignSelf: {
-								"top": "flex-start",
-								"middle": "center",
-								"bottom": "flex-end",
-						}[source.captionVerticalAlignment] || null,
-					}}>
-						<PortableText source={source.caption} small={true} muted={true} />
-					</figcaption>
-				)
-				: null
-			}
-		</figure>
-	)
-	: null
-}
+<figure data-caption-placement={source.captionPlacement || "bottom"}>
+	<Image source={source} style={{
+		flex: Math.max(source.imageRatio, 1) || 1,
+	}} />
+	{source.caption && source.caption?.length !== 0
+		? (
+			<figcaption style={{
+				flex: Math.max(source.captionRatio, 1) || 1,
+				alignSelf: {
+						"top": "flex-start",
+						"middle": "center",
+						"bottom": "flex-end",
+				}[source.captionVerticalAlignment] || null,
+			}}>
+				<PortableText source={source.caption} />
+			</figcaption>
+		)
+		: null
+	}
+</figure>
 
 <style lang="scss">
 	figure {

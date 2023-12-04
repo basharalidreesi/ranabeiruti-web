@@ -1,7 +1,15 @@
 ---
-import type { ComplexDateFormats, ComplexDateProps } from "@lib/types";
+export type ComplexDateFormats = "fullDate" | "yearWithMonth" | "yearOnly";
 
-export type Props = {
+export type ComplexDateProps = {
+	startDate: string;
+	endDate: string;
+	hasDuration: boolean;
+	isOngoing: boolean;
+	dateFormat: ComplexDateFormats;
+};
+
+type Props = {
 	source: ComplexDateProps;
 	length?: "long" | "short";
 	format?: ComplexDateFormats;

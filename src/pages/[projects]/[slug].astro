@@ -1,17 +1,56 @@
 ---
-import ComplexDate from "@components/ComplexDate.astro";
+import ComplexDate, { type ComplexDateProps } from "@components/ComplexDate.astro";
 import Image from "@components/Image.astro";
 import Link from "@components/Link.astro";
-import PageBuilder from "@components/PageBuilder.astro";
+import PageBuilder, { type PageBuilderProps } from "@components/PageBuilder.astro";
 import PortableText from "@components/PortableText.astro";
 import Main from "@layouts/Main.astro";
-import { ProjectGroqQuery, ProjectsListingSlugGroqQuery } from "@lib/groq";
+import { ProjectsGroqQuery, ProjectsListingSlugGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-import type { ProjectsListingProps, ProjectProps } from "@lib/types";
 import sanityClient from "@root/sanity";
+import type { CollectionProps, LocationProps, NewsProps, PressProps, SanityImageMetadataObject, SubjectProps, TypeProps } from "@lib/types";
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
+import type { TypedObject } from "astro-portabletext/types";
+import type { ProjectsListingProps } from "@projects/index.astro";
+
+export type BasicProjectProps = {
+	slug: { current: string; };
+	title: string;
+	subtitle?: string;
+	date: ComplexDateProps & {
+		sortDate: string;
+	};
+	locations?: LocationProps[];
+	types: TypeProps[];
+	subjects?: SubjectProps[];
+	collections?: CollectionProps[];
+	image: SanityImageObject & SanityImageMetadataObject;
+	description?: TypedObject[] | string;
+	
+};
+
+export type ProjectProps = BasicProjectProps & {
+	credits?: TypedObject[];
+	relatedProjects?: BasicProjectProps[];
+	relatedNews?: NewsProps & {
+		type: "news";
+	}[];
+	relatedPress?: PressProps & {
+		type: "press";
+	}[];
+	page: {
+		body: PageBuilderProps[];
+		doesIncludeCollections: boolean;
+		doesIncludeCredits: boolean;
+		doesIncludeDescription: boolean;
+		doesIncludeRelatedNews: boolean;
+		doesIncludeRelatedPress: boolean;
+		doesIncludeRelatedProjects: boolean;
+	};
+};
 
 export async function getStaticPaths() {
-	const projects: ProjectProps[]  = await sanityClient.fetch(ProjectGroqQuery);
+	const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
 	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingSlugGroqQuery);
 	return projects?.map((project) => {
 		return {
@@ -27,32 +66,13 @@ export async function getStaticPaths() {
 };
 
 const project = Astro.props;
-
 ---
 
 <Main title={project.title}>
 	<article id="project">
-		<header id="project-header">
-			<PageBuilder source={project.page?.header} document={project} baseUrl={Astro.params.projects} />
-		</header>
 		<section id="project-body">
 			<h2 class="display-none">Body</h2>
-			{(
-				(project.page.doesIncludeDescription && project.description && project.description.length !== 0)
-				|| (project.page.doesIncludeCollections && project.collections && project.collections.length !== 0 && project.collections.filter((collection) => collection.description && collection.description.length !== 0).length !== 0)
-			) && (
-				<div id="description">
-					{project.page.doesIncludeDescription && project.description && project.description.length !== 0 && (
-						<PortableText source={project.description} />
-					)}
-					{project.page.doesIncludeCollections && project.collections && project.collections.length !== 0 && (
-						project.collections.filter((collection) => collection.description && collection.description.length !== 0).map((collection) => (
-							<PortableText source={collection.description} />
-						))
-					)}
-				</div>
-			)}
-			<PageBuilder source={project.page?.body} document={project} />
+			<PageBuilder source={project.page?.body} />
 		</section>
 		<footer id="project-footer">
 			{project.page.doesIncludeCredits && project.credits && project.credits.length !== 0 && (
@@ -107,7 +127,6 @@ const project = Astro.props;
 		padding-block-start: 1.5rem;
 		line-height: var(--line-height-large);
 	}
-	#project-header,
 	#project-body {
 		display: grid;
 		grid-template-columns: [all-start] 10% [content-start] 1fr [content-end] 10% [all-end];
@@ -129,23 +148,8 @@ const project = Astro.props;
 			grid-template-columns: unset;
 		}
 	}
-	#project-header {
-		padding-inline: 1.5rem;
-		padding-block-start: 1.5rem;
-		margin-block-end: 1.5rem;
-		margin-inline: -1.5rem;
-		margin-block-start: -1.5rem;
-		background: var(--color-6);
-	}
 	#project-body {
 		flex: 1;
-	}
-	#description {
-		margin-block-end: 1.5rem;
-		padding-block-end: 1.5rem;
-		border-block-end: 1px solid var(--color-5);
-		font-size: var(--font-size-small);
-		color: var(--color-2);
 	}
 	#credits {
 		margin-inline: calc(10% + 1.5rem);

@@ -1,13 +1,18 @@
 ---
 import PortableTextBlock from "@components/PortableTextCmps/PortableTextBlock.astro";
+import PortableTextDescription from "@components/PortableTextCmps/PortableTextDescription.astro";
 import PortableTextImage from "@components/PortableTextCmps/PortableTextImage.astro";
 import PortableTextMark from "@components/PortableTextCmps/PortableTextMark.astro";
+import PortableTextTitle from "@components/PortableTextCmps/PortableTextTitle.astro";
 import { PortableText as SanityPortableText } from "astro-portabletext";
+import type { SomePortableTextComponents, TypedObject } from "astro-portabletext/types";
 
-const components = {
+const components: SomePortableTextComponents = {
 	type: {
 		image: PortableTextImage,
-		// object TODO
+		// embed TODO
+		title: PortableTextTitle,
+		description: PortableTextDescription,
 	},
 	mark: {
 		// strong (default)
@@ -30,7 +35,7 @@ const components = {
 };
 
 export type Props = {
-	source: [];
+	source: TypedObject[];
 };
 
 const {
@@ -83,7 +88,7 @@ const {
 			padding-inline-start: 0.5rem;
 			margin-inline-start: 1rem;
 		}
-		a {
+		.link {
 			background-image: linear-gradient(to bottom, var(--color-4), var(--color-4));
 			background-size: 1px 2px;
 			background-repeat: repeat-x;

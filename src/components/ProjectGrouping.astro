@@ -3,18 +3,26 @@ import ComplexDate from "@components/ComplexDate.astro";
 import Image from "@components/Image.astro";
 import Link from "@components/Link.astro";
 import { LOCALES } from "@lib/locales";
-import type { ProjectGroupingProps } from "@lib/types";
+import type { BasicProjectProps } from "@projects/[slug].astro";
 
-export type Props = {
+export type ProjectGroupingProps = {
+	[key: string]: {
+		title: string;
+		projects: BasicProjectProps[];
+		description?: string;
+	};
+};
+
+type Props = {
 	source: ProjectGroupingProps;
 	keys?: string[],
 	baseUrl: string;
 };
 
 const {
-	source = {},
-	keys = null,
-	baseUrl = "",
+	source,
+	keys,
+	baseUrl,
 } = Astro.props;
 
 const resolvedSource = keys ? keys : Object.keys(source);
@@ -127,7 +135,7 @@ const resolvedSource = keys ? keys : Object.keys(source);
 		.record {
 			position: relative;
 			display: grid;
-			grid-template-columns: 2fr 3fr;
+			grid-template-columns: 1fr 1fr;
 			grid-template-rows: auto auto 1fr auto;
 			column-gap: 1.5rem;
 			row-gap: 0.75rem;
@@ -466,7 +474,7 @@ const resolvedSource = keys ? keys : Object.keys(source);
 	@media (max-width: 768px) {
 		#dataset[data-view="cards"] .listing[data-view-mode~="cards"] {
 			.record {
-				grid-template-columns: 3fr 2fr;
+				// grid-template-columns: 3fr 2fr;
 			}
 		}
 		#dataset[data-view="list"] .listing[data-view-mode~="list"] {

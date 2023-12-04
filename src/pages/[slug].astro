@@ -1,17 +1,18 @@
 ---
-import sanityClient from "../sanity";
-import Main from "../layouts/Main.astro";
+import Main from "@layouts/Main.astro";
+import { SimplePagesGroqQuery } from "@lib/groq";
+import sanityClient from "@root/sanity";
+
+export type SimplePageProps = {
+	slug: {
+		current: string;
+	};
+	title: string;
+};
 
 export async function getStaticPaths() {
-	const pages = await sanityClient.fetch(`
-		*[_type == "simplePage" && defined(slug)] {
-			slug {
-				current,
-			},
-			title,
-		}
-	`);
-	return pages?.map((page: { slug: { current: string; }; }) => {
+	const pages: SimplePageProps[] = await sanityClient.fetch(SimplePagesGroqQuery);
+	return pages?.map((page) => {
 		return {
 			params: {
 				slug: page.slug?.current,

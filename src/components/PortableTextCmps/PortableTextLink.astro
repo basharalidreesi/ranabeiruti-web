@@ -1,5 +1,5 @@
 ---
-import Link from "../Link.astro";
+import Link from "@components/Link.astro";
 
 const { markDef } = Astro.props.node;
 
@@ -23,6 +23,6 @@ function resolveHref() {
 const href = resolveHref() || null;
 ---
 
-<Link class="hover-text" href={href}>
+<Link class="link hover-text" href={href}>
 	<slot />
 </Link>

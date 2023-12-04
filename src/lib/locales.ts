@@ -1,4 +1,4 @@
-export const LOCALES = [
+export const LOCALES: { title: string; value: string; }[] = [
 	{ title: "Abkhazia", value: "GE-AB" },
 	{ title: "Afghanistan", value: "AF" },
 	{ title: "Åland Islands", value: "AX" },

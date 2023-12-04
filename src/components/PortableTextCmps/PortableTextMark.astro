@@ -1,8 +1,8 @@
 ---
-import type { Props as $, Mark as MarkType } from "astro-portabletext/types";
+import PortableTextLink from "@components/PortableTextCmps/PortableTextLink.astro";
+import PortableTextSup from "@components/PortableTextCmps/PortableTextSup.astro";
 import { Mark } from "astro-portabletext/components";
-import PortableTextSup from "./PortableTextSup.astro";
-import PortableTextLink from "./PortableTextLink.astro";
+import type { Props as $, Mark as MarkType } from "astro-portabletext/types";
 
 export type Props = $<MarkType<never>>;
 

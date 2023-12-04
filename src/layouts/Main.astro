@@ -1,17 +1,31 @@
 ---
 import Link from "@components/Link.astro";
 import { SiteSettingsGroqQuery } from "@lib/groq";
-import type { SiteSettingsProps } from "@lib/types";
-import sanityClient from "@root/sanity";
 import "@styles/reset.scss";
 import "@styles/global.scss";
+import sanityClient from "@root/sanity";
+
+export type SiteSettingsProps = {
+	title: string;
+	navigationItems: {
+		title: string;
+		slug: {
+			current: string;
+		};
+	}[];
+};
 
 const settings: SiteSettingsProps = await sanityClient.fetch(SiteSettingsGroqQuery);
 
 type Props = {
 	title: string;
+	headerMode?: "sticky" | "overlay";
 };
-const { title } = Astro.props;
+
+const {
+	title,
+	headerMode = "sticky",
+} = Astro.props;
 ---
 
 <html lang="en">
@@ -23,7 +37,7 @@ const { title } = Astro.props;
 		<title>{[title, settings.title]?.filter(Boolean)?.join(" • ")}</title>
 	</head>
 	<body>
-		<header id="header-outer">
+		<header id="header-outer" data-mode={headerMode}>
 			<button id="header-expand" aria-label="Expand menu">
 				<svg class="hover-text" width="24" height="18" viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg">
 					<line x1="0" y1="0" x2="24" y2="0"/>
@@ -75,7 +89,6 @@ const { title } = Astro.props;
 		top: -1.5rem;
 		z-index: 100;
 		padding-inline: var(--spacing-inline);
-		background: var(--color-7);
 		font-size: var(--font-size-medium);
 	}
 	#header-inner {
@@ -87,10 +100,15 @@ const { title } = Astro.props;
 		row-gap: 1rem;
 		padding-block: 1rem;
 		height: calc(var(--header-height) + 1.5rem);
-		border-block-end: 1px solid var(--color-4);
 		& > * {
 			position: sticky;
 			top: 1rem;
+		}
+	}
+	#header-outer[data-mode="sticky"] {
+		background: var(--color-7);
+		#header-inner {
+			border-block-end: 1px solid var(--color-4);
 		}
 	}
 	@media (min-width: 641px) {

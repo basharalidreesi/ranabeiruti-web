@@ -1,9 +1,9 @@
 ---
-import type { Props as $, Block as BlockType } from "astro-portabletext/types";
-import PortableTextNormal from "./PortableTextNormal.astro";
-import PortableTextNote from "./PortableTextNote.astro";
-import PortableTextH2 from "./PortableTextH2.astro";
+import PortableTextH2 from "@components/PortableTextCmps/PortableTextH2.astro";
+import PortableTextNormal from "@components/PortableTextCmps/PortableTextNormal.astro";
+import PortableTextNote from "@components/PortableTextCmps/PortableTextNote.astro";
 import { Block } from "astro-portabletext/components";
+import type { Props as $, Block as BlockType } from "astro-portabletext/types";
 
 export type Props = $<BlockType>;
 

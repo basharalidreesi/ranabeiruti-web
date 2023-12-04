@@ -1,43 +1,56 @@
 ---
-import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
-import sanityClient from "../sanity.js";
+import sanityClient from "@root/sanity.js";
 import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageMetadataObject } from "@lib/types";
+import type { ImageFormat, SanityImageObject, SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 const imageBuilder = imageUrlBuilder(sanityClient);
-function urlFor(source: SanityImageSource) {
-	return imageBuilder.image(source);
+
+function urlFor(source: SanityImageSource, format: ImageFormat) {
+	return !["gif"].includes(format) ? imageBuilder.image(source)?.format(format)?.url() : imageBuilder.image(source)?.url();
+};
+
+type Props = {
+	source: SanityImageObject & SanityImageMetadataObject;
+	class?: string;
+	style?: {};
 };
 
 const {
 	source,
-	alt = "",
-	width,
-	height,
+	class: className,
+	style = {},
 	...rest
 } = Astro.props;
-
-const srcset =
-	width && !height ? urlFor(source)?.format("webp")?.width(width)?.url()
-	: width && height ? urlFor(source)?.format("webp")?.width(width)?.height(height)?.url()
-	: !width && height ? urlFor(source)?.format("webp")?.height(height)?.url()
-	: urlFor(source)?.format("webp")?.url()
-const src =
-	width && !height ? urlFor(source)?.width(width)?.url()
-	: width && height ? urlFor(source)?.width(width)?.height(height)?.url()
-	: !width && height ? urlFor(source)?.height(height)?.url()
-	: urlFor(source)?.url()
 ---
 
-<picture>
-	<source srcset={srcset} type="image/webp" />
-	<img loading="lazy" src={src} alt={alt} {...rest} />
-</picture>
+{source && source.asset && (
+	<picture class={className} style={{
+		backgroundImage: source.metadata && source.metadata.isOpaque && source.metadata.lqip && `url(${source.metadata.lqip})`,
+		"--hotspot-x": source.hotspot && (source.hotspot.x) || 0.5,
+		"--hotspot-y": source.hotspot && (source.hotspot.y) || 0.5,
+		...style,
+	}} {...rest}>
+		{!["gif"].includes(source.metadata?.extension) && (
+			<source srcset={urlFor(source, "webp")} type="image/webp" />
+		)}
+		<img src={urlFor(source, source.metadata?.extension)} width={source.metadata?.dimensions?.width} height={source.metadata?.dimensions?.height} alt="" loading="lazy" />
+	</picture>
+)}
 
 <style lang="scss">
+	picture {
+		display: block;
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: calc(var(--hotspot-x) * 100%) calc(var(--hotspot-y) * 100%);
+	}
 	img {
 		display: block;
 		width: 100%;
 		height: auto;
+		object-fit: cover;
+		object-position: calc(var(--hotspot-x) * 100%) calc(var(--hotspot-y) * 100%);
 		font-style: italic;
 	}
 </style>

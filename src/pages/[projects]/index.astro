@@ -1,11 +1,19 @@
 ---
 import Main from "@layouts/Main.astro";
 import Link from "@components/Link.astro";
-import ProjectGrouping from "@components/ProjectGrouping.astro";
+import ProjectGrouping, { type ProjectGroupingProps } from "@components/ProjectGrouping.astro";
 import { ProjectsListingGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-import type { ProjectsListingProps, ProjectGroupingProps, ProjectProps } from "@lib/types";
+import type { BasicProjectProps } from "@projects/[slug].astro";
 import sanityClient from "@root/sanity";
+
+export type ProjectsListingProps = {
+	slug: { current: string; };
+	title: string;
+	allProjects: BasicProjectProps[];
+};
+
+export type ProjectGroupings = typeof projectsByTitle | typeof projectsByPeriod | typeof projectsByType | typeof projectsByCollection | typeof projectsBySubject | typeof projectsByLocation;
 
 export async function getStaticPaths() {
 	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingGroqQuery);
@@ -28,7 +36,7 @@ const projectsByCollection: ProjectGroupingProps = {};
 const projectsBySubject: ProjectGroupingProps = {};
 const projectsByLocation: ProjectGroupingProps = {};
 
-function assignProjectToGrouping(project: ProjectProps, params: { grouping: ProjectGroupingProps; key: string; title: string; description?: string; }) {
+function assignProjectToGrouping(project: BasicProjectProps, params: { grouping: ProjectGroupings; key: string; title: string; description?: string; }) {
 	const { grouping, key, title, description } = params;
 	if (!grouping[key]) {
 		grouping[key] = {

@@ -1,3 +1,13 @@
+// hoist
+
+export const ProjectsListingSlugGroqQuery = (`
+	*[_id == "projectsListing" && defined(slug)][0] {
+		slug,
+	}
+`);
+
+// partials
+
 export const ComplexDateGroqPartial = (`
 	startDate,
 	endDate,
@@ -23,10 +33,17 @@ export const ImageMetadataGroqPartial = (`
 			width,
 			aspectRatio,
 		},
+		palette,
+		"extension": ^.asset -> extension,
 	},
 `);
 
-const PortableTextTypeBlock = (`
+export const ImageGroqPartial = (`
+	...,
+	${ImageMetadataGroqPartial}
+`);
+
+const PortableTextBlockGroqPartial = (`
 	_type == "block" => {
 		...,
 		markDefs[] {
@@ -43,21 +60,25 @@ const PortableTextTypeBlock = (`
 	},
 `);
 
-const PortableTextTypeImage = (`
+const PortableTextImageGroqPartial = (`
 	_type == "image" => {
 		isUsedAsPlaceholder == true => {
-			"asset": ^.^.^.^.image { asset }.asset,
+			"asset": ^.^.^.^.image.asset,
 			"caption": ^.^.^.^.image.caption[] {
 				...,
-				${PortableTextTypeBlock}
+				${PortableTextBlockGroqPartial}
 			},
+			"metadata": ^.^.^.^.image {
+				${ImageMetadataGroqPartial}
+			}.metadata,
 		},
-		isUsedAsPlaceholder == "false" => {
+		isUsedAsPlaceholder != true => {
 			asset,
 			caption[] {
 				...,
-				${PortableTextTypeBlock}
+				${PortableTextBlockGroqPartial}
 			},
+			${ImageMetadataGroqPartial}
 		},
 		captionPlacement,
 		captionPlacement == "left" || captionPlacement == "right" => {
@@ -68,11 +89,103 @@ const PortableTextTypeImage = (`
 	},
 `);
 
+const PortableTextTitleGroqPartial = (`
+	_type == "title" => {
+		"title": ^.^.^.^.title,
+		"subtitle": ^.^.^.^.subtitle,
+		"date": ^.^.^.^.date {
+			${ComplexDateGroqPartial}
+		},
+		"types": ^.^.^.^.types[] -> {
+			slug {
+				current,
+			},
+			"type": "type",
+			name,
+		},
+		"collections": ^.^.^.^.collections[] -> {
+			slug {
+				current,
+			},
+			"type": "collection",
+			name,
+			description[] {
+				...,
+				${PortableTextBlockGroqPartial}
+			},
+		},
+		"subjects": ^.^.^.^.subjects[] -> {
+			slug {
+				current,
+			},
+			"type": "subject",
+			name,
+		},
+		"locations": ^.^.^.^.locations[] -> {
+			"type": "location",
+			name,
+			locale,
+		},
+		"baseUrl": ${ProjectsListingSlugGroqQuery}.slug.current,
+	},
+`);
+
+const PortableTextDescriptionGroqPartial = (`
+	_type == "description" => {
+		defined(doesInclude) && "projectDescription" in doesInclude => {
+			"projectDescription": ^.^.^.^.description[] {
+				...,
+				${PortableTextBlockGroqPartial}
+			},
+		},
+		defined(doesInclude) && "collectionDescriptions" in doesInclude => {
+			"collectionDescriptions": ^.^.^.^.collections[] -> {
+				description[] {
+					...,
+					${PortableTextBlockGroqPartial}
+				},
+			},
+		},
+	},
+`);
+
 export const PortableTextGroqPartial = (`
 	...,
-	${PortableTextTypeBlock}
-	${PortableTextTypeImage}
+	${PortableTextBlockGroqPartial}
+	${PortableTextImageGroqPartial}
+	${PortableTextTitleGroqPartial}
+	${PortableTextDescriptionGroqPartial}
 `);
+
+export const ProjectBaseGroqPartial = (`
+	slug {
+		current,
+	},
+	title,
+	subtitle,
+	types[] -> {
+		name,
+	},
+	collections[] -> {
+		name,
+	},
+	subjects[] -> {
+		name,
+	},
+	locations[] -> {
+		name,
+		locale,
+	},
+	image {
+		asset,
+		caption[] {
+			${PortableTextGroqPartial}
+		},
+		${ImageGroqPartial}
+	},
+`);
+
+// queries
 
 export const SiteSettingsGroqQuery = (`
 	*[_id == "settings"][0] {
@@ -93,9 +206,40 @@ export const SiteSettingsGroqQuery = (`
 	}
 `);
 
-export const ProjectsListingSlugGroqQuery = (`
-	*[_id == "projectsListing" && defined(slug)][0] {
-		slug,
+export const SimplePagesGroqQuery = (`
+	*[_type == "simplePage" && defined(slug)] {
+		slug {
+			current,
+		},
+		title,
+	}
+`);
+
+export const HomepageGroqQuery = (`
+	*[_id == "homepage"][0] {
+		title,
+		"baseUrls": {
+			"projectsListingBaseUrl": ${ProjectsListingSlugGroqQuery}.slug.current,
+		},
+		featuredProjects[] {
+			project -> {
+				slug {
+					current,
+				},
+				title,
+				subtitle,
+			},
+			doesUseProjectImage == true => {
+				"image": project->image {
+					${ImageGroqPartial}
+				},
+			},
+			doesUseProjectImage != true => {
+				"image": image {
+					${ImageGroqPartial}
+				},
+			},
+		},
 	}
 `);
 
@@ -142,144 +286,50 @@ export const ProjectsListingGroqQuery = (`
 				locale,
 			},
 			image {
-				asset,
+				${ImageGroqPartial}
 			},
 			"description": pt::text(description[0]),
 		} | order(date.sortDate desc, date.startDate desc, lower(title) asc),
-		quicklinks[] {
-			title,
-			items[] {
-				_type,
-				_type == "linkToItem" => @-> {
-					slug {
-						current,
-					},
-					title,
-				},
-				_type == "filterByTag" => @-> {
-					"schemaType": _type,
-					slug {
-						current,
-					},
-					name,
-				},
-				_type == "filterByDate" => {
-					year,
-				},
-				_type == "customFilter" => {
-					label,
-					tags[] -> {
-						"schemaType": _type,
-						slug {
-							current,
-						},
-					},
-				},
-			},
-		},
 	}
 `);
 
-export const ProjectBaseGroqPartial = (`
-	slug {
-		current,
-	},
-	title,
-	subtitle,
-	profiles[] -> {
-		name,
-	} | order(lower(name) desc),
-	date {
-		startDate,
-		endDate,
-		hasDuration,
-		isOngoing,
-		dateFormat,
-	},
-	types[] -> {
-		slug {
-			current,
-		},
-		"type": "type",
-		name,
-	},
-	collections[] -> {
-		slug {
-			current,
-		},
-		"type": "collection",
-		name,
-		description[] {
-			${PortableTextGroqPartial}
-		},
-	},
-	subjects[] -> {
-		slug {
-			current,
-		},
-		"type": "subject",
-		name,
-	},
-	locations[] -> {
-		"type": "location",
-		name,
-		locale,
-	},
-	image {
-		asset,
-		caption[] {
-			${PortableTextGroqPartial}
-		},
-	},
-`);
-
-export const ProjectGroqQuery = (`
+export const ProjectsGroqQuery = (`
 	*[_type == "project" && defined(slug) && defined(date.startDate)] {
 		${ProjectBaseGroqPartial}
 		description[] {
 			${PortableTextGroqPartial}
 		},
-		credits[] {
-			${PortableTextGroqPartial}
-		},
-		relatedProjects[] -> {
-			${ProjectBaseGroqPartial}
-			"description": pt::text(description[0]),
-		},
-		relatedNews[] -> {
-			_type,
-			slug {
-				current,
+		page.doesIncludeCredits => {
+			credits[] {
+				${PortableTextGroqPartial}
 			},
-			title,
-			date,
 		},
-		relatedPress[] -> {
-			_type,
-			url,
-			date,
-			title,
-			publisher,
+		page.doesIncludeRelatedProjects => {
+			relatedProjects[] -> {
+				${ProjectBaseGroqPartial}
+				"description": pt::text(description[0]),
+			},
+		},
+		page.doesIncludeRelatedNews => {
+			relatedNews[] -> {
+				"type": _type,
+				slug {
+					current,
+				},
+				title,
+				date,
+			},
+		},
+		page.doesIncludeRelatedPress => {
+			relatedPress[] -> {
+				"type": _type,
+				url,
+				date,
+				title,
+				publisher,
+			},
 		},
 		page {
-			header[] {
-				doesBreakout,
-				columns[] {
-					_type,
-					ratio,
-					verticalAlignment,
-					_type == "image_" => {
-						captionPlacement,
-						captionPlacement == "left" || captionPlacement == "right" => {
-							imageRatio,
-							captionRatio,
-							captionVerticalAlignment,
-						},
-					},
-				},
-			},
-			doesIncludeDescription,
-			doesIncludeCollections,
 			body[] {
 				doesBreakout,
 				columns[] {
