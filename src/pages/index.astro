@@ -44,7 +44,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 							<strong class="featured-project-title-baseline">{featuredProject.project.title?.trim()}{featuredProject.project.subtitle && (<span class="featured-project-title-colon">:&nbsp;</span>)}</strong>{featuredProject.project.subtitle && (<span class="featured-project-subtitle">{featuredProject.project.subtitle?.trim()}</span>)}
 						</Link>
 					</h2>
-					<Image class="featured-project-image" source={featuredProject.image} />
+					<Image class="featured-project-image" source={featuredProject.image} sizes="100vw" />
 				</article>
 			))}
 		</section>

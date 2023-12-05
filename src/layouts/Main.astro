@@ -81,6 +81,7 @@ const {
 		display: flex;
 		flex-flow: column nowrap;
 		min-height: 100vh;
+		min-height: 100dvh;
 		--header-height: calc(var(--font-size-medium) + 1rem + 1rem + 1px);
 		--spacing-inline: calc(1.5rem + env(safe-area-inset-left, 0px));
 	}
@@ -111,6 +112,12 @@ const {
 			border-block-end: 1px solid var(--color-4);
 		}
 	}
+	#header-outer[data-mode="overlay"] {
+		pointer-events: none;
+		#header-inner > * {
+			pointer-events: all;
+		}
+	}
 	@media (min-width: 641px) {
 		#header-expand {
 			display: none;
@@ -123,15 +130,17 @@ const {
 		#header-expand {
 			all: unset;
 			position: absolute;
-			top: 1rem;
+			top: 0;
 			left: 1.5rem;
 			width: 1rem;
-			height: 1rem;
+			height: calc(var(--header-height) + 1.5rem);
 			cursor: pointer;
 			svg {
+				position: sticky;
+				top: 1rem;
 				display: block;
 				width: 100%;
-				height: 100%;
+				height: 1rem;
 				fill: transparent;
 				stroke: currentColor;
 				stroke-width: 1px;

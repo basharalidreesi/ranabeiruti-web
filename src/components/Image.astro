@@ -2,26 +2,70 @@
 import sanityClient from "@root/sanity.js";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageMetadataObject } from "@lib/types";
-import type { ImageFormat, SanityImageObject, SanityImageSource } from "@sanity/image-url/lib/types/types";
+import type { SanityImageObject, SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 const imageBuilder = imageUrlBuilder(sanityClient);
 
-function urlFor(source: SanityImageSource, format: ImageFormat) {
-	return !["gif"].includes(format) ? imageBuilder.image(source)?.format(format)?.url() : imageBuilder.image(source)?.url();
+function urlFor(source: SanityImageSource, width?: number) {
+	return width ? imageBuilder.image(source)?.width(width)?.quality(100)?.auto("format")?.url() : imageBuilder.image(source)?.quality(100)?.auto("format")?.url();
 };
 
 type Props = {
 	source: SanityImageObject & SanityImageMetadataObject;
 	class?: string;
+	sizes?: string;
 	style?: {};
 };
 
 const {
 	source,
 	class: className,
+	sizes = "100vw",
 	style = {},
 	...rest
 } = Astro.props;
+
+const sourceSets = {
+	500: {
+		source: urlFor(source, 500),
+		width: 500,
+		descriptor: "500w",
+	},
+	800: {
+		source: urlFor(source, 800),
+		width: 800,
+		descriptor: "800w",
+	},
+	1100: {
+		source: urlFor(source, 1100),
+		width: 1100,
+		descriptor: "1100w",
+	},
+	1500: {
+		source: urlFor(source, 1500),
+		width: 1500,
+		descriptor: "1500w",
+	},
+	2000: {
+		source: urlFor(source, 2000),
+		width: 2000,
+		descriptor: "2000w",
+	},
+	2500: {
+		source: urlFor(source, 2500),
+		width: 2500,
+		descriptor: "2500w",
+	},
+};
+
+const srcset = [
+	`${sourceSets[500].source} ${sourceSets[500].descriptor}`,
+	`${sourceSets[800].source} ${sourceSets[800].descriptor}`,
+	`${sourceSets[1100].source} ${sourceSets[1100].descriptor}`,
+	`${sourceSets[1500].source} ${sourceSets[1500].descriptor}`,
+	`${sourceSets[2000].source} ${sourceSets[2000].descriptor}`,
+	`${sourceSets[2500].source} ${sourceSets[2500].descriptor}`,
+];
 ---
 
 {source && source.asset && (
@@ -31,10 +75,15 @@ const {
 		"--hotspot-y": source.hotspot && (source.hotspot.y) || 0.5,
 		...style,
 	}} {...rest}>
-		{!["gif"].includes(source.metadata?.extension) && (
-			<source srcset={urlFor(source, "webp")} type="image/webp" />
-		)}
-		<img src={urlFor(source, source.metadata?.extension)} width={source.metadata?.dimensions?.width} height={source.metadata?.dimensions?.height} alt="" loading="lazy" />
+		<img
+			srcset={srcset.join(", ")}
+			sizes={sizes}
+			width={source.metadata?.dimensions?.width}
+			height={source.metadata?.dimensions?.height}
+			loading="lazy"
+			src={urlFor(source, sourceSets[2500].width)}
+			alt=""
+		/>
 	</picture>
 )}
 
