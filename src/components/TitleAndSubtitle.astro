@@ -1,0 +1,19 @@
+---
+type Props = {
+	title: string;
+	subtitle?: string;
+	separator?: string;
+	classPrefix?: string;
+};
+
+const {
+	title,
+	subtitle,
+	separator = ":&nbsp;",
+	classPrefix,
+} = Astro.props;
+---
+
+{title && (<>
+	<strong class={`${classPrefix ? classPrefix + "-" : ""}title-baseline`}>{title?.trim()}{subtitle && (<span class={`${classPrefix ? classPrefix + "-" : ""}title-separator`} set:html={separator} />)}</strong>{subtitle && (<span class={`${classPrefix ? classPrefix + "-" : ""}subtitle`}>{subtitle?.trim()}</span>)}
+</>)}

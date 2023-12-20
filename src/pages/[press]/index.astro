@@ -1,16 +1,21 @@
 ---
-import sanityClient from "../../sanity";
-import Main from "../../layouts/Main.astro";
+import Dataset, { assignRecordToGrouping, type DatasetGroupingProps } from "@components/Dataset.astro";
+import Main from "@layouts/Main.astro";
+import { PressListingGroqQuery } from "@lib/groq";
+import type { BaseUrls, NewsProps, PressProps } from "@lib/types";
+import sanityClient from "@root/sanity";
+
+export type PressItemProps = NewsProps | PressProps;
+
+export type PressListingProps = {
+	slug: { current: string; };
+	baseUrls: BaseUrls;
+	title: string;
+	allItems: PressItemProps[];
+};
 
 export async function getStaticPaths() {
-	const pressListing = await sanityClient.fetch(`
-		*[_id == "pressListing" && defined(slug)][0] {
-			slug {
-				current,
-			},
-			title,
-		}
-	`);
+	const pressListing: PressListingProps = await sanityClient.fetch(PressListingGroqQuery);
 	return [{
 		params: {
 			press: pressListing.slug?.current,
@@ -22,10 +27,77 @@ export async function getStaticPaths() {
 };
 
 const listing = Astro.props;
+
+const allPressItems: DatasetGroupingProps = {};
+
+listing.allItems.forEach((item) => {
+	assignRecordToGrouping(item, {
+		grouping: allPressItems,
+		key: "all",
+		title: "All",
+		description: "All press items",
+	});
+});
 ---
 
 <Main title={listing.title}>
-	<article>
+	<h1 class="display-none">
 		{listing.title}
-	</article>
+	</h1>
+	<Dataset
+		type="press"
+		of={[
+			{
+				type: "date",
+			},
+			{
+				type: "title",
+				baseUrl: listing.slug.current,
+			},
+			{
+				type: "description",
+				descriptions: ["local"],
+			},
+			{
+				type: "image",
+			},
+			{
+				type: "body",
+			},
+			{
+				type: "related",
+				baseUrls: listing.baseUrls,
+			},
+		]}
+		groupings={[
+			{
+				title: "List of Press Items, Sorted By Date",
+				label: "Date",
+				method: "date",
+				object: allPressItems,
+				keys: Object.keys(allPressItems),
+				default: true,
+				"columns@>=1536px": "20% 1fr 20%",
+				"columns@<1536px": "15% 1fr 15%",
+				"columns@<=1280px": "15% 1fr 15%",
+			},
+		]}
+		controls={{
+			views: [
+				{
+					title: "Headlines",
+					mode: "headlines",
+					default: true,
+				},
+			],
+			// filters: [
+			// 	{
+			// 		title: "Type",
+			// 		method: "types",
+			// 		object: pressItemsByPeriod,
+			// 		keys: Object.keys(pressItemsByPeriod).sort(),
+			// 	},
+			// ],
+		}}
+	/>
 </Main>

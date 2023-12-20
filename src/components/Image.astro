@@ -7,7 +7,11 @@ import type { SanityImageObject, SanityImageSource } from "@sanity/image-url/lib
 const imageBuilder = imageUrlBuilder(sanityClient);
 
 function urlFor(source: SanityImageSource, width?: number) {
-	return width ? imageBuilder.image(source)?.width(width)?.quality(100)?.auto("format")?.url() : imageBuilder.image(source)?.quality(100)?.auto("format")?.url();
+	try {
+		return width ? imageBuilder.image(source)?.width(width)?.quality(100)?.auto("format")?.url() : imageBuilder.image(source)?.quality(100)?.auto("format")?.url();
+	} catch(error) {
+		console.error(error);
+	}
 };
 
 type Props = {

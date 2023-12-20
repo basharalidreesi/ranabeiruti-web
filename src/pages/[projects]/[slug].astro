@@ -14,6 +14,7 @@ import type { TypedObject } from "astro-portabletext/types";
 import type { ProjectsListingProps } from "@projects/index.astro";
 
 export type BasicProjectProps = {
+	type: "project";
 	slug: { current: string; };
 	title: string;
 	subtitle?: string;
@@ -25,7 +26,7 @@ export type BasicProjectProps = {
 	subjects?: SubjectProps[];
 	collections?: CollectionProps[];
 	image: SanityImageObject & SanityImageMetadataObject;
-	description?: TypedObject[] | string;
+	description: TypedObject[] | string;
 	
 };
 
@@ -92,7 +93,7 @@ const project = Astro.props;
 						<article class="related-project">
 							<h3 class="related-project-title">
 								<Link href={`/${Astro.params.projects}/${relatedProject.slug.current}/`}>
-									<strong class="related-project-title-baseline">{relatedProject.title?.trim()}{relatedProject.subtitle && (<span class="related-project-title-colon">:&nbsp;</span>)}</strong>{relatedProject.subtitle && (<span class="related-project-subtitle">{relatedProject.subtitle?.trim()}</span>)}
+									<strong class="related-project-title-baseline">{relatedProject.title?.trim()}{relatedProject.subtitle && (<span class="related-project-title-separator">:&nbsp;</span>)}</strong>{relatedProject.subtitle && (<span class="related-project-subtitle">{relatedProject.subtitle?.trim()}</span>)}
 								</Link>
 							</h3>
 							<!-- <div class="related-project-tagline">
@@ -128,6 +129,7 @@ const project = Astro.props;
 		line-height: var(--line-height-large);
 	}
 	#project-body {
+		flex: 1;
 		display: grid;
 		grid-template-columns: [all-start] 10% [content-start] 1fr [content-end] 10% [all-end];
 		column-gap: 1.5rem;
@@ -147,9 +149,6 @@ const project = Astro.props;
 			column-gap: 0;
 			grid-template-columns: unset;
 		}
-	}
-	#project-body {
-		flex: 1;
 	}
 	#credits {
 		margin-inline: calc(10% + 1.5rem);
@@ -223,7 +222,7 @@ const project = Astro.props;
 		font-weight: var(--font-weight-bold);
 		// text-transform: uppercase;
 	}
-	.related-project-title-colon {
+	.related-project-title-separator {
 		opacity: 0;
 		position: absolute;
 	}

@@ -81,12 +81,12 @@ function renderComplexDate(complexDate: ComplexDateProps) {
 				if (startComponents.year === endComponents.year) {
 					return `<span class="date-baseline">${formatMonth(startComponents.month)} – ${formatMonth(endComponents.month)} </span><span class="date-year">${startComponents.year}</span>`;
 				};
-				return `<span class="date-baseline">${formatMonth(startComponents.month)} </span><span class="date-year">${startComponents.year} – </span><span class="date-baseline">${formatMonth(endComponents.month)}</span><span class="date-year">${endComponents.year}</span>`;
+				return `<span class="date-baseline">${formatMonth(startComponents.month)} </span><span class="date-year">${startComponents.year} – </span><span class="date-baseline">${formatMonth(endComponents.month)} </span><span class="date-year">${endComponents.year}</span>`;
 			};
 			if (hasDuration && isOngoing) {
-				return `<span class="date-baseline">${formatMonth(startComponents.month)}</span><span class="date-year">${startComponents.year} – Present</span>`;
+				return `<span class="date-baseline">${formatMonth(startComponents.month)} </span><span class="date-year">${startComponents.year} – Present</span>`;
 			};
-			return `<span class="date-baseline">${formatMonth(startComponents.month)}</span><span class="date-year">${startComponents.year}</span>`;
+			return `<span class="date-baseline">${formatMonth(startComponents.month)} </span><span class="date-year">${startComponents.year}</span>`;
 		case "yearOnly":
 			if (hasDuration && endDate && !isOngoing) {
 				if (startComponents.year === endComponents.year) {

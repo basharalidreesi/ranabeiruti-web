@@ -1,0 +1,27 @@
+---
+type Props = {
+	source: string;
+	length?: SimpleDateLengths;
+};
+
+type SimpleDateLengths =  "numeric" | "2-digit" | "long" | "short" | "narrow";
+
+const {
+	source,
+	length = "long",
+} = Astro.props;
+
+export function SimpleDateString(source_: string, length_: SimpleDateLengths) {
+	return new Date(source_).toLocaleDateString("en-gb", {
+		day: "numeric",
+		month: length_,
+		year: "numeric",
+	});
+};
+
+const dateString = source && SimpleDateString(source, length)
+---
+
+{source && (
+	<time datetime={source}>{dateString}</time>
+)}

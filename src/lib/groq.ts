@@ -2,7 +2,25 @@
 
 export const ProjectsListingSlugGroqQuery = (`
 	*[_id == "projectsListing" && defined(slug)][0] {
-		slug,
+		slug {
+			current,
+		},
+	}
+`);
+
+export const PublicationsListingSlugGroqQuery = (`
+	*[_id == "publicationsListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
+	}
+`);
+
+export const PressListingSlugGroqQuery = (`
+	*[_id == "pressListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
 	}
 `);
 
@@ -220,21 +238,47 @@ export const HomepageGroqQuery = (`
 		title,
 		"baseUrls": {
 			"projectsListingBaseUrl": ${ProjectsListingSlugGroqQuery}.slug.current,
+			"publicationsListingBaseUrl": ${PublicationsListingSlugGroqQuery}.slug.current,
+			"pressListingBaseUrl": ${PressListingSlugGroqQuery}.slug.current,
 		},
-		featuredProjects[] {
-			project -> {
-				slug {
-					current,
+		featuredItems[] {
+			item -> {
+				"type": _type,
+				_type == "project" => {
+					slug {
+						current,
+					},
+					title,
+					subtitle,
 				},
-				title,
-				subtitle,
+				_type == "publication" => {
+					slug {
+						current,
+					},
+					title,
+					subtitle,
+				},
+				_type == "news" => {
+					slug {
+						current,
+					},
+					title,
+					date,
+				},
+				_type == "press" => {
+					url,
+					title,
+					publisher,
+					date,
+				},
 			},
-			doesUseProjectImage == true => {
-				"image": project->image {
+			displayMode,
+			doesUseDocumentImage == true => {
+				"image": item->image {
 					${ImageGroqPartial}
 				},
 			},
-			doesUseProjectImage != true => {
+			doesUseDocumentImage != true => {
 				"image": image {
 					${ImageGroqPartial}
 				},
@@ -250,6 +294,7 @@ export const ProjectsListingGroqQuery = (`
 		},
 		title,
 		"allProjects": *[_type == "project" && defined(slug)] {
+			"type": _type,
 			slug {
 				current,
 			},
@@ -276,7 +321,7 @@ export const ProjectsListingGroqQuery = (`
 					current,
 				},
 				name,
-				"description": pt::text(description[0]),
+				"description": pt::text(description[]),
 			},
 			locations[] -> {
 				slug {
@@ -288,7 +333,7 @@ export const ProjectsListingGroqQuery = (`
 			image {
 				${ImageGroqPartial}
 			},
-			"description": pt::text(description[0]),
+			"description": pt::text(description[]),
 		} | order(date.sortDate desc, date.startDate desc, lower(title) asc),
 	}
 `);
@@ -307,7 +352,7 @@ export const ProjectsGroqQuery = (`
 		page.doesIncludeRelatedProjects => {
 			relatedProjects[] -> {
 				${ProjectBaseGroqPartial}
-				"description": pt::text(description[0]),
+				"description": pt::text(description[]),
 			},
 		},
 		page.doesIncludeRelatedNews => {
@@ -346,5 +391,93 @@ export const ProjectsGroqQuery = (`
 			doesIncludeRelatedNews,
 			doesIncludeRelatedPress,
 		},
+	}
+`);
+
+export const PressListingGroqQuery = (`
+	*[_id == "pressListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
+		"baseUrls": {
+			"projectsListingBaseUrl": ${ProjectsListingSlugGroqQuery}.slug.current,
+		},
+		title,
+		"allItems": *[(_type == "news" && defined(slug)) || (_type == "press" && defined(url))] {
+			"type": _type,
+			title,
+			_type == "news" => {
+				slug {
+					current,
+				},
+				date,
+				body[] {
+					${PortableTextGroqPartial}
+				},
+			},
+			_type == "press" => {
+				url,
+				publisher,
+				date,
+			},
+			"description": pt::text(description[]),
+			image {
+				${ImageGroqPartial}
+			},
+			"relatedProjects": *[_type == "project" && defined(slug) && references(^._id)] {
+				slug {
+					current,
+				},
+				title,
+			},
+		} | order(date desc, lower(title) asc),
+	}
+`);
+
+export const PublicationsListingGroqQuery = (`
+	*[_id == "publicationsListing" && defined(slug)][0] {
+		slug {
+			current,
+		},
+		title,
+		"allPublications": *[_type == "publication" && defined(slug)] {
+			"type": _type,
+			slug {
+				current,
+			},
+			title,
+			subtitle,
+			date,
+			types[] -> {
+				slug {
+					current,
+				},
+				name,
+			},
+			subjects[] -> {
+				slug {
+					current,
+				},
+				name,
+			},
+			collections[] -> {
+				slug {
+					current,
+				},
+				name,
+				"description": pt::text(description[]),
+			},
+			locations[] -> {
+				slug {
+					current,
+				},
+				name,
+				locale,
+			},
+			image {
+				${ImageGroqPartial}
+			},
+			"description": pt::text(description[]),
+		} | order(date desc, lower(title) asc),
 	}
 `);

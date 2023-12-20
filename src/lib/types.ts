@@ -1,5 +1,7 @@
+import type { BasicProjectProps } from "@projects/[slug].astro";
 import type { ImageFormat } from "@sanity/image-url/lib/types/types";
 import type { SanityImagePalette } from "@sanity/client";
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { PortableTextProps } from "astro-portabletext/types";
 
 export type SanityImageMetadataObject = {
@@ -29,26 +31,28 @@ export type VerticalAlignments = "top" | "middle" | "bottom";
 export type CaptionPlacements = "left" | "top" | "right" | "bottom";
 
 export type NewsProps = {
+	type: "news";
 	slug: { current: string; };
 	title: string;
 	date: string;
-	description: PortableTextProps[] | string;
-	body: PortableTextProps[];
+	description?: TypedObject[];
+	body?: TypedObject[];
+	image?: SanityImageObject & SanityImageMetadataObject;
+	relatedProjects?: BasicProjectProps[];
 };
 
 export type PressProps = {
+	type: "press";
 	url: string;
 	title: string;
 	publisher: string;
 	date: string;
-	description: PortableTextProps[] | string;
+	description?: TypedObject[];
+	image?: SanityImageObject & SanityImageMetadataObject;
+	relatedProjects?: BasicProjectProps[];
 };
 
-export type LocationProps = {
-	type: "location";
-	name: string;
-	locale: string;
-};
+export type TagTypes = "types" | "collections" | "subjects" | "locations";
 
 export type TypeProps = {
 	type: "type";
@@ -67,4 +71,16 @@ export type SubjectProps = {
 	type: "subject";
 	slug: { current: string; };
 	name: string;
+};
+
+export type LocationProps = {
+	type: "location";
+	name: string;
+	locale: string;
+};
+
+export type BaseUrls = {
+	projectsListingBaseUrl?: string;
+	publicationsListingBaseUrl?: string;
+	pressListingBaseUrl?: string;
 };
