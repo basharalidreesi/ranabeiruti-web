@@ -1,426 +1,289 @@
 ---
-import ComplexDate from "@components/ComplexDate.astro";
-import Image from "@components/Image.astro";
-import Link from "@components/Link.astro";
-import TitleAndSubtitle from "@components/TitleAndSubtitle.astro";
-import SimpleDate from "@components/SimpleDate.astro";
-import { LOCALES } from "@lib/locales";
-import type { BaseUrls, CollectionProps, SanityImageMetadataObject, SubjectProps, TagTypes, TypeProps } from "@lib/types";
-import type { BasicProjectProps } from "@projects/[slug].astro";
-import type { PressItemProps } from "@press/index.astro";
-import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
-import type { TypedObject } from "astro-portabletext/types";
-import PortableText from "./PortableText.astro";
-import { string } from "astro/zod";
+import RecordTitle from "@components/DatasetCmps/RecordTitle.astro";
+import RecordDate from "@components/DatasetCmps/RecordDate.astro";
+import RecordImage from "@components/DatasetCmps/RecordImage.astro";
+import RecordDescriptions from "@components/DatasetCmps/RecordDescriptions.astro";
+import RecordBody from "@components/DatasetCmps/RecordBody.astro";
+import RecordTag from "@components/DatasetCmps/RecordTag.astro";
+import RecordRelated from "@components/DatasetCmps/RecordRelated.astro";
+import type { RecordProps, TagNames } from "@lib/types.astro";
+import Link from "./Link.astro";
 
-type BasicPublicationProps = {
-	type: "publication";
-	slug: { current: string; };
+type DatasetGroupingMethods = "alphabetic" | "period" | TagNames;
+
+type DatasetBlockTypes = "title" | "date" | TagNames | "tags" | "image" | "descriptions" | "body" | "related";
+
+type DatasetRecordGroup = {
 	title: string;
-	subtitle: string;
-	date: string;
-	types: TypeProps[];
-	subjects?: SubjectProps[];
-	collections?: CollectionProps[];
-	image: SanityImageObject & SanityImageMetadataObject;
-	description: TypedObject[] | string;
+	records: RecordProps[];
+	description?: string;
+	method: DatasetGroupingMethods;
 };
 
-type DatasetRecordProps = BasicProjectProps | BasicPublicationProps | PressItemProps;
-
-export type DatasetGroupingProps = {
-	[key: string]: {
-		title: string;
-		records: DatasetRecordProps[];
-		description?: string;
-	};
+export type DatasetRecordGroups = {
+	[key: string]: DatasetRecordGroup;
 };
 
-export function assignRecordToGrouping(record: DatasetRecordProps, params: { grouping: DatasetGroupingProps; key: string; title: string; description: string; }) {
+export function assignRecordToGroup(record: RecordProps, params: { group: DatasetRecordGroups; method: DatasetGroupingMethods; key: string; title: string; description: string; }) {
 	const {
-		grouping,
+		group,
+		method,
 		key,
 		title,
 		description,
 	} = params;
-	if (!grouping[key]) {
-		grouping[key] = {
+	if (!group[key]) {
+		group[key] = {
 			title: title,
 			records: [],
 			description: description,
+			method: method,
 		};
 	};
-	if (grouping[key] && grouping[key].records) {
-		grouping[key].records.push(record);
+	if (group[key] && group[key].records) {
+		group[key].records.push(record);
 	};
 };
 
-type NewProps = {
-	groupings: ({
+type Props = {
+	sets: ({
 		name: string;
+		method: DatasetGroupingMethods | "dynamic";
 		title: string;
-		description: string;
-		object: {}[];
+		label?: string;
+		object: DatasetRecordGroups;
 		orderings?: string[];
 	} & ({
 		type: "details";
 		options?: {
-			imageAspectRatio?: string;
-			tags?: string[];
+			tags?: TagNames[];
 		};
 	} | {
 		type: "list";
 		rows: ({
-			type: "main";
+			type: "baseline";
 			columns: {
-				name: string;
+				method: DatasetGroupingMethods;
+				name: DatasetBlockTypes;
 				title: string;
+				width: string;
 			}[];
 		} | {
 			type: "expanded";
 			columns: {
-				name: string;
+				name: DatasetBlockTypes;
+				width: string;
 			}[];
 		})[];
+		default: DatasetGroupingMethods;
 	} | {
 		type: "covers";
 		options?: {
-			imageAspectRatio?: string;
-			tags?: string[];
+			tags?: TagNames[];
 		};
 	} | {
 		type: "headlines";
+		options?: {
+			withBody?: boolean;
+			withRelated?: boolean;
+		};
 	}))[];
-	baseUrls: BaseUrls;
-	filters?: {
-		name: string;
-		title: string;
-		items: {
-			slug: {
-				current: string;
-			};
-			name: string;
-			size: number;
-		}[];
-		size: number;
-	}[];
-};
-
-type Props = {
-	type: "projects" | "publications" | "press";
-	of: ({
-		type: "title";
-		baseUrl: string;
-	} | {
-		type: "date";
-	} | {
-		type: "tags";
-		tags: TagTypes[];
-		length: number;
-	} | {
-		type: "description";
-		descriptions: ("local" | "collections")[];
-	} | {
-		type: "image";
-	} | {
-		type: "body";
-	} | {
-		type: "related";
-		baseUrls: BaseUrls;
-	})[];
-	groupings: {
-		title: string;
-		label?: string;
-		method: "title" | "date" | "types" | "collections";
-		object: DatasetGroupingProps;
-		keys?: string[];
-		default?: boolean;
-		"columns@>=1536px": string;
-		"columns@<1536px": string;
-		"columns@<=1280px": string;
-	}[];
-	controls: {
-		views: ({
-			title: string;
-			default?: boolean;
-		} & ({
-			mode: "cards" | "covers" | "headlines";
-		} | {
-			mode: "list";
-			"columns@>1024px": string;
-			"columns@<=1024px": string;
-		}))[];
-		filters?: {
-			title: string;
-			method: TagTypes;
-			object: DatasetGroupingProps;
-			keys?: string[];
-		}[];
+	switches?: {
+		enabled: boolean;
+		default: string;
 	};
+	filters?: {
+		type: TagNames;
+		object: DatasetRecordGroups;
+		orderings?: string[];
+		unfilteredSize: number;
+	}[];
 };
 
 const {
-	type,
-	of,
-	groupings,
-	controls,
+	sets,
+	switches,
+	filters,
 } = Astro.props;
 
-const titleSchema = of && of.length !== 0 && of.find((schemaItem) => schemaItem.type === "title");
-const baseUrl = titleSchema && titleSchema.type === "title" && titleSchema.baseUrl;
-const tagSchema = of && of.length !== 0 && of.find((schemaItem) => schemaItem.type === "tags");
-const length = tagSchema && tagSchema.type === "tags" && tagSchema.length;
-
-const defaultGrouping = groupings && groupings.length !== 0 && groupings.find((grouping) => grouping.default === true)?.method;
-const defaultView = controls && controls.views && controls.views.length !== 0 && controls.views.find((view) => view.default === true)?.mode;
-const hasFilterOptions = controls && controls.filters && controls.filters.length !== 0;
-const hasViewOptions = controls && controls.views && controls.views.length > 1;
-
-const listSchema = groupings && groupings.length > 1 && controls && controls.views && controls.views.find((view) => view.mode === "list");
-const hasListSchema = listSchema && listSchema.mode === "list";
+const hasDatasetSwitches = switches && switches.enabled && sets && sets.length > 1;
+const hasDatasetFilters = filters && filters.length !== 0;
+const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 ---
 
-<div id="dataset"
-	data-current-grouping={defaultGrouping}
-	data-current-view={defaultView}
-	style={{
-		"--list-columns-gt-1024px": hasListSchema && listSchema["columns@>1024px"],
-		"--list-columns-lte-1024px": hasListSchema && listSchema["columns@<=1024px"],
-	}}
->
-	{(hasFilterOptions || hasViewOptions) && (
-		<aside id="controls-outer" aria-labelledby="controls-title">
-			<h2 id="controls-title" class="display-none">{[hasFilterOptions ? "Filtering" : null, hasViewOptions ? "Viewing" : null]?.filter(Boolean)?.join(" and ")} Options</h2>
-			<div id="controls-inner">
-				{hasFilterOptions && (
-					<section id="filters">
-						<h3 class="control-group-title">Filter by</h3>
-						<div class="control-group">
-							{controls.filters.map((filter) => filter.object && Object.keys(filter.object) && Object.keys(filter.object)?.filter((key) => key !== "other").length !== 0 && (
-								<div class="control">
-									<input type="checkbox" name="filter-by" id={`filter-by-${filter.method}`} value={filter.method} autocomplete="off" />
-									<label class="hover-text" for={`filter-by-${filter.method}`}>{filter.title}</label>
-								</div>
-							))}
+<div class="dataset">
+	{hasDatasetHeaders && (<>
+		<div class="dataset-headers">
+			{hasDatasetSwitches && (
+				<div class="dataset-switches dataset-header" data-title="View as">
+					{sets.map((set) => (
+						<div class="dataset-switch dataset-header-item">
+							<input type="radio" name="switch-dataset-to" id={`switch-dataset-to-${set.name}`} value={set.name} autocomplete="off" checked={switches.default === set.name} />
+							<label for={`switch-dataset-to-${set.name}`}>{set.label || set.title}</label>
 						</div>
-					</section>
-				)}
-				{hasViewOptions && (
-					<section id="views">
-						<h3 class="control-group-title">View as</h3>
-						<div class="control-group">
-							{controls.views.map((view) => (
-								<div class="control">
-									<input type="radio" name="view-as" id={`view-as-${view.mode}`} value={view.mode} autocomplete="off" checked={view.default} />
-									<label class="hover-text" for={`view-as-${view.mode}`}>{view.title}</label>
-								</div>
-							))}
+					))}
+				</div>
+			)}
+			{hasDatasetFilters && (
+				<div class="dataset-filters dataset-header" data-title="Filter by">
+					{filters.map((filter) => filter.object && Object.keys(filter.object) && Object.keys(filter.object)?.filter((key) => key !== "other").length !== 0 && (
+						<div class="dataset-filter dataset-header-item">
+							<input type="checkbox" name="filter-dataset-by" id={`filter-dataset-by-${filter.type}`} value={filter.type} autocomplete="off" />
+							<label for={`filter-dataset-by-${filter.type}`}>{
+								filter.type === "types" ? "Types"
+								: filter.type === "subjects" ? "Subjects"
+								: filter.type === "collections" ? "Collections"
+								: filter.type === "locations" ? "Locations"
+								: null
+							}</label>
 						</div>
-					</section>
-				)}
-				{hasFilterOptions && (
-					<section id="tags" data-current-filter="none">
-						<h3 class="display-none">Tags</h3>
-						{controls.filters.map((filter) => {
-							const keys = filter.keys ? filter.keys : Object.keys(filter.object);
-							return (
-								<ul data-filter={filter.method}>
+					))}
+					<div class="dataset-filter-menus" data-current-filter-type="none">
+						{filters.map((filter) => filter.object && Object.keys(filter.object) && Object.keys(filter.object)?.filter((key) => key !== "other").length !== 0 && (
+							<ul class="dataset-filter-menu" data-filter-type={filter.type}>
+								<li>
+									<Link href={`?${filter.type}=`} data-size={filter.unfilteredSize}>All</Link>
+								</li>
+								{(filter.orderings || Object.keys(filter.object)).map((key) => (
 									<li>
-										<Link href={`/${baseUrl}/`} class="hover-text" data-size={length}>All</Link>
+										<Link href={`?${filter.type}=${key}`} data-size={filter.object[key]?.records?.length}>{filter.object[key]?.title}</Link>
 									</li>
-									{keys.map((key) => (
-										<li>
-											<Link href={`/${baseUrl}/?${filter.method}=${key}`} class="hover-text" data-size={filter.object[key].records.length}>{filter.object[key].title}</Link>
-										</li>
-									))}
-								</ul>
-							)
-						})}
-					</section>
-					// <section id="pills" class="display-none">
-					// 	<h3 class="display-none">Active Tags</h3>
-					// 	<template></template>
-					// 	<ul class="ln"></ul>
-					// </section>
-				)}
-			</div>
-		</aside>
-	)}
-	{hasListSchema && (
-		<section id="sorts" aria-labelledby="sorts-title">
-			<h2 id="sorts-title" class="display-none">Sorting Options</h2>
-			<div id="sorts-inner">
-				{groupings.map((grouping) => (
-					<div class="sort control">
-						<input type="radio" name="sort-by" id={`sort-by-${grouping.method}`} value={grouping.method} autocomplete="off" checked={grouping.default} />
-						<label for={`sort-by-${grouping.method}`}>{grouping.label || grouping.title}</label>
+								))}
+							</ul>
+						))}
 					</div>
-				))}
-			</div>
-		</section>
-	)}
-	{groupings && groupings.length !== 0 && groupings.map((grouping) => {
-		const keys = grouping.keys ? grouping.keys : Object.keys(grouping.object);
+				</div>
+			)}
+		</div>
+	</>)}
+	{sets && sets.length !== 0 && sets?.map((set) => {
+		const keys = set.orderings ? set.orderings : Object.keys(set.object);
+		// const isDetailsSet = set.type === "details";
+		const isListSet = set.type === "list";
+		const hasBaselineRow = isListSet && set.rows && set.rows?.find((row) => row.type === "baseline" && row.columns && row.columns.length !== 0) ? true : false;
+		const hasExpandedRow = isListSet && set.rows && set.rows?.find((row) => row.type === "expanded" && row.columns && row.columns.length !== 0) ? true : false;
+		const baselineRow = isListSet && hasBaselineRow && set.rows?.find((row) => row.type === "baseline" && row.columns && row.columns.length !== 0);
+		const expandedRow = isListSet && hasExpandedRow && set.rows?.find((row) => row.type === "expanded" && row.columns && row.columns.length !== 0);
+		// const isCoversSet = set.type === "covers";
+		const isHeadlinesSet = set.type === "headlines";
+		const isDynamicSet = set.method === "dynamic";
+		const hasListingHeaders = isListSet && hasBaselineRow;
 		return (
 			<section
 				class="listing"
-				data-grouping={grouping.method}
-				data-default={grouping.default ? "true" : "false"}
-				aria-label={grouping.title}
+				data-set-name={set.name}
+				data-set-type={set.type}
+				data-set-method={set.method}
+				data-current-subset={isDynamicSet && isListSet && hasBaselineRow && set.default}
 				style={{
-					"--grouping-columns-gte-1536px": grouping["columns@>=1536px"],
-					"--grouping-columns-lt-1536px": grouping["columns@<1536px"],
-					"--grouping-columns-lte-1280px": grouping["columns@<=1280px"],
+					display: hasDatasetSwitches && switches.default !== set.name && "none",
+					"--grid-template-columns-baseline": isListSet && hasBaselineRow && baselineRow.columns.map((column) => column.width)?.join(" "),
+					"--grid-template-columns-expanded": isListSet && hasExpandedRow && expandedRow.columns.map((column) => column.width)?.join(" "),
 				}}
 			>
-				<h2 class="display-none" aria-hidden="true">{grouping.title}</h2>
-				{keys?.map((key) => (<>
-					<section id={`${grouping.method}-group-${key}`} class="record-group" data-type={type} data-size={grouping.object[key]?.records?.length || "0"} aria-label={grouping.object[key]?.description && grouping.object[key]?.description}>
-						<h3 class="record-group-title" role="presentation" aria-hidden="true">{grouping.object[key]?.title}</h3>
-						{grouping.object[key]?.records?.map((record) => {
-							const isProjectRecord = record.type === "project";
-							const isPublicationRecord = record.type === "publication";
-							const isNewsRecord = record.type === "news";
-							const isPressRecord = record.type === "press";
-							const hasLocalDescription = (isProjectRecord || isPublicationRecord || isNewsRecord || isPressRecord) && record.description && record.description.length !== 0;
-							const hasCollectionDescriptions = (isProjectRecord || isPublicationRecord) && record.collections && record.collections.length !== 0 && record.collections.filter((collection) => collection.description).length !== 0;
-							const hasBody = isNewsRecord && record.body && record.body.length !== 0;
-							const hasRelated = (isNewsRecord || isPressRecord) && record.relatedProjects && record.relatedProjects.length !== 0;
-							return (
-								<article
-									id={isNewsRecord && `news-${record.slug.current}`}
-									class="record"
-									data-type={record.type}
-									data-start-date={isProjectRecord ? record.date.startDate : record.date}
-									data-end-date={isProjectRecord ? record.date.endDate : record.date}
-									data-expanded="false"
-									aria-label={record.title}
-									style={{
-										"--color-image-background": record.image?.metadata?.palette?.darkMuted?.background,
-										"--color-image-foreground": record.image?.metadata?.palette?.darkMuted?.title,
-									}}
-								>
-									{of && of.length !== 0 && of.map((schemaItem) => {
-										switch (schemaItem.type) {
-											case "title": return (
-												<div class="record-title">
-													<h4>
-														<Link
-															href={
-																(isProjectRecord || isPublicationRecord) ? `/${baseUrl}/${record.slug.current}/`
-																: isNewsRecord ? `#${record.slug.current}`
-																: isPressRecord ? record.url
-																: null
-															}
-														>
-															<TitleAndSubtitle
-																classPrefix="record"
-																title={record.title}
-																subtitle={
-																	isProjectRecord ? record.subtitle
-																	: isPublicationRecord ? record.subtitle
-																	: isNewsRecord ? null
-																	: isPressRecord ? record.publisher
-																	: null
-																}
-																separator={
-																	isProjectRecord ? undefined
-																	: isPublicationRecord ? undefined
-																	: isNewsRecord ? undefined
-																	: isPressRecord ? " →&nbsp;"
-																	: undefined
-																}
-															/>
-														</Link>
-													</h4>
-												</div>
-											);
-											case "date": return (
-												<div class="record-date" data-format={isProjectRecord ? record.date.dateFormat : null}>
-													{isProjectRecord && (
-														<ComplexDate source={isProjectRecord && record.date} />
-													)}
-													{["news", "press"].includes(record.type) && (
-														<SimpleDate source={(isNewsRecord || isPressRecord || isPublicationRecord) && record.date} />
-													)}
-													{["publication"].includes(record.type) && (
-														<time datetime={record.date}>{record.date.split("-")[0]}</time>
-													)}
-												</div>
-											);
-											case "tags": return schemaItem.tags && schemaItem.tags.length !== 0 && (
-												<dl class="record-tags" aria-label="Tags">
-													{schemaItem.tags.map((schemaTag) => (
-														<div class={`record-${schemaTag}`} data-has-value={record[schemaTag] && record[schemaTag].length !== 0 ? "true" : "false"}>
-															<dt class="display-none">{
-																schemaTag === "types" ? "Types"
-																: schemaTag === "collections" ? "Collections"
-																: schemaTag === "subjects" ? "Subjects"
-																: schemaTag === "locations" ? "Locations"
-																: null
-															}</dt>
-															{record[schemaTag] && record[schemaTag].length !== 0 && record[schemaTag].map((tag) => (
-																<dd>{
-																	schemaTag === "locations" ? [tag.name?.trim(), LOCALES.find((locale) => locale.value === tag.locale)?.title]?.filter(Boolean)?.join(", ")
-																	: tag.name?.trim()
-																}</dd>
-															)) || (
-																<dd aria-hidden="true">∅</dd>
-															)}
-														</div>
-													))}
-												</dl>
-											);
-											case "description": return schemaItem.descriptions && schemaItem.descriptions.length !== 0 && (hasLocalDescription || hasCollectionDescriptions) && (
-												<div class="record-description">
-													{schemaItem.descriptions.map((schemaDescription) => (
-														schemaDescription === "local" && hasLocalDescription ? (
-															<p class="record-description-local">{record.description}</p>
-														) : schemaDescription === "collections" && hasCollectionDescriptions ? (
-															record.collections.map((collection) => (
-																<p class="record-description-collection">{collection.description}</p>
-															))
-														) : null
-													))}
-												</div>
-											);
-											case "image": return (isProjectRecord || isPublicationRecord || isNewsRecord || isPressRecord) && record.image && record.image.asset && (
-												<div class="record-image">
-													<Image
-														source={record.image}
-														sizes={
-															isProjectRecord ? "(min-width: 1281px) 30vw, (max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 40vw"
-															: isPublicationRecord ? "(min-width: 1281px) 25vw, (max-width: 640px) 50vw, (max-width: 1024px) 30vw, (max-width: 1280px) 25vw"
-															: isNewsRecord ? "(min-width: 769px) 60ch, (max-width: 768px) 100vw"
-															: isPressRecord ? "(min-width: 769px) 50ch, (max-width: 768px) 100vw"
-															: "100vw"
-														}
-													/>
-												</div>
-											);
-											case "body": return hasBody && (
-												<div class="record-body">
-													<PortableText source={record.body} />
-												</div>
-											);
-											case "related": return hasRelated && (
-												<div class="record-related">
-													<dl class="record-related-projects">
-														<dt>Projects covered:</dt>
-														{record.relatedProjects.map((project) => (
-															<dd><Link href={`/${schemaItem.baseUrls.projectsListingBaseUrl}/${project.slug.current}`}>{project.title}</Link></dd>
-														))}
-													</dl>
-												</div>
-											);
-											default: return null;
-										};
-									})}
-								</article>
+				<h2 class="display-none" aria-hidden="true">{set.title}</h2>
+				{hasListingHeaders && (
+					<div class="listing-headers" aria-label="Sorting Controls">
+						{baselineRow.columns.map((column) => {
+							return isDynamicSet ? (
+								<div class="listing-header">
+									<input type="radio" name="switch-subset-to" id={`${set.name}-switch-subset-to-${column.method}`} value={column.method} autocomplete="off" checked={column.method === set.default} />
+									<label for={`${set.name}-switch-subset-to-${column.method}`}>{column.title}</label>
+								</div>
+							) : (
+								<div class="listing-header">
+									<span>{column.title}</span>
+								</div>
 							);
 						})}
-					</section>
-				</>))}
+					</div>
+				)}
+				{keys && keys.length !== 0 && keys?.map((key) => {
+					const correspondingObject: DatasetRecordGroup = set.object[key];
+					return (<>
+						<section
+							id={`${set.name}-${key}`}
+							class="record-group"
+							data-size={correspondingObject?.records?.length || "0"}
+							data-grouping-method={correspondingObject?.method}
+							aria-label={correspondingObject?.description}
+							style={{
+								"--item-count": correspondingObject?.records?.length || "0",
+							}}
+						>
+							<h3 class="record-group-title" role="presentation" aria-hidden="true">
+								<span>{correspondingObject?.title}</span>
+							</h3>
+							{correspondingObject?.records?.map((record) => {
+								const isProjectRecord = record.type === "project";
+								const isPublicationRecord = record.type === "publication";
+								const isNewsRecord = record.type === "news";
+								const isPressRecord = record.type === "press";
+								return (
+									<article
+										id={(isProjectRecord || isPublicationRecord || isNewsRecord) && `${set.name}-${key}-${record.type}-${record.slug.current}`}
+										class="record"
+										data-record-type={record.type}
+										data-start-date={(isProjectRecord && record.date.startDate) || ((isPublicationRecord || isNewsRecord || isPressRecord) && record.date)}
+										data-end-date={(isProjectRecord && record.date.startDate) || ((isPublicationRecord || isNewsRecord || isPressRecord) && record.date)}
+										data-expanded={(isListSet || (isHeadlinesSet && isNewsRecord)) && "false"}
+										aria-label={record.title}
+									>
+										{(() => {
+											switch(set.type) {
+												case "details": return (<>
+													<RecordTitle record={record} />
+													<RecordDate record={record} />
+													<RecordTag tags={["types", "locations"]} record={record} />
+													<RecordDescriptions record={record} />
+													<RecordImage record={record} />
+												</>);
+												case "list": return set.rows && set.rows.length !== 0 && set.rows.map((row) => row.columns && row.columns.length !== 0 && (
+													<div class={`record-${row.type}-row`}>
+														{row.columns.map((column) => {
+															switch (column.name) {
+																case "title": return (<RecordTitle record={record} />);
+																case "date": return (<RecordDate record={record} />);
+																case "types": return (<RecordTag tags={["types"]} record={record} withMissing={true} />);
+																case "subjects": return (<RecordTag tags={["subjects"]} record={record} withMissing={true} />);
+																case "collections": return (<RecordTag tags={["collections"]} record={record} withMissing={true} />);
+																case "locations": return (<RecordTag tags={["locations"]} record={record} withMissing={true} />);
+																case "tags": return (<RecordTag tags={["types", "subjects", "collections", "locations"]} record={record} withMissing={true} />);
+																case "descriptions": return (<RecordDescriptions record={record} />);
+																case "image": return (<RecordImage record={record} />);
+																case "body": return (<RecordBody record={record} />);
+																case "related": return (<RecordRelated record={record} />);
+																default: return null;
+															};
+														})}
+													</div>
+												));
+												case "covers": return (<>
+													<RecordTitle record={record} />
+													<div class="record-date-and-tags">
+														<RecordDate record={record} />
+														<RecordTag tags={["types", "collections"]} record={record} />
+													</div>
+													<RecordImage record={record} />
+												</>);
+												case "headlines": return (<>
+													<RecordTitle record={record} />
+													<RecordDate record={record} />
+													<RecordDescriptions record={record} />
+													<RecordImage record={record} />
+													{set.options?.withBody !== false && (<RecordBody record={record} />)}
+													{set.options?.withRelated !== false && (<RecordRelated record={record} />)}
+													
+												</>);
+												default: return null;
+											};
+										})()}
+									</article>
+								);
+							})}
+						</section>
+					</>);
+				})}
 			</section>
 		)
 	})}
@@ -429,275 +292,333 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 <style lang="scss" is:global>
 	// sass setup
 	@use "@styles/mixins";
-	@mixin hoverable-record($from-background-color: transparent, $to-background-color: var(--color-6), $before: false) {
-		@if $before {
-			&::before {
-				background: $from-background-color;
-				transition: background-color 0.125s;
-			}
-			@media (any-hover: hover) {
-				&:hover::before {
-					background: $to-background-color;
-				}
-			}
-		} @else {
-			background: $from-background-color;
-			transition: background-color 0.125s;
-			@media (any-hover: hover) {
-				&:hover {
-					background: $to-background-color;
-				}
-			}
+	// dataset headers
+	.dataset-headers {
+		& {
+			padding-block: 1rem;
+			border-block-end: 1px solid var(--color-5);
+			line-height: var(--line-height-small);
+			font-size: var(--font-size-medium);
 		}
-	}
-	// configuration
-	#dataset:not([data-current-view="list"]) #sorts,
-	#dataset[data-current-view="cards"] .listing:not([data-default="true"]),
-	#dataset[data-current-view="list"][data-current-grouping="title"] .listing:not([data-grouping="title"]),
-	#dataset[data-current-view="list"][data-current-grouping="date"] .listing:not([data-grouping="date"]),
-	#dataset[data-current-view="list"][data-current-grouping="types"] .listing:not([data-grouping="types"]),
-	#dataset[data-current-view="list"][data-current-grouping="collections"] .listing:not([data-grouping="collections"]) {
-		display: none;
-	}
-	#tags[data-current-filter="none"],
-	#tags[data-current-filter="types"] > ul:not([data-filter="types"]),
-	#tags[data-current-filter="collections"] > ul:not([data-filter="collections"]),
-	#tags[data-current-filter="subjects"] > ul:not([data-filter="subjects"]),
-	#tags[data-current-filter="locations"] > ul:not([data-filter="locations"]) {
-		display: none;
-	}
-	// controls and sorts
-	#controls-outer, #sorts {
-		line-height: 1;
-	}
-	#controls-outer {
-		position: sticky;
-		top: var(--header-height);
-		z-index: 98;
-		padding-inline: calc(15% + 1.5rem + 1.5rem);
-		margin-inline: -1.5rem;
-		background: var(--color-7);
-		font-size: var(--font-size-medium);
-		@media (min-width: 1536px) {
-			padding-inline: calc(20% + 1.5rem + 1.5rem);
-		}
-		@media (max-width: 1280px) {
-			padding-inline-end: 1.5rem;
-		}
-		@media (max-width: 1024px) {
-			padding-inline-start: 1.5rem;
-		}
-	}
-	#controls-inner {
-		display: flex;
-		flex-wrap: wrap;
-		column-gap: 1.5rem;
-		row-gap: 1rem;
-		padding-block: 1rem;
-		border-block-end: 1px solid var(--color-5);
-	}
-	.control-group-title {
-		color: var(--color-2);
-	}
-	.control-group {
-		display: flex;
-		column-gap: 0.75rem;
-		row-gap: 0.75rem;
-		@media (max-width: 512px) {
-			flex-direction: column;
+		.dataset-header {
+			display: flex;
+			column-gap: 0.5rem;
+			row-gap: 0.5rem;
 			flex-wrap: wrap;
-			max-height: calc(2em + 0.75rem + 1px);
 		}
-	}
-	.control {
-		position: relative;
-		input {
+		.dataset-header::before {
+			content: attr(data-title);
+			color: var(--color-2);
+		}
+		.dataset-header-item {
+			position: relative;
+			@include mixins.hover-text();
+		}
+		.dataset-header-item input {
 			position: absolute;
 			inset: 0;
 			opacity: 0;
-		}
-		input,
-		input + label {
 			cursor: pointer;
 		}
-		input + label {
-			position: relative;
-		}
-		input + label::before {
-			display: inline-block;
-			margin-inline-end: 0.25rem;
+		.dataset-header-item label::before {
 			font-family: var(--font-family-mono);
-			line-height: 1;
+			margin-inline-end: 0.25em;
 		}
-		input:not(:checked) + label::before {
-			color: var(--color-3);
-		}
-		input:checked + label::before {
-			color: currentColor;
-		}
-	}
-	#filters,
-	#views {
-		display: flex;
-		align-items: baseline;
-		column-gap: 0.75rem;
-		row-gap: 0.75rem;
-		@media (max-width: 768px) {
-			flex-direction: column;
-		}
-	}
-	#filters {
-		flex: 1;
-		label::before {
-			content: "+";
-			content: "+" / "";
-		}
-		input:checked + label::before {
-			content: "×";
-			content: "×" / "";
-		}
-		input:checked + label::after {
-			content: "";
-			position: absolute;
-			display: block;
-			left: 50%;
-			transform: translateX(-50%);
-			width: 1em;
-			height: 0.5em;
-			background: var(--color-7);
-			top: calc(100% + 1rem - 0.5em - 1px);
-			border-inline-start: 0.5em solid var(--color-7);
-			border-inline-end: 0.5em solid var(--color-7);
-			border-block-end: 0.5em solid var(--color-6);
-			pointer-events: none;
-			@media (max-width: 512px) {
-				content: none;
-			}
-		}
-	}
-	#views {
-		min-width: 3.75rem;
-		input:checked + label::before {
+		.dataset-switch input:checked + label::before {
 			content: "✓";
 			content: "✓" / "";
 		}
-	}
-	#tags {
-		flex-basis: calc(100% + 1.5rem);
-		ul {
+		.dataset-filter input:not(:checked) + label::before {
+			content: "+";
+			content: "+" / "";
+		}
+		.dataset-filter input:checked + label::before {
+			content: "×";
+			content: "×" / "";
+		}
+		.dataset-filter-menus[data-current-filter-type="none"],
+		.dataset-filter-menus[data-current-filter-type="types"] .dataset-filter-menu:not([data-filter-type="types"]),
+		.dataset-filter-menus[data-current-filter-type="subjects"] .dataset-filter-menu:not([data-filter-type="subjects"]),
+		.dataset-filter-menus[data-current-filter-type="collections"] .dataset-filter-menu:not([data-filter-type="collections"]),
+		.dataset-filter-menus[data-current-filter-type="locations"] .dataset-filter-menu:not([data-filter-type="locations"]) {
+			display: none;
+		}
+		.dataset-filter-menus {
+			flex-basis: 100%;
+		}
+		.dataset-filter-menu {
 			display: flex;
 			flex-wrap: wrap;
 			column-gap: 1.5rem;
 			row-gap: 0.75rem;
 			padding: 0.75rem;
+			margin-block-start: 0.5rem;
 			background: var(--color-6);
+			border-radius: 0.5rem;
 			list-style: none;
 		}
-		a {
+		.dataset-filter-menu a {
 			display: flex;
+			@include mixins.hover-text();
 		}
-		a::before {
+		.dataset-filter-menu a::before {
 			content: attr(data-size);
 			content: attr(data-size) / "";
 			display: inline-block;
 			margin-inline-end: 0.5rem;
-			color: var(--color-3);
+			color: var(--color-2);
 		}
-	}
-	#sorts {
-		position: sticky;
-		top: calc(var(--header-height) + (var(--font-size-medium) + 1rem + 1rem + 1px));
-		z-index: 97;
-		margin-inline: -1.5rem;
-		padding-inline: calc(15% + 1.5rem + 1.5rem);
-		background: var(--color-7);
-		font-size: var(--font-size-medium);
-		@media (min-width: 1536px) {
-			padding-inline: calc(20% + 1.5rem + 1.5rem);
+		@media (min-width: 513px) {
+			.dataset-filter input:checked + label::after {
+				content: "";
+				position: absolute;
+				display: block;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 1em;
+				height: 0.5em;
+				background: var(--color-7);
+				top: calc(100% + 1rem - 0.5em);
+				border-inline-start: 0.5em solid var(--color-7);
+				border-inline-end: 0.5em solid var(--color-7);
+				border-block-end: 0.5em solid var(--color-6);
+				pointer-events: none;
+			}
 		}
-		@media (max-width: 1280px) {
-			padding-inline-end: 1.5rem;
+		@media (min-width: 705px) {
+			& {
+				position: sticky;
+				top: var(--header-height);
+				z-index: 99;
+				background: var(--color-7);
+			}
+			.dataset-switches {
+				position: absolute;
+				top: 1rem;
+				right: 0;
+			}
 		}
-		@media (max-width: 1024px) {
-			padding-inline-start: 1.5rem;
+		@media (max-width: 704px) {
+			& {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				row-gap: 1rem;
+			}
 		}
-	}
-	#sorts-inner {
-		display: grid;
-		grid-template-columns: var(--list-columns-gt-1024px);
-		border-block-end: 1px solid var(--color-5);
-		@media (max-width: 1024px) {
-			grid-template-columns: var(--list-columns-lte-1024px);
-		}
-	}
-	.sort {
-		position: relative;
-		padding-block: 1rem;
-		padding-inline: 0.75rem;
-		background: transparent;
-		transition: background-color 0.125s;
-		input:checked + label::before {
-			content: "↓";
-			content: "↓" / "";
-		}
-		@media (any-hover: hover) {
-			&:hover {
-				background: var(--color-6);
+		@media (max-width: 512px) {
+			.dataset-header::before {
+				flex-basis: 100%;
 			}
 		}
 	}
-	// listings
-	.record-group {
-		display: grid;
-		grid-template-columns: var(--grouping-columns-lt-1536px);
+	// general listing layouting
+	.listing[data-set-type="details"],
+	.listing[data-set-type="list"],
+	.listing[data-set-type="headlines"],
+	.listing[data-set-type="covers"] {
+		.record-group {
+			display: grid;
+			&[data-size="0"] {
+				display: none;
+			}
+			* {
+				min-width: 0;
+				min-height: 0;
+			}
+		}
+	}
+	.listing[data-set-type="details"],
+	.listing[data-set-type="list"],
+	.listing[data-set-type="headlines"] {
 		column-gap: 1.5rem;
-		&[data-size="0"] {
-			display: none;
-		}
-		* {
-			min-width: 0;
-			min-height: 0;
-		}
 	}
-	.record-group-title {
-		grid-column: 1/2;
-		position: sticky;
-		top: var(--header-height);
-		z-index: 99;
-		height: fit-content;
-		width: fit-content;
-		padding-block: 0.75rem;
-		color: var(--color-2);
-		text-wrap: balance;
-	}
-	.record {
-		grid-column: 2/3;
-	}
-	@media (min-width: 1536px) {
+	.listing[data-set-type="details"],
+	.listing[data-set-type="list"] {
 		.record-group {
-			grid-template-columns: var(--grouping-columns-gte-1536px);
-		}
-	}
-	@media (max-width: 1280px) {
-		.record-group {
-			grid-template-columns: var(--grouping-columns-lte-1280px);
-		}
-	}
-	@media (max-width: 1024px) {
-		.record-group {
-			grid-template-columns: unset;
-		}
-		.record-group-title {
-			grid-column: unset;
-			position: revert;
-			top: revert;
-			z-index: revert;
+			grid-template-columns: 15% 1fr 15%;
 		}
 		.record {
-			grid-column: unset;
+			grid-column: 2/3;
+		}
+		.record-group-title {
+			grid-column: 1/2;
+			grid-row: 1/calc(var(--item-count) + 1);
+			position: sticky;
+			top: var(--header-height);
+			height: fit-content;
+			width: fit-content;
+			padding-block: 0.75rem;
+			color: var(--color-2);
+			text-wrap: balance;
+		}
+		@media (min-width: 1536px) {
+			.record-group {
+				grid-template-columns: 20% 1fr 20%;
+			}
+		}
+		@media (max-width: 1280px) {
+			.record-group {
+				grid-template-columns: 15% 1fr;
+			}
+		}
+		@media (max-width: 1024px) {
+			.record-group {
+				grid-template-columns: auto 1fr;
+			}
+			.record-group-title {
+				-webkit-writing-mode: vertical-lr;
+				writing-mode: vertical-lr;
+				line-height: var(--line-height-small);
+				padding-inline: calc(0.75rem + 0.3em);
+				padding-block-start: 0;
+				padding-block-end: calc(0.5em + 0.75rem);
+			}
 		}
 	}
-	#dataset[data-current-view="cards"] .listing {
+	.dataset-headers ~ .listing[data-set-type="details"] .record-group-title,
+	.dataset-headers ~ .listing[data-set-type="list"] .record-group-title {
+		@media (min-width: 705px) {
+			top: calc(var(--header-height) * 2);
+		}
+	}
+	.listing[data-set-type="list"] {
+		.listing-headers {
+			display: grid;
+			grid-template-columns: var(--grid-template-columns-baseline);
+			grid-auto-flow: column;
+			margin-inline: 15%;
+			font-size: var(--font-size-medium);
+		}
+		.record-baseline-row {
+			display: grid;
+			grid-template-columns: var(--grid-template-columns-baseline);
+			grid-auto-flow: column;
+		}
+		.record-expanded-row {
+			display: grid;
+			grid-template-columns: var(--grid-template-columns-expanded);
+			grid-auto-flow: column;
+		}
+		@media (min-width: 1536px) {
+			.listing-headers {
+				margin-inline: 20%;
+			}
+		}
+		@media (max-width: 1280px) {
+			.listing-headers {
+				margin-inline: 15%;
+				margin-inline-end: 0;
+			}
+		}
+		@media (max-width: 1024px) {
+			.listing-headers {
+				grid-template-columns: unset;
+				margin-inline-start: calc(var(--font-size-large) + (var(--font-size-large) / 2) + 0.75rem);
+			}
+		}
+		@media (max-width: 640px) {
+			.listing-headers {
+				display: flex;
+				column-gap: 0.5rem;
+				justify-content: space-between;
+			}
+		}
+	}
+	.dataset-headers ~ .listing[data-set-type="list"] .listing-headers {
+		@media (max-width: 1024px) {
+			margin-inline-start: 0;
+		}
+	}
+	.listing[data-set-type="headlines"] {
+		.record-group {
+			grid-template-columns: 15% 1fr 15%;
+		}
+		.record-group-title {
+			display: none;
+		}
+		.record {
+			grid-column: 2/3;
+		}
+		@media (min-width: 1536px) {
+			.record-group {
+				grid-template-columns: 20% 1fr 20%;
+			}
+		}
+		@media (max-width: 1280px) {
+			.record-group {
+				grid-template-columns: 15% 1fr 15%;
+			}
+		}
+		@media (max-width: 1024px) {
+			.record-group {
+				grid-template-columns: unset;
+			}
+			.record {
+				grid-column: unset;
+			}
+		}
+	}
+	.listing[data-set-type="covers"] {
+		.record-group {
+			grid-template-columns: 15% 1fr 1fr 1fr 15%;
+		}
+		.record-group-title {
+			display: none;
+		}
+		.record:nth-of-type(3n - 2) {
+			grid-column: 2/3;
+		}
+		.record:nth-of-type(3n - 1) {
+			grid-column: 3/4;
+		}
+		.record:nth-of-type(3n) {
+			grid-column: 4/5;
+		}
+		@media (min-width: 1536px) {
+			.record-group {
+				grid-template-columns: 20% 1fr 1fr 1fr 20%;
+			}
+		}
+		@media (max-width: 1280px) {
+			.record-group {
+				grid-template-columns: 15% 1fr 1fr 1fr 15%;
+			}
+		}
+		@media (max-width: 1024px) {
+			.record-group {
+				grid-template-columns: 1fr 1fr 1fr;
+				gap: 1rem;
+			}
+			.record:nth-of-type(3n - 2) {
+				grid-column: 1/2;
+			}
+			.record:nth-of-type(3n - 1) {
+				grid-column: 2/3;
+			}
+			.record:nth-of-type(3n) {
+				grid-column: 3/4;
+			}
+		}
+		@media (max-width: 640px) {
+			.record-group {
+				grid-template-columns: 1fr 1fr;
+			}
+			.record:nth-of-type(2n - 1) {
+				grid-column: 1/2;
+			}
+			.record:nth-of-type(2n) {
+				grid-column: 2/3;
+			}
+		}
+		@media (max-width: 384px) {
+			.record-group {
+				gap: 0.75rem;
+			}
+		}
+	}
+	// specific layouting for detail sets
+	.listing[data-set-type="details"] {
 		& {
 			margin-block: 0.75rem;
 		}
@@ -706,7 +627,6 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 		}
 		.record-title {
 			text-wrap: balance;
-			// @include mixins.ellipsis-multiline($lines: 3);
 		}
 		.record-title a::after {
 			content: "";
@@ -728,36 +648,24 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			font-size: var(--font-size-small);
 			color: var(--color-2);
 		}
-		.record-description-local,
-		.record-description-collection {
+		.record-local-description,
+		.record-collection-description {
 			@include mixins.ellipsis-multiline($lines: 3);
 		}
 		.record-tags {
-			display: flex;
-			flex-wrap: wrap;
-			column-gap: 0.5rem;
-			row-gap: 0.5rem;
 			font-size: var(--font-size-small);
 			color: var(--color-1);
-			[data-has-value="false"] {
-				display: none;
-			}
 		}
-		.record-types,
-		.record-locations {
-			display: inline-flex;
-			flex-wrap: wrap;
-			column-gap: 0.5rem;
-			row-gap: 0.5rem;
+		.record-tags dt {
+			display: none;
 		}
 		.record-tags dd {
-			@include mixins.tag($hover: false, $border-color: var(--color-5));
-			background: var(--color-7);
+			display: inline;
 		}
-		.record-tags dd ~ dd {
-			// display: none;
+		.record-tags dd:not(:last-of-type)::after {
+			content: ", ";
 		}
-		.record-collections {
+		.record-location-var1 {
 			display: none;
 		}
 		.record-image img {
@@ -806,10 +714,10 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 				min-height: 100%;
 				overflow: hidden;
 				overflow: clip;
-				-webkit-mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
-				mask: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+				-webkit-mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+				mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
 			}
-			.record-description-local + .record-description-collection {
+			.record-local-description + .record-collection-description {
 				margin-block-start: var(--_inner-gap);
 			}
 			.record-tags {
@@ -820,7 +728,7 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 		@media (min-width: 1025px) {
 			.record {
 				padding: 0.75rem;
-				@include hoverable-record();
+				@include mixins.hoverable-area();
 			}
 		}
 		@media (max-width: 1024px) {
@@ -833,7 +741,7 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			.record {
 				display: flex;
 				flex-direction: column;
-				row-gap: 0.25rem;
+				row-gap: 0.375rem;
 			}
 			.record-image {
 				order: 1;
@@ -849,26 +757,18 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			.record-description {
 				order: 4;
 			}
-			.record-description:has(.record-description-collection:only-child) {
+			.record-description:has(.record-collection-description:only-child) {
 				display: none;
 			}
-			.record-description-collection { 
+			.record-collection-description { 
 				display: none;
 			}
 			.record-tags {
-				position: absolute;
-				left: var(--_inset);
-				right: var(--_inset);
-				bottom: calc(100% - 0.75rem - ((100vw - 1.5rem - 1.5rem) * 0.5625) + var(--_inset));
-				bottom: calc(100% - 0.75rem - ((100dvw - 1.5rem - 1.5rem) * 0.5625) + var(--_inset));
-				--_inset: 0.5rem;
-				// order: 5;
+				order: 5;
 			}
 		}
 		@media (max-width: 384px) {
-			.record-tags,
-			.record-types,
-			.record-locations {
+			.record-tags {
 				flex-wrap: nowrap;
 			}
 			.record-tags dd {
@@ -876,17 +776,49 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			}
 		}
 	}
-	#dataset[data-current-view="list"] .listing {
+	// specific layouting for list sets
+	.listing[data-set-type="list"] {
+		&[data-set-method="dynamic"][data-current-subset="alphabetic"] > .record-group:not([data-grouping-method="alphabetic"]),
+		&[data-set-method="dynamic"][data-current-subset="period"] > .record-group:not([data-grouping-method="period"]),
+		&[data-set-method="dynamic"][data-current-subset="types"] > .record-group:not([data-grouping-method="types"]),
+		&[data-set-method="dynamic"][data-current-subset="subjects"] > .record-group:not([data-grouping-method="subjects"]),
+		&[data-set-method="dynamic"][data-current-subset="collections"] > .record-group:not([data-grouping-method="collections"]) {
+			display: none;
+		}
+		.listing-headers {
+			border-block-end: 1px solid var(--color-5);
+			line-height: var(--line-height-small);
+		}
+		.listing-header {
+			position: relative;
+			padding-block: 1rem;
+			background: transparent;
+			transition: background-color 0.125s;
+			input:checked + label::before {
+				content: "↓";
+				content: "↓" / "";
+				font-family: var(--font-family-mono);
+				margin-inline-end: 0.25em;
+			}
+		}
+		.listing-header input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			cursor: pointer;
+		}
 		@media (min-width: 1025px) {
 			& {
 				margin-block-end: 1.5rem;
 			}
+			.listing-header {
+				padding-inline: 0.75rem;
+				@include mixins.hoverable-area($from-background-color: var(--color-7));
+			}
 			.record {
 				position: relative;
-				display: grid;
-				grid-template-columns: var(--list-columns-gt-1024px);
 				border-block-end: 1px solid var(--color-6);
-				@include hoverable-record();
+				@include mixins.hoverable-area();
 				// &::after {
 				// 	position: absolute;
 				// 	top: 0;
@@ -917,8 +849,7 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 				// }
 			}
 			.record:not([data-expanded="true"]) {
-				.record-description,
-				.record-image {
+				.record-expanded-row {
 					display: none;
 				}
 				// &::after {
@@ -926,13 +857,12 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 				// 	content: "+" / "";
 				// }
 			}
-			.record-title,
-			.record-date,
-			.record-types,
-			.record-collections,
-			.record-image,
-			.record-description, {
+			.record-baseline-row > * {
 				padding: 0.75rem;
+			}
+			.record-expanded-row > * {
+				padding: 0.75rem;
+				padding-block-start: 0;
 			}
 			.record-date,
 			.record-types,
@@ -942,7 +872,6 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			}
 			.record-title {
 				position: relative;
-				grid-column: 1/2;
 			}
 			.record-title a {
 				@include mixins.hover-text();
@@ -957,118 +886,92 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			.record-title-baseline {
 				font-weight: var(--font-weight-bold);
 			}
-			.record-date {
-				grid-column: 2/3;
-				.date-baseline {
-					display: none;
-				}
-			}
-			.record-tags {
-				display: contents;
-			}
-			.record-types {
-				grid-column: 3/4;
-			}
-			.record-collections {
-				grid-column: 4/5;
-			}
-			.record-locations {
+			.record-date .date-baseline {
 				display: none;
 			}
-			.record-tags dd {
+			.record-types dt,
+			.record-subjects dt,
+			.record-collections dt,
+			.record-locations dt {
+				display: none;
+			}
+			.record-types dd,
+			.record-subjects dd,
+			.record-collections dd,
+			.record-locations dd {
 				display: inline;
 				&:not(:last-of-type)::after {
 					content: ", ";
 				}
 			}
-			.record-image,
 			.record-description {
-				padding-block-start: 0;
+				font-size: var(--font-size-medium);
 			}
-			.record-image {
-				grid-column: 1/2;
-				grid-row: 2/3;
-			}
-			.record-description {
-				grid-column: 2/5;
-				grid-row: 2/3;
-				font-size: var(--font-size-small);
-			}
-			.record-description-local + .record-description-collection {
+			.record-local-description + .record-collection-description {
 				margin-block-start: 0.5rem;
 			}
 		}
-		// @media (max-width: 1024px) {
-		// 	& {
-		// 		margin-block-end: 0.75rem;
-		// 	}
-		// 	.record {
-		// 		padding-block: 0.75rem;
-		// 		margin-inline-start: 1.5rem;
-		// 	}
-		// 	.record::before {
-		// 		content: "•";
-		// 		content: "•" / "";
-		// 		display: inline-block;
-		// 		margin-inline-start: -1.5rem;
-		// 		margin-block-start: 0.1ch;
-		// 		padding-inline-end: calc(1.5rem - 1ch);
-		// 		font-family: var(--font-family-mono);
-		// 		line-height: 1;
-		// 		float: left;
-		// 		color: var(--color-3);
-		// 	}
-		// 	.record-title {
-		// 		display: inline-block;
-		// 		width: 100%;
-		// 		margin-block-end: 0.25rem;
-		// 		// text-wrap: balance;
-		// 	}
-		// 	.record-title-baseline {
-		// 		font-weight: var(--font-weight-bold);
-		// 	}
-		// 	.record-date,
-		// 	.record-date * {
-		// 		display: inline;
-		// 	}
-		// 	.record-date::after {
-		// 		content: ", ";
-		// 	}
-		// 	.record-types[data-has-value="true"] + .record-collections[data-has-value="true"]::before {
-		// 		content: ", ";
-		// 	}
-		// 	.record-tags > [data-has-value="false"] {
-		// 		display: none;
-		// 	}
-		// 	.record-tags,
-		// 	.record-types,
-		// 	.record-types dd,
-		// 	.record-collections,
-		// 	.record-collections dd {
-		// 		display: inline;
-		// 	}
-		// 	.record-types > dd:not(:last-of-type)::after,
-		// 	.record-collections > dd:not(:last-of-type)::after {
-		// 		content: ", ";
-		// 	}
-		// 	.record-subjects,
-		// 	.record-locations {
-		// 		display: none;
-		// 	}
-		// 	.record-description {
-		// 		display: none;
-		// 	}
-		// 	.record-image {
-		// 		display: none;
-		// 	}
-		// 	.record-date,
-		// 	.record-tags {
-		// 		color: var(--color-2);
-		// 		font-size: var(--font-size-medium);
-		// 	}
-		// }
+		@media (max-width: 1024px) {
+			& {
+				margin-block-end: 0.75rem;
+			}
+			.listing-header {
+				@include mixins.hover-text();
+			}
+			.record {
+				padding-block: 0.75rem;
+			}
+			.record-baseline-row {
+				display: revert;
+			}
+			.record-expanded-row {
+				display: none;
+			}
+			.record-date,
+			.record-types,
+			.record-collections {
+				font-size: var(--font-size-small);
+				color: var(--color-2);
+			}
+			.record-date,
+			.record-types,
+			.record-collections,
+			.record-types dd,
+			.record-collections dd {
+				display: inline;
+			}
+			.record-title-baseline {
+				font-weight: var(--font-weight-bold);
+			}
+			.record-title a {
+				@include mixins.hover-text();
+			}
+			.record-date time::after {
+				content: ", ";
+			}
+			.record-types dt,
+			.record-collections dt {
+				display: none;
+			}
+			.record-types[data-has-value="false"],
+			.record-collections[data-has-value="false"] {
+				display: none;
+			}
+			.record-types + .record-collections:not([data-has-value="false"])::before {
+				content: ", ";
+			}
+			.record-types dd:not(:last-of-type)::after,
+			.record-collections dd:not(:last-of-type)::after {
+				content: ", ";
+			}
+		}
 	}
-	#dataset[data-current-view="headlines"] .listing {
+	// specific layouting for headline sets
+	.listing[data-set-type="headlines"] {
+		& {
+			padding: 1rem;
+			@include mixins.polka-dot-background($density: 3);
+		}
 		.record-group-title {
 			display: none;
 		}
@@ -1076,9 +979,22 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			display: flex;
 			flex-flow: column;
 			row-gap: 0.75rem;
+			padding: 0.75rem;
+			margin: 1.5rem;
+			box-shadow: 0 0 0.75rem 0.75rem var(--color-7);
 		}
-		.record[data-type="press"] {
+		.record[data-record-type="news"] {
+			background: var(--color-7);
+			scroll-margin-block-start: calc(var(--header-height) + 1.5rem);
+			// &:not([data-expanded="true"]) {
+			// 	.record-body {
+			// 		@include mixins.ellipsis-multiline($lines: 10);
+			// 	}
+			// }
+		}
+		.record:not([data-record-type="news"]) {
 			position: relative;
+			@include mixins.hoverable-area($from-background-color: var(--color-7));
 			.record-title a::after {
 				content: "";
 				position: absolute;
@@ -1127,31 +1043,16 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			@include mixins.link();
 			@include mixins.hover-text();
 		}
-		.record-related-projects dt {
+		.record-related dt {
 			display: inline
 		}
-		.record-related-projects dd {
+		.record-related dd {
 			@include mixins.comma-separated-list();
 		}
-		@media (min-width: 769px) {
-			& {
-				margin-block: 1.5rem;
-				@include mixins.polka-dot-background();
-			}
+		@media (min-width: 641px) {
 			.record {
-				padding: 1.5rem;
-				margin: 1.5rem;
-			}
-			.record[data-type="news"] {
-				width: 100%;
-				max-width: 60ch;
-				background: var(--color-7);
-				scroll-margin-block-start: calc(var(--header-height) + 1.5rem);
-			}
-			.record[data-type="press"] {
 				width: fit-content;
 				max-width: 50ch;
-				@include hoverable-record($from-background-color: var(--color-7));
 			}
 			.record:nth-of-type(even) {
 				margin-inline-start: auto;
@@ -1160,48 +1061,20 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 				margin-inline: auto;
 			}
 		}
-		@media (max-width: 768px) {
-			& {
-				margin-block-end: 1.5rem;
-			}
+		@media (max-width: 640px) {
 			.record {
-				background: var(--color-7);
-				padding-block: 1.5rem;
-				border-block-end: 1px solid var(--color-5);
-			}
-			.record[data-type="news"] {
-				scroll-margin-block-start: var(--header-height);
-			}
-			.record-title a::after {
-				top: 1.5rem;
-				bottom: 1.5rem;
+				justify-self: center;
 			}
 		}
 	}
-	#dataset[data-current-view="covers"] .listing {
-		& {
-			margin-block: 1.5rem;
-		}
-		.record-group-title {
-			display: none;
-		}
-		.record-group {
-			row-gap: 1.5rem;
-		}
+	// specific layouting for cover sets
+	.listing[data-set-type="covers"] {
 		.record {
 			position: relative;
 			display: flex;
 			flex-direction: column;
 			row-gap: 0.25rem;
-		}
-		.record:nth-of-type(3n - 2) {
-			grid-column: 2/3;
-		}
-		.record:nth-of-type(3n - 1) {
-			grid-column: 3/4;
-		}
-		.record:nth-of-type(3n) {
-			grid-column: 4/5;
+			align-self: start;
 		}
 		.record-image {
 			order: 1;
@@ -1214,14 +1087,9 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			object-fit: cover;
 			aspect-ratio: 2.1/3;
 		}
-		.record-date {
-			order: 2;
-			font-size: var(--font-size-small);
-			color: var(--color-2);
-		}
 		.record-title {
-			order: 3;
-			text-wrap: balance;
+			order: 2;
+			font-size: var(--font-size-medium);
 		}
 		.record-title-baseline {
 			font-weight: var(--font-weight-bold);
@@ -1231,138 +1099,142 @@ const hasListSchema = listSchema && listSchema.mode === "list";
 			position: absolute;
 			inset: 0;
 		}
-		.record-tags {
-			order: 4;
+		.record-date-and-tags {
+			order: 3;
 			font-size: var(--font-size-small);
-			color: var(--color-2);
-			[data-has-value="false"] {
-				display: none;
-			}
 		}
-		.record-types,
-		.record-collections {
-			display: contents;
+		.record-date {
+			display: inline;
+		}
+		.record-date::after {
+			content: ", ";
+		}
+		.record-tags {
+			display: inline;
+		}
+		.record-tags dt {
+			display: none;
 		}
 		.record-tags dd {
 			display: inline;
 		}
-		.record-tags dd::after {
+		.record-tags dd + dd::before,
+		.record-tags dt:not(:first-of-type) + dd::before {
 			content: ", ";
 		}
-		@media (max-width: 1024px) {
-			.record:nth-of-type(3n - 2) {
-				grid-column: 1/2;
+		@media (min-width: 1025px) {
+			& {
+				margin-block: 0.75rem;
 			}
-			.record:nth-of-type(3n - 1) {
-				grid-column: 2/3;
-			}
-			.record:nth-of-type(3n) {
-				grid-column: 3/4;
+			.record {
+				margin: 0.75rem;
 			}
 		}
-		@media (max-width: 640px) {
-			.record:nth-of-type(2n - 1) {
-				grid-column: 1/2;
-			}
-			.record:nth-of-type(2n) {
-				grid-column: 2/3;
+		@media (max-width: 1024px) {
+			& {
+				margin-block: 1.5rem;
 			}
 		}
 	}
 </style>
 
 <script>
-	const dataset = document.querySelector("#dataset");
-	const viewInputs = document.querySelectorAll(`input[name="view-as"]`);
-	const sortInputs = document.querySelectorAll(`input[name="sort-by"]`);
-	viewInputs?.forEach((input) => {
-		return input.addEventListener("change", handleViewChange);
+	// const dataset = document.querySelector("#dataset");
+	const datasetSwitches = document.querySelectorAll(`input[name="switch-dataset-to"]`);
+	datasetSwitches?.forEach((datasetSwitch) => {
+		return datasetSwitch.addEventListener("change", handleDatasetSwitch);
 	});
-	sortInputs?.forEach((input) => {
-		return input.addEventListener("change", handleSortChange);
-	});
-	function handleViewChange(event: Event) {
-		const selectedView = (event.target as HTMLInputElement).value;
-		dataset.setAttribute("data-current-view", selectedView);
-		return;
-	};
-	function handleSortChange(event: Event) {
-		const selectedSort = (event.target as HTMLInputElement).value;
-		dataset.setAttribute("data-current-grouping", selectedSort);
+	function handleDatasetSwitch(event: Event) {
+		const selectedSetName = (event.target as HTMLInputElement).value;
+		const selectedListing = document.querySelector(`.listing[data-set-name="${selectedSetName}"]`);
+		const otherListings = document.querySelectorAll(`.listing:not([data-set-name="${selectedSetName}"])`);
+		(selectedListing as HTMLElement).style.removeProperty("display");
+		otherListings.forEach((otherListing: HTMLElement) => otherListing.style.setProperty("display", "none"))
 		return;
 	};
 
-	const filterInputs = document.querySelectorAll(`input[name="filter-by"]`);
-	filterInputs?.forEach((input) => {
-		return input.addEventListener("change", handleFilteringChange);
+	const subsetSwitches = document.querySelectorAll(`input[name="switch-subset-to"]`);
+	subsetSwitches?.forEach((subsetSwitch) => {
+		return subsetSwitch.addEventListener("change", handleSubsetSwitch);
 	});
-	function handleFilteringChange(event: Event) {
-		const selectedFilter = (event.target as HTMLInputElement).value;
-		const tagsList = document.querySelector("#tags");
-		const otherFilters = document.querySelectorAll(`input[name="filter-by"]:not([value="${selectedFilter}"])`);
+	function handleSubsetSwitch(event: Event) {
+		const selectedSubset = (event.target as HTMLInputElement).value;
+		const closestListing = (event.target as HTMLInputElement).closest(`.listing[data-set-type="list"][data-set-method="dynamic"]`);
+		closestListing?.setAttribute("data-current-subset", selectedSubset);
+		return;
+	};
+
+	const datasetFilterToggles = document.querySelectorAll(`input[name="filter-dataset-by"]`);
+	const datasetFilterMenuContainer = document.querySelector(".dataset-filter-menus");
+	datasetFilterToggles?.forEach((datasetFilterToggle) => {
+		return datasetFilterToggle.addEventListener("change", handleDatasetFilterToggle);
+	});
+	function handleDatasetFilterToggle(event: Event) {
+		const selectedFilterType = (event.target as HTMLInputElement).value;
+		const otherFilterToggles = document.querySelectorAll(`input[name="filter-dataset-by"]:not([value="${selectedFilterType}"])`);
 		if ((event.target as HTMLInputElement).checked === true) {
-			tagsList.setAttribute("data-current-filter", selectedFilter);
+			datasetFilterMenuContainer.setAttribute("data-current-filter-type", selectedFilterType);
 		} else {
-			tagsList.setAttribute("data-current-filter", "none");
+			datasetFilterMenuContainer.setAttribute("data-current-filter-type", "none");
 		};
-		otherFilters.forEach((filter: HTMLInputElement) => filter.checked = false );
+		otherFilterToggles.forEach((otherFilterToggle: HTMLInputElement) => otherFilterToggle.checked = false);
 		return;
 	};
 
-	var upcomingRecords = []
-	var ongoingRecords = [];
-	const upcomingRecordsGroup = document.querySelector("#date-group-upcoming");
-	const ongoingRecordsGroup = document.querySelector("#date-group-ongoing");
-	const recordsWithStartDates = document.querySelectorAll(`.listing[data-grouping="date"] .record[data-start-date]`);
-	recordsWithStartDates.forEach((record) => {
-		const startDateString = record.getAttribute("data-start-date");
-		const endDateString = record.getAttribute("data-end-date");
-		const startDate = new Date(startDateString);
-		const endDate = endDateString && new Date(endDateString) || null;
-		const now = new Date();
-		if (startDate > now) {
-			updateRecordGroupSize(record, -1);
-			upcomingRecords.push(record);
-			record.remove();
-			return;
-		};
-		if (endDate && startDate < now && endDate > now) {
-			updateRecordGroupSize(record, -1);
-			ongoingRecords.push(record);
-			record.remove();
-			return;
-		};
-	});
-	upcomingRecords.forEach((record) => {
-		upcomingRecordsGroup.appendChild(record);
-		updateRecordGroupSize(record, 1);
-		return;
-	});
-	ongoingRecords.forEach((record) => {
-		ongoingRecordsGroup.appendChild(record);
-		updateRecordGroupSize(record, 1);
-		return;
-	});
-	function updateRecordGroupSize (record: Element, modifier: 1 | -1) {
-		if (!record || !modifier) { return; };
-		const group = record.closest(".record-group[data-size]");
-		if (!group) { return; };
-		return group.setAttribute("data-size", (parseFloat(group.getAttribute("data-size")) + modifier)?.toString());
-	};
+	// var upcomingRecords = []
+	// var ongoingRecords = [];
+	// const upcomingRecordsGroup = document.querySelector("#date-group-upcoming");
+	// const ongoingRecordsGroup = document.querySelector("#date-group-ongoing");
+	// const recordsWithStartDates = document.querySelectorAll(`.listing[data-grouping="date"] .record[data-start-date]`);
+	// recordsWithStartDates.forEach((record) => {
+	// 	const startDateString = record.getAttribute("data-start-date");
+	// 	const endDateString = record.getAttribute("data-end-date");
+	// 	const startDate = new Date(startDateString);
+	// 	const endDate = endDateString && new Date(endDateString) || null;
+	// 	const now = new Date();
+	// 	if (startDate > now) {
+	// 		updateRecordGroupSize(record, -1);
+	// 		upcomingRecords.push(record);
+	// 		record.remove();
+	// 		return;
+	// 	};
+	// 	if (endDate && startDate < now && endDate > now) {
+	// 		updateRecordGroupSize(record, -1);
+	// 		ongoingRecords.push(record);
+	// 		record.remove();
+	// 		return;
+	// 	};
+	// });
+	// upcomingRecords.forEach((record) => {
+	// 	upcomingRecordsGroup.appendChild(record);
+	// 	updateRecordGroupSize(record, 1);
+	// 	return;
+	// });
+	// ongoingRecords.forEach((record) => {
+	// 	ongoingRecordsGroup.appendChild(record);
+	// 	updateRecordGroupSize(record, 1);
+	// 	return;
+	// });
+	// function updateRecordGroupSize (record: Element, modifier: 1 | -1) {
+	// 	if (!record || !modifier) { return; };
+	// 	const group = record.closest(".record-group[data-size]");
+	// 	if (!group) { return; };
+	// 	return group.setAttribute("data-size", (parseFloat(group.getAttribute("data-size")) + modifier)?.toString());
+	// };
 
-	const records = document.querySelectorAll(".record");
-	records.forEach((record) => {
-		record.addEventListener("click", handleRecordClick);
-	});
-	function handleRecordClick(event: Event) {
-		if ((event.target as HTMLElement).closest("a") && !(event.target as HTMLElement).closest(`.record[data-type="news"]`)) { return; };
-		const closestRecord = (event.target as HTMLElement).closest(".record");
-		if (closestRecord.getAttribute("data-expanded") === "false") {
-			closestRecord.setAttribute("data-expanded", "true");
-		} else {
-			if ((event.target as HTMLElement).closest("p, img, span, dd, time")) { return; };
-			closestRecord.setAttribute("data-expanded", "false");
-		};
-		return;
-	};
+	// const records = document.querySelectorAll(".record");
+	// records.forEach((record) => {
+	// 	record.addEventListener("click", handleRecordClick);
+	// });
+	// function handleRecordClick(event: Event) {
+	// 	if ((event.target as HTMLElement).closest("a") && !(event.target as HTMLElement).closest(`.record[data-record-type="news"]`)) { return; };
+	// 	const closestRecord = (event.target as HTMLElement).closest(".record");
+	// 	if (closestRecord.getAttribute("data-expanded") === "false") {
+	// 		closestRecord.setAttribute("data-expanded", "true");
+	// 	} else {
+	// 		if ((event.target as HTMLElement).closest("p, img, span, dd, time")) { return; };
+	// 		closestRecord.setAttribute("data-expanded", "false");
+	// 	};
+	// 	return;
+	// };
 </script>

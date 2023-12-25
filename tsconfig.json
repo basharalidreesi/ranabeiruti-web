@@ -9,6 +9,7 @@
       "@styles/*": ["src/styles/*"],
       "@press/*": ["src/pages/[press]/*"],
       "@projects/*": ["src/pages/[projects]/*"],
+      "@publications/*": ["src/pages/[publications]/*"],
       "@root/*": ["src/*"],
     },
   },

@@ -1,0 +1,26 @@
+---
+import Link from "@components/Link.astro";
+import type { RecordProps } from "@lib/types.astro";
+
+type Props = {
+	record: RecordProps;
+};
+
+const {
+	record,
+} = Astro.props;
+
+const hasRelatedProjects = (record.type === "news" || record.type === "press") && record.relatedProjects && record.relatedProjects.length !== 0;
+const hasRelatedPublications = (record.type === "news" || record.type === "press") && record.relatedPublications && record.relatedPublications.length !== 0;
+---
+
+{(hasRelatedProjects || hasRelatedPublications) && (
+	<dl class="record-related">
+		<dt>
+			Works covered:
+		</dt>
+		{[...((hasRelatedProjects && record.relatedProjects) || []), ...((hasRelatedPublications && record.relatedPublications) || [])].map((relatedWork) => (
+			<dd><Link to={record}>{relatedWork.title}</Link></dd>
+		))}
+	</dl>
+)}

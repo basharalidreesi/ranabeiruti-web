@@ -3,12 +3,14 @@ import Image from "@components/Image.astro";
 import Link from "@components/Link.astro";
 import Main from "@layouts/Main.astro";
 import { HomepageGroqQuery } from "@lib/groq";
-import type { BaseUrls, SanityImageMetadataObject } from "@lib/types";
+import type { BaseUrls, SanityImageMetadataObject } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import sanityClient from "@root/sanity";
 import SimpleDate from "@components/SimpleDate.astro";
 
 export type HomepageProps = {
+	id: "homepage";
+	type: "listing";
 	title: string;
 	baseUrls: BaseUrls;
 	featuredItems: {

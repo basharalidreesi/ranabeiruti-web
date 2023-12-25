@@ -4,7 +4,7 @@ import PortableText from "@components/PortableText.astro";
 const { node } = Astro.props;
 ---
 
-{node.doesInclude && node.doesInclude.length !== 0 && (
+<!-- {node.doesInclude && node.doesInclude.length !== 0 && (
 	<div class="document-description">
 		{node.doesInclude.includes("projectDescription") && node.projectDescription && node.projectDescription.length !== 0 && (
 			<PortableText source={node.projectDescription} />
@@ -15,9 +15,9 @@ const { node } = Astro.props;
 			))
 		)}
 	</div>
-)}
+)} -->
 
-<style lang="scss">
+<!-- <style lang="scss">
 	.document-description {
 		font-size: var(--font-size-small);
 		color: var(--color-2);
@@ -25,4 +25,4 @@ const { node } = Astro.props;
 	:global(*) + .document-description {
 		margin-block-start: 1rem;
 	}
-</style>
+</style> -->

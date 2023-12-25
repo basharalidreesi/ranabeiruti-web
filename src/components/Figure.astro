@@ -1,9 +1,12 @@
 ---
 import Image from "@components/Image.astro";
 import PortableText from "@components/PortableText.astro";
-import type { CaptionPlacements, SanityImageMetadataObject, VerticalAlignments } from "@lib/types";
+import type { SanityImageMetadataObject } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
+import type { VerticalAlignments } from "./Column.astro";
+
+type CaptionPlacements = "left" | "top" | "right" | "bottom";
 
 type Props = {
 	source: SanityImageObject & SanityImageMetadataObject & {

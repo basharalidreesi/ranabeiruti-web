@@ -1,0 +1,30 @@
+---
+import ComplexDate from "@components/ComplexDate.astro";
+import SimpleDate from "@components/SimpleDate.astro";
+import type { RecordProps } from "@lib/types.astro";
+
+type Props = {
+	record: RecordProps;
+};
+
+const {
+	record,
+} = Astro.props;
+---
+
+<div
+	class="record-date"
+	data-format={
+		record.type === "project" ? record.date.dateFormat
+		: record.type === "publication" ? "yearOnly"
+		: record.type === "news" ? "fullDate"
+		: record.type === "press" ? "fullDate"
+		: null
+	}
+>{
+	record.type === "project" && (<ComplexDate source={record.date} />)
+}{
+	record.type === "publication" && (<time datetime={record.date}>{record.date.split("-")[0]}</time>)
+}{
+	(record.type === "news" || record.type === "press") && (<SimpleDate source={record.date} />)
+}</div>

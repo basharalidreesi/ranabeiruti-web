@@ -1,17 +1,46 @@
 ---
-import Dataset, { assignRecordToGrouping, type DatasetGroupingProps } from "@components/Dataset.astro";
+import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import Main from "@layouts/Main.astro";
 import { PressListingGroqQuery } from "@lib/groq";
-import type { BaseUrls, NewsProps, PressProps } from "@lib/types";
+import type { SanityImageMetadataObject } from "@lib/types.astro";
+import type { BasicProjectProps } from "@projects/[slug].astro";
+import type { BasicPublicationProps } from "@publications/index.astro";
 import sanityClient from "@root/sanity";
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
+import type { TypedObject } from "astro-portabletext/types";
 
-export type PressItemProps = NewsProps | PressProps;
+export type NewsProps = {
+	type: "news";
+	slug: { current: string; };
+	title: string;
+	date: string;
+	description?: TypedObject[] | string;
+	body?: TypedObject[];
+	image?: SanityImageObject & SanityImageMetadataObject;
+	relatedProjects?: BasicProjectProps[];
+	relatedPublications?: BasicPublicationProps[];
+};
+
+export type PressProps = {
+	type: "press";
+	url: string;
+	title: string;
+	publisher: string;
+	date: string;
+	description?: TypedObject[];
+	image?: SanityImageObject & SanityImageMetadataObject;
+	relatedProjects?: BasicProjectProps[];
+	relatedPublications?: BasicPublicationProps[];
+};
+
+export type NewsOrPressItemProps = NewsProps | PressProps;
 
 export type PressListingProps = {
+	id: "pressListing";
+	type: "listing";
 	slug: { current: string; };
-	baseUrls: BaseUrls;
 	title: string;
-	allItems: PressItemProps[];
+	allItems: NewsOrPressItemProps[];
 };
 
 export async function getStaticPaths() {
@@ -28,14 +57,15 @@ export async function getStaticPaths() {
 
 const listing = Astro.props;
 
-const allPressItems: DatasetGroupingProps = {};
+const allPressItems: DatasetRecordGroups = {};
 
 listing.allItems.forEach((item) => {
-	assignRecordToGrouping(item, {
-		grouping: allPressItems,
+	assignRecordToGroup(item, {
+		group: allPressItems,
 		key: "all",
 		title: "All",
 		description: "All press items",
+		method: "period",
 	});
 });
 ---
@@ -45,59 +75,15 @@ listing.allItems.forEach((item) => {
 		{listing.title}
 	</h1>
 	<Dataset
-		type="press"
-		of={[
+		sets={[
 			{
-				type: "date",
-			},
-			{
-				type: "title",
-				baseUrl: listing.slug.current,
-			},
-			{
-				type: "description",
-				descriptions: ["local"],
-			},
-			{
-				type: "image",
-			},
-			{
-				type: "body",
-			},
-			{
-				type: "related",
-				baseUrls: listing.baseUrls,
-			},
-		]}
-		groupings={[
-			{
+				name: "set-1",
+				method: "period",
+				type: "headlines",
 				title: "List of Press Items, Sorted By Date",
-				label: "Date",
-				method: "date",
 				object: allPressItems,
-				keys: Object.keys(allPressItems),
-				default: true,
-				"columns@>=1536px": "20% 1fr 20%",
-				"columns@<1536px": "15% 1fr 15%",
-				"columns@<=1280px": "15% 1fr 15%",
+				orderings: Object.keys(allPressItems),
 			},
 		]}
-		controls={{
-			views: [
-				{
-					title: "Headlines",
-					mode: "headlines",
-					default: true,
-				},
-			],
-			// filters: [
-			// 	{
-			// 		title: "Type",
-			// 		method: "types",
-			// 		object: pressItemsByPeriod,
-			// 		keys: Object.keys(pressItemsByPeriod).sort(),
-			// 	},
-			// ],
-		}}
 	/>
 </Main>

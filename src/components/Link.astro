@@ -1,21 +1,48 @@
 ---
+import { PressListingSlugGroqQuery, ProjectsListingSlugGroqQuery, PublicationsListingSlugGroqQuery } from "@lib/groq";
+import type { ListingProps, RecordProps } from "@lib/types.astro";
+import sanityClient from "@root/sanity";
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"a"> & {
-	href?: string;
-};
+type Props = HTMLAttributes<"a"> & ({
+	href: string;
+	to?: never;
+} | {
+	href?: never;
+	to: RecordProps | ListingProps;
+});
 
 const {
 	class: className,
 	href,
+	to,
 	title,
 	role,
 	...rest
 } = Astro.props;
+
+const projectsListing = await sanityClient.fetch(ProjectsListingSlugGroqQuery);
+const publicationsListing = await sanityClient.fetch(PublicationsListingSlugGroqQuery);
+const pressListing = await sanityClient.fetch(PressListingSlugGroqQuery);
+
+const resolvedLink =
+	href && !to ? href
+	: !href && to ? (
+		to.type === "project" ? `/${projectsListing.slug.current}/${to.slug.current}/`
+		: to.type === "publication" ? `/${publicationsListing.slug.current}/${to.slug.current}/`
+		: to.type === "news" ? `/${pressListing.slug.current}/#${to.slug.current}/`
+		: to.type === "press" ? to.url
+		: to.type === "listing" && to.id === "homepage" ? "/"
+		: to.type === "listing" && to.id === "projectsListing" ? `/${projectsListing.slug.current}/`
+		: to.type === "listing" && to.id === "publicationsListing" ? `/${publicationsListing.slug.current}/`
+		: to.type === "listing" && to.id === "pressListing" ? `/${pressListing.slug.current}/`
+		: null
+	)
+	: null
 ---
 
-{href && (
-	<a class={className} href={href} target={href.startsWith("http") && "_blank"} rel={href.startsWith("http") && "noindex nofollow"} title={title} role={role} {...rest}>
+{resolvedLink && (
+	<a class={className} href={resolvedLink} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || to?.title} role={role} {...rest}>
 		<slot />
 	</a>
 ) || (

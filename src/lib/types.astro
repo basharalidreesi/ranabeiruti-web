@@ -1,8 +1,12 @@
+---
 import type { BasicProjectProps } from "@projects/[slug].astro";
+import type { BasicPublicationProps, PublicationsListingProps } from "@publications/index.astro";
+import type { NewsOrPressItemProps, PressListingProps } from "@press/index.astro";
 import type { ImageFormat } from "@sanity/image-url/lib/types/types";
 import type { SanityImagePalette } from "@sanity/client";
-import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
-import type { PortableTextProps } from "astro-portabletext/types";
+import type { TypedObject } from "astro-portabletext/types";
+import type { ProjectsListingProps } from "@projects/index.astro";
+import type { HomepageProps } from "@root/pages/index.astro";
 
 export type SanityImageMetadataObject = {
 	metadata: {
@@ -26,33 +30,11 @@ export type SanityImageMetadataObject = {
 	};
 };
 
-export type VerticalAlignments = "top" | "middle" | "bottom";
+export type RecordProps = BasicProjectProps | BasicPublicationProps | NewsOrPressItemProps;
 
-export type CaptionPlacements = "left" | "top" | "right" | "bottom";
+export type ListingProps = HomepageProps | ProjectsListingProps | PublicationsListingProps | PressListingProps;
 
-export type NewsProps = {
-	type: "news";
-	slug: { current: string; };
-	title: string;
-	date: string;
-	description?: TypedObject[];
-	body?: TypedObject[];
-	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: BasicProjectProps[];
-};
-
-export type PressProps = {
-	type: "press";
-	url: string;
-	title: string;
-	publisher: string;
-	date: string;
-	description?: TypedObject[];
-	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: BasicProjectProps[];
-};
-
-export type TagTypes = "types" | "collections" | "subjects" | "locations";
+export type TagNames = "types" | "collections" | "subjects" | "locations";
 
 export type TypeProps = {
 	type: "type";
@@ -63,7 +45,7 @@ export type TypeProps = {
 export type CollectionProps = {
 	type: "collection";
 	slug: { current: string; };
-	description: string | PortableTextProps[];
+	description: string | TypedObject[];
 	name: string;
 };
 
@@ -78,9 +60,4 @@ export type LocationProps = {
 	name: string;
 	locale: string;
 };
-
-export type BaseUrls = {
-	projectsListingBaseUrl?: string;
-	publicationsListingBaseUrl?: string;
-	pressListingBaseUrl?: string;
-};
+---

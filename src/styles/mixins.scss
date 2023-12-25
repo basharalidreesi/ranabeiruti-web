@@ -79,3 +79,25 @@
 		content: " #{$connector} ";
 	}
 }
+
+@mixin hoverable-area($from-background-color: transparent, $to-background-color: var(--color-6), $before: false) {
+	@if $before {
+		&::before {
+			background: $from-background-color;
+			transition: background-color 0.125s;
+		}
+		@media (any-hover: hover) {
+			&:hover::before {
+				background: $to-background-color;
+			}
+		}
+	} @else {
+		background: $from-background-color;
+		transition: background-color 0.125s;
+		@media (any-hover: hover) {
+			&:hover {
+				background: $to-background-color;
+			}
+		}
+	}
+}

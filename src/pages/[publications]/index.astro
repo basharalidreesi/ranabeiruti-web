@@ -1,15 +1,33 @@
 ---
-import Dataset, { assignRecordToGrouping, type DatasetGroupingProps } from "@components/Dataset.astro";
+import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import Main from "@layouts/Main.astro";
 import { PublicationsListingGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-import type { BasicProjectProps } from "@projects/[slug].astro";
+import type { CollectionProps, LocationProps, SanityImageMetadataObject, SubjectProps, TypeProps } from "@lib/types.astro";
 import sanityClient from "@root/sanity";
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
+import type { TypedObject } from "astro-portabletext/types";
 
 export type PublicationsListingProps = {
+	id: "publicationsListing";
+	type: "listing";
 	slug: { current: string; };
 	title: string;
-	allPublications: BasicProjectProps[];
+	allPublications: BasicPublicationProps[];
+};
+
+export type BasicPublicationProps = {
+	type: "publication";
+	slug: { current: string; };
+	title: string;
+	subtitle: string;
+	date: string;
+	locations?: LocationProps[];
+	types: TypeProps[];
+	subjects?: SubjectProps[];
+	collections?: CollectionProps[];
+	image: SanityImageObject & SanityImageMetadataObject;
+	description: TypedObject[];
 };
 
 export async function getStaticPaths() {
@@ -26,60 +44,68 @@ export async function getStaticPaths() {
 
 const listing = Astro.props;
 
-const allPublications: DatasetGroupingProps = {};
-const publicationsByType: DatasetGroupingProps = {};
-const publicationsByCollection: DatasetGroupingProps = {};
-const publicationsBySubject: DatasetGroupingProps = {};
-const publicationsByLocation: DatasetGroupingProps = {};
+const allPublications: DatasetRecordGroups = {};
+const publicationsByType: DatasetRecordGroups = {};
+const publicationsByCollection: DatasetRecordGroups = {};
+const publicationsBySubject: DatasetRecordGroups = {};
+const publicationsByLocation: DatasetRecordGroups = {};
 
 listing.allPublications.forEach((publication) => {
-	assignRecordToGrouping(publication, {
-		grouping: allPublications,
+	assignRecordToGroup(publication, {
+		group: allPublications,
 		key: "all",
 		title: "All",
 		description: "All publications",
+		method: "period",
 	});
 	publication.types && publication.types.length !== 0
-		? publication.types?.forEach((type) => assignRecordToGrouping(publication, {
-			grouping: publicationsByType,
+		? publication.types?.forEach((type) => assignRecordToGroup(publication, {
+			group: publicationsByType,
 			key: type.slug.current,
 			title: type.name,
 			description: `${type.name?.trim()} publications`,
-		})) : assignRecordToGrouping(publication, {
-			grouping: publicationsByType,
+			method: "types",
+		})) : assignRecordToGroup(publication, {
+			group: publicationsByType,
 			key: "other",
 			title: "Other",
 			description: "Other publications",
+			method: "types",
 		});
 	publication.collections && publication.collections.length !== 0
-		? publication.collections?.forEach((collection) => assignRecordToGrouping(publication, {
-			grouping: publicationsByCollection,
+		? publication.collections?.forEach((collection) => assignRecordToGroup(publication, {
+			group: publicationsByCollection,
 			key: collection.slug.current,
 			title: collection.name,
 			description: `Publications from ${collection.name?.trim()}`,
-		})) : assignRecordToGrouping(publication, {
-			grouping: publicationsByCollection,
+			method: "collections",
+		})) : assignRecordToGroup(publication, {
+			group: publicationsByCollection,
 			key: "other",
 			title: "Other",
 			description: "Other publications",
+			method: "collections",
 		});
 	publication.subjects && publication.subjects.length !== 0
-		? publication.subjects?.forEach((subject) => assignRecordToGrouping(publication, {
-			grouping: publicationsBySubject,
+		? publication.subjects?.forEach((subject) => assignRecordToGroup(publication, {
+			group: publicationsBySubject,
 			key: subject.slug.current,
 			title: subject.name,
 			description: `${subject.name?.trim()} publications`,
-		})) : assignRecordToGrouping(publication, {
-			grouping: publicationsBySubject,
+			method: "subjects",
+		})) : assignRecordToGroup(publication, {
+			group: publicationsBySubject,
 			key: "other",
 			title: "Other",
 			description: "Other publications",
+			method: "subjects",
 		});
-	publication.locations?.forEach((location) => assignRecordToGrouping(publication, {
-		grouping: publicationsByLocation,
+	publication.locations?.forEach((location) => assignRecordToGroup(publication, {
+		group: publicationsByLocation,
 		key: location.locale,
 		title: LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale,
 		description: `Publications from ${LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale}`,
+		method: "locations",
 	}));
 });
 ---
@@ -89,71 +115,41 @@ listing.allPublications.forEach((publication) => {
 		{listing.title}
 	</h1>
 	<Dataset
-		type="publications"
-		of={[
+		sets={[
 			{
-				type: "title",
-				baseUrl: listing.slug.current,
-			},
-			{
-				type: "date",
-			},
-			{
-				type: "tags",
-				length: listing.allPublications.length,
-				tags: ["types", "collections"],
-			},
-			{
-				type: "image",
-			},
-		]}
-		groupings={[
-			{
+				name: "set-1",
+				method: "period",
+				type: "covers",
 				title: "List of Publications, Sorted by Date",
-				label: "Date",
-				method: "date",
 				object: allPublications,
-				keys: Object.keys(allPublications),
-				default: true,
-				"columns@>=1536px": "20% 1fr 1fr 1fr 20%",
-				"columns@<1536px": "15% 1fr 1fr 1fr 15%",
-				"columns@<=1280px": "10% 1fr 1fr 1fr 10%",
+				orderings: Object.keys(allPublications),
 			},
 		]}
-		controls={{
-			views: [
-				{
-					title: "Images",
-					mode: "covers",
-					default: true,
-				},
-			],
-			filters: [
-				{
-					title: "Type",
-					method: "types",
-					object: publicationsByType,
-					keys: Object.keys(publicationsByType).sort(),
-				},
-				{
-					title: "Collection",
-					method: "collections",
-					object: publicationsByCollection,
-					keys: Object.keys(publicationsByCollection).filter((key) => key !== "other").sort(),
-				},
-				{
-					title: "Subject",
-					method: "subjects",
-					object: publicationsBySubject,
-					keys: Object.keys(publicationsBySubject).filter((key) => key !== "other").sort(),
-				},
-				{
-					title: "Location",
-					method: "locations",
-					object: publicationsByLocation,
-					keys: Object.keys(publicationsByLocation).sort(),
-				},
-			],
-		}}
+		filters={[
+			{
+				type: "types",
+				object: publicationsByType,
+				orderings: Object.keys(publicationsByType)?.filter((key) => !["other"].includes(key))?.sort(),
+				unfilteredSize: listing.allPublications?.length,
+			},
+			{
+				type: "subjects",
+				object: publicationsBySubject,
+				orderings: Object.keys(publicationsBySubject)?.filter((key) => !["other"].includes(key))?.sort(),
+				unfilteredSize: listing.allPublications?.length,
+			},
+			{
+				type: "collections",
+				object: publicationsByCollection,
+				orderings: Object.keys(publicationsByCollection)?.filter((key) => !["other"].includes(key))?.sort(),
+				unfilteredSize: listing.allPublications?.length,
+			},
+			{
+				type: "locations",
+				object: publicationsByLocation,
+				orderings: Object.keys(publicationsByLocation)?.filter((key) => !["other"].includes(key))?.sort((a, b) => LOCALES.find((locale) => locale.value === a)?.title?.localeCompare(LOCALES.find((locale) => locale.value === b)?.title)),
+				unfilteredSize: listing.allPublications?.length,
+			},
+		]}
 	/>
 </Main>
