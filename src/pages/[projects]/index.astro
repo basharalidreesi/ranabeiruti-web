@@ -3,7 +3,7 @@ import Main from "@layouts/Main.astro";
 import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import { ProjectsListingGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-import type { BasicProjectProps } from "@projects/[slug].astro";
+import type { ProjectProps } from "@projects/[slug].astro";
 import sanityClient from "@root/sanity";
 
 export type ProjectsListingProps = {
@@ -11,7 +11,7 @@ export type ProjectsListingProps = {
 	type: "listing";
 	slug: { current: string; };
 	title: string;
-	allProjects: BasicProjectProps[];
+	allProjects: ProjectProps[];
 };
 
 export async function getStaticPaths() {
@@ -121,6 +121,7 @@ listing.allProjects?.forEach((project) => {
 				title: "List of Projects By Date",
 				object: projectsByPeriod,
 				orderings: ["ongoing", "upcoming", ...Object.keys(projectsByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()],
+				imageAspectRatio: "16/9",
 			},
 			{
 				name: "set-2",

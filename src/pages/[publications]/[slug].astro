@@ -1,24 +1,21 @@
 ---
-import { type ComplexDateProps } from "@components/ComplexDate.astro";
 import Main from "@layouts/Main.astro";
-import { ProjectsGroqQuery, ProjectsListingSlugGroqQuery } from "@lib/groq";
+import { PublicationsGroqQuery, PublicationsListingGroqQuery } from "@lib/groq";
 import sanityClient from "@root/sanity";
 import type { CollectionProps, LocationProps, SanityImageMetadataObject, SubjectProps, TypeProps } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
-import type { ProjectsListingProps } from "@projects/index.astro";
 import Page, { type PageProps } from "@components/Page.astro";
-import type { PublicationProps } from "@publications/[slug].astro";
 import type { NewsProps, PressProps } from "@press/index.astro";
+import type { ProjectProps } from "@projects/[slug].astro";
+import type { PublicationsListingProps } from "./index.astro";
 
-export type ProjectProps = {
-	type: "project";
+export type PublicationProps = {
+	type: "publication";
 	slug: { current: string; };
 	title: string;
 	subtitle?: string;
-	date: ComplexDateProps & {
-		sortDate: string;
-	};
+	date: string;
 	types: TypeProps[];
 	locations?: LocationProps[];
 	subjects?: SubjectProps[];
@@ -34,24 +31,24 @@ export type ProjectProps = {
 };
 
 export async function getStaticPaths() {
-	const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
-	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingSlugGroqQuery);
-	return projects?.map((project) => {
+	const publications: PublicationProps[] = await sanityClient.fetch(PublicationsGroqQuery);
+	const publicationsListing: PublicationsListingProps = await sanityClient.fetch(PublicationsListingGroqQuery);
+	return publications?.map((publication) => {
 		return {
 			params: {
-				projects: projectsListing.slug?.current,
-				slug: project.slug?.current,
+				publications: publicationsListing.slug?.current,
+				slug: publication.slug?.current,
 			},
 			props: {
-				...project,
+				...publication,
 			},
 		};
 	});
 };
 
-const project = Astro.props;
+const publication = Astro.props;
 ---
 
-<Main title={project.title}>
-	<Page source={project} />
+<Main title={publication.title}>
+	<Page source={publication} />
 </Main>

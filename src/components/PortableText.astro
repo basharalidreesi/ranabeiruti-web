@@ -93,24 +93,30 @@ const {
 			background-size: 1px 2px;
 			background-repeat: repeat-x;
 			background-position: 0 100%;
-			color: var(--color-1);
+			// color: var(--color-1);
 		}
-		:is(p, h3, blockquote, .note, ul, ol, figure):not(:empty) {
+		:is(p, h3, blockquote, .note, ul, ol, figure, .document-header, .document-description) {
 			&:empty {
 				display: none;
 			}
-			& + :is(p, h3, blockquote, .note, ul, ol):not(:empty):not(blockquote + blockquote) {
+			&:not(:empty):not(.document-header) + :is(p, h3, blockquote, .note, ul, ol, .document-description):not(:empty):not(blockquote + blockquote) {
 				margin-block-start: 0.5rem;
 			}
-			& + figure {
+			&:not(:empty) + figure {
 				margin-block-start: calc(1.5rem - 0.3em);
+			}
+			&:not(:empty) + .document-header {
+				margin-block-start: 1.5rem;
 			}
 		}
 		blockquote + blockquote {
 			padding-block-start: 0.5rem;
 		}
-		figure + :is(p, h3, blockquote, .note, ul, ol) {
+		figure + :is(p, h3, blockquote, .note, ul, ol, .document-description) {
 			margin-block-start: calc(1.5rem - 0.3em);
+		}
+		.document-header + :is(p, h3, blockquote, .note, ul, ol, .document-description) {
+			margin-block-start: 1.5rem;
 		}
 	}
 </style>

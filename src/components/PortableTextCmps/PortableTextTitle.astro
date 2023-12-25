@@ -6,60 +6,63 @@ import { LOCALES } from "@lib/locales";
 const { node } = Astro.props;
 ---
 
-{node.title && (<>
-	<div class="document-title">
-		<h1 class="document-title-baseline">{node.title?.trim()}</h1>
-		{node.subtitle && (
-			<p class="document-subtitle">{node.subtitle?.trim()}</p>
-		)}
-	</div>
-	{node.date && node.date.startDate && node.date.dateFormat && (
-		<div class="document-date">
-			<ComplexDate source={node.date} />
+{node.title && (
+	<div class="document-header">
+		<div class="document-title">
+			<h1 class="document-title-baseline">{node.title?.trim()}</h1>
+			{node.subtitle && (
+				<p class="document-subtitle">{node.subtitle?.trim()}</p>
+			)}
 		</div>
-	)}
-	<div class="document-tags">
-		<ul>
-			{[...(node.types || []), ...(node.collections || []), ...(node.subjects || []), ...(node.locations || [])]?.filter(Boolean)?.map((tag) => (
-				<li>
-					<Link class="tag link" href={`/${node.baseUrl}/?${tag.type}=${tag.type === "location" ? tag.locale?.toLowerCase() : tag.slug.current}`}>
-						{tag.type === "location" ? `${tag.name?.trim()}, ${LOCALES.find((locale) => locale.value === tag.locale)?.title}` : tag.name?.trim()}
-					</Link>
-				</li>
-			))}
-		</ul>
+		{node.date && node.date.startDate && node.date.dateFormat && (
+			<div class="document-date">
+				<ComplexDate source={node.date} />
+			</div>
+		)}
+		<div class="document-tags">
+			<ul>
+				{[...(node.types || []), ...(node.collections || []), ...(node.subjects || []), ...(node.locations || [])]?.filter(Boolean)?.map((tag) => (
+					<li>
+						<Link class="link hover-text" href={`/${node.baseUrl}/?${tag.type}=${tag.type === "location" ? tag.locale : tag.slug.current}`}>
+							{tag.type === "location" ? `${tag.name?.trim()} (${LOCALES.find((locale) => locale.value === tag.locale)?.title})` : tag.name?.trim()}
+						</Link>
+					</li>
+				))}
+			</ul>
+		</div>
 	</div>
-</>)}
+)}
 
 <style lang="scss">
 	@use "@styles/mixins";
+	.document-header {
+		display: flex;
+		flex-direction: column;
+		row-gap: 0.5rem;
+	}
 	.document-title-baseline {
 		font-weight: var(--font-weight-bold);
 	}
 	.document-subtitle {
-		margin-block-start: 0.75rem;
+		margin-block-start: 0.5rem;
 	}
 	.document-date {
-		margin-block-start: 1rem;
+		// margin-block-start: 0.5rem;
 		font-size: var(--font-size-small);
 	}
 	.document-tags {
-		margin-block-start: 1rem;
+		// margin-block-start: 0.5rem;
 		font-size: var(--font-size-small);
 	}
 	.document-tags ul {
 		list-style: none;
-		display: flex;
-		flex-wrap: wrap;
-		column-gap: 0.5rem;
-		row-gap: 0.5rem;
-		// margin-inline-start: -0.5625rem;
 	}
 	.document-tags li {
-		padding: 0;
+		display: inline;
 		margin: 0;
+		padding: 0;
 	}
-	.document-tags .tag {
-		@include mixins.tag($hover: true);
+	.document-tags li:not(:last-of-type)::after {
+		content: ", ";
 	}
 </style>

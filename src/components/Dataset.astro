@@ -4,7 +4,7 @@ import RecordDate from "@components/DatasetCmps/RecordDate.astro";
 import RecordImage from "@components/DatasetCmps/RecordImage.astro";
 import RecordDescriptions from "@components/DatasetCmps/RecordDescriptions.astro";
 import RecordBody from "@components/DatasetCmps/RecordBody.astro";
-import RecordTag from "@components/DatasetCmps/RecordTag.astro";
+import RecordTags from "@components/DatasetCmps/RecordTags.astro";
 import RecordRelated from "@components/DatasetCmps/RecordRelated.astro";
 import type { RecordProps, TagNames } from "@lib/types.astro";
 import Link from "./Link.astro";
@@ -46,6 +46,7 @@ export function assignRecordToGroup(record: RecordProps, params: { group: Datase
 };
 
 type Props = {
+	location?: "listing" | "page";
 	sets: ({
 		name: string;
 		method: DatasetGroupingMethods | "dynamic";
@@ -55,9 +56,7 @@ type Props = {
 		orderings?: string[];
 	} & ({
 		type: "details";
-		options?: {
-			tags?: TagNames[];
-		};
+		imageAspectRatio: string;
 	} | {
 		type: "list";
 		rows: ({
@@ -78,8 +77,9 @@ type Props = {
 		default: DatasetGroupingMethods;
 	} | {
 		type: "covers";
+		imageAspectRatio: string;
 		options?: {
-			tags?: TagNames[];
+			withTagline?: boolean;
 		};
 	} | {
 		type: "headlines";
@@ -101,6 +101,7 @@ type Props = {
 };
 
 const {
+	location = "listing",
 	sets,
 	switches,
 	filters,
@@ -111,7 +112,7 @@ const hasDatasetFilters = filters && filters.length !== 0;
 const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 ---
 
-<div class="dataset">
+<div class="dataset" data-location={location}>
 	{hasDatasetHeaders && (<>
 		<div class="dataset-headers">
 			{hasDatasetSwitches && (
@@ -221,7 +222,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 								const isPressRecord = record.type === "press";
 								return (
 									<article
-										id={(isProjectRecord || isPublicationRecord || isNewsRecord) && `${set.name}-${key}-${record.type}-${record.slug.current}`}
+										id={((isProjectRecord || isPublicationRecord) && `${set.name}-${key}-${record.type}-${record.slug.current}`) || (isNewsRecord && `${record.type}-${record.slug.current}`)}
 										class="record"
 										data-record-type={record.type}
 										data-start-date={(isProjectRecord && record.date.startDate) || ((isPublicationRecord || isNewsRecord || isPressRecord) && record.date)}
@@ -234,9 +235,9 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 												case "details": return (<>
 													<RecordTitle record={record} />
 													<RecordDate record={record} />
-													<RecordTag tags={["types", "locations"]} record={record} />
+													<RecordTags tags={["types", "locations"]} record={record} />
 													<RecordDescriptions record={record} />
-													<RecordImage record={record} />
+													<RecordImage record={record} aspectRatio={set.imageAspectRatio} />
 												</>);
 												case "list": return set.rows && set.rows.length !== 0 && set.rows.map((row) => row.columns && row.columns.length !== 0 && (
 													<div class={`record-${row.type}-row`}>
@@ -244,11 +245,11 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 															switch (column.name) {
 																case "title": return (<RecordTitle record={record} />);
 																case "date": return (<RecordDate record={record} />);
-																case "types": return (<RecordTag tags={["types"]} record={record} withMissing={true} />);
-																case "subjects": return (<RecordTag tags={["subjects"]} record={record} withMissing={true} />);
-																case "collections": return (<RecordTag tags={["collections"]} record={record} withMissing={true} />);
-																case "locations": return (<RecordTag tags={["locations"]} record={record} withMissing={true} />);
-																case "tags": return (<RecordTag tags={["types", "subjects", "collections", "locations"]} record={record} withMissing={true} />);
+																case "types": return (<RecordTags tags={["types"]} record={record} withMissing={true} />);
+																case "subjects": return (<RecordTags tags={["subjects"]} record={record} withMissing={true} />);
+																case "collections": return (<RecordTags tags={["collections"]} record={record} withMissing={true} />);
+																case "locations": return (<RecordTags tags={["locations"]} record={record} withMissing={true} />);
+																case "tags": return (<RecordTags tags={["types", "subjects", "collections", "locations"]} record={record} withMissing={true} />);
 																case "descriptions": return (<RecordDescriptions record={record} />);
 																case "image": return (<RecordImage record={record} />);
 																case "body": return (<RecordBody record={record} />);
@@ -260,11 +261,13 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 												));
 												case "covers": return (<>
 													<RecordTitle record={record} />
-													<div class="record-date-and-tags">
-														<RecordDate record={record} />
-														<RecordTag tags={["types", "collections"]} record={record} />
-													</div>
-													<RecordImage record={record} />
+													{set.options?.withTagline !== false && (
+														<div class="record-date-and-tags">
+															<RecordDate record={record} />
+															<RecordTags tags={["types", "collections"]} record={record} />
+														</div>
+													)}
+													<RecordImage record={record} aspectRatio={set.imageAspectRatio} />
 												</>);
 												case "headlines": return (<>
 													<RecordTitle record={record} />
@@ -292,847 +295,927 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 <style lang="scss" is:global>
 	// sass setup
 	@use "@styles/mixins";
-	// dataset headers
-	.dataset-headers {
-		& {
-			padding-block: 1rem;
-			border-block-end: 1px solid var(--color-5);
-			line-height: var(--line-height-small);
-			font-size: var(--font-size-medium);
-		}
-		.dataset-header {
-			display: flex;
-			column-gap: 0.5rem;
-			row-gap: 0.5rem;
-			flex-wrap: wrap;
-		}
-		.dataset-header::before {
-			content: attr(data-title);
-			color: var(--color-2);
-		}
-		.dataset-header-item {
-			position: relative;
-			@include mixins.hover-text();
-		}
-		.dataset-header-item input {
-			position: absolute;
-			inset: 0;
-			opacity: 0;
-			cursor: pointer;
-		}
-		.dataset-header-item label::before {
-			font-family: var(--font-family-mono);
-			margin-inline-end: 0.25em;
-		}
-		.dataset-switch input:checked + label::before {
-			content: "✓";
-			content: "✓" / "";
-		}
-		.dataset-filter input:not(:checked) + label::before {
-			content: "+";
-			content: "+" / "";
-		}
-		.dataset-filter input:checked + label::before {
-			content: "×";
-			content: "×" / "";
-		}
-		.dataset-filter-menus[data-current-filter-type="none"],
-		.dataset-filter-menus[data-current-filter-type="types"] .dataset-filter-menu:not([data-filter-type="types"]),
-		.dataset-filter-menus[data-current-filter-type="subjects"] .dataset-filter-menu:not([data-filter-type="subjects"]),
-		.dataset-filter-menus[data-current-filter-type="collections"] .dataset-filter-menu:not([data-filter-type="collections"]),
-		.dataset-filter-menus[data-current-filter-type="locations"] .dataset-filter-menu:not([data-filter-type="locations"]) {
-			display: none;
-		}
-		.dataset-filter-menus {
-			flex-basis: 100%;
-		}
-		.dataset-filter-menu {
-			display: flex;
-			flex-wrap: wrap;
-			column-gap: 1.5rem;
-			row-gap: 0.75rem;
-			padding: 0.75rem;
-			margin-block-start: 0.5rem;
-			background: var(--color-6);
-			border-radius: 0.5rem;
-			list-style: none;
-		}
-		.dataset-filter-menu a {
-			display: flex;
-			@include mixins.hover-text();
-		}
-		.dataset-filter-menu a::before {
-			content: attr(data-size);
-			content: attr(data-size) / "";
-			display: inline-block;
-			margin-inline-end: 0.5rem;
-			color: var(--color-2);
-		}
-		@media (min-width: 513px) {
-			.dataset-filter input:checked + label::after {
-				content: "";
-				position: absolute;
-				display: block;
-				left: 50%;
-				transform: translateX(-50%);
-				width: 1em;
-				height: 0.5em;
-				background: var(--color-7);
-				top: calc(100% + 1rem - 0.5em);
-				border-inline-start: 0.5em solid var(--color-7);
-				border-inline-end: 0.5em solid var(--color-7);
-				border-block-end: 0.5em solid var(--color-6);
-				pointer-events: none;
-			}
-		}
-		@media (min-width: 705px) {
+	.dataset[data-location="listing"] {
+		// dataset headers
+		.dataset-headers {
 			& {
-				position: sticky;
-				top: var(--header-height);
-				z-index: 99;
-				background: var(--color-7);
-			}
-			.dataset-switches {
-				position: absolute;
-				top: 1rem;
-				right: 0;
-			}
-		}
-		@media (max-width: 704px) {
-			& {
-				position: relative;
-				display: flex;
-				flex-direction: column;
-				row-gap: 1rem;
-			}
-		}
-		@media (max-width: 512px) {
-			.dataset-header::before {
-				flex-basis: 100%;
-			}
-		}
-	}
-	// general listing layouting
-	.listing[data-set-type="details"],
-	.listing[data-set-type="list"],
-	.listing[data-set-type="headlines"],
-	.listing[data-set-type="covers"] {
-		.record-group {
-			display: grid;
-			&[data-size="0"] {
-				display: none;
-			}
-			* {
-				min-width: 0;
-				min-height: 0;
-			}
-		}
-	}
-	.listing[data-set-type="details"],
-	.listing[data-set-type="list"],
-	.listing[data-set-type="headlines"] {
-		column-gap: 1.5rem;
-	}
-	.listing[data-set-type="details"],
-	.listing[data-set-type="list"] {
-		.record-group {
-			grid-template-columns: 15% 1fr 15%;
-		}
-		.record {
-			grid-column: 2/3;
-		}
-		.record-group-title {
-			grid-column: 1/2;
-			grid-row: 1/calc(var(--item-count) + 1);
-			position: sticky;
-			top: var(--header-height);
-			height: fit-content;
-			width: fit-content;
-			padding-block: 0.75rem;
-			color: var(--color-2);
-			text-wrap: balance;
-		}
-		@media (min-width: 1536px) {
-			.record-group {
-				grid-template-columns: 20% 1fr 20%;
-			}
-		}
-		@media (max-width: 1280px) {
-			.record-group {
-				grid-template-columns: 15% 1fr;
-			}
-		}
-		@media (max-width: 1024px) {
-			.record-group {
-				grid-template-columns: auto 1fr;
-			}
-			.record-group-title {
-				-webkit-writing-mode: vertical-lr;
-				writing-mode: vertical-lr;
+				padding-block: 1rem;
+				border-block-end: 1px solid var(--color-5);
 				line-height: var(--line-height-small);
-				padding-inline: calc(0.75rem + 0.3em);
-				padding-block-start: 0;
-				padding-block-end: calc(0.5em + 0.75rem);
+				font-size: var(--font-size-medium);
 			}
-		}
-	}
-	.dataset-headers ~ .listing[data-set-type="details"] .record-group-title,
-	.dataset-headers ~ .listing[data-set-type="list"] .record-group-title {
-		@media (min-width: 705px) {
-			top: calc(var(--header-height) * 2);
-		}
-	}
-	.listing[data-set-type="list"] {
-		.listing-headers {
-			display: grid;
-			grid-template-columns: var(--grid-template-columns-baseline);
-			grid-auto-flow: column;
-			margin-inline: 15%;
-			font-size: var(--font-size-medium);
-		}
-		.record-baseline-row {
-			display: grid;
-			grid-template-columns: var(--grid-template-columns-baseline);
-			grid-auto-flow: column;
-		}
-		.record-expanded-row {
-			display: grid;
-			grid-template-columns: var(--grid-template-columns-expanded);
-			grid-auto-flow: column;
-		}
-		@media (min-width: 1536px) {
-			.listing-headers {
-				margin-inline: 20%;
-			}
-		}
-		@media (max-width: 1280px) {
-			.listing-headers {
-				margin-inline: 15%;
-				margin-inline-end: 0;
-			}
-		}
-		@media (max-width: 1024px) {
-			.listing-headers {
-				grid-template-columns: unset;
-				margin-inline-start: calc(var(--font-size-large) + (var(--font-size-large) / 2) + 0.75rem);
-			}
-		}
-		@media (max-width: 640px) {
-			.listing-headers {
+			.dataset-header {
 				display: flex;
 				column-gap: 0.5rem;
-				justify-content: space-between;
+				row-gap: 0.5rem;
+				flex-wrap: wrap;
+			}
+			.dataset-header::before {
+				content: attr(data-title);
+				color: var(--color-2);
+			}
+			.dataset-header-item {
+				position: relative;
+				@include mixins.hover-text();
+			}
+			.dataset-header-item input {
+				position: absolute;
+				inset: 0;
+				opacity: 0;
+				cursor: pointer;
+			}
+			.dataset-header-item label::before {
+				font-family: var(--font-family-mono);
+				margin-inline-end: 0.25em;
+			}
+			.dataset-switch input:checked + label::before {
+				content: "✓";
+				content: "✓" / "";
+			}
+			.dataset-filter input:not(:checked) + label::before {
+				content: "+";
+				content: "+" / "";
+			}
+			.dataset-filter input:checked + label::before {
+				content: "×";
+				content: "×" / "";
+			}
+			.dataset-filter-menus[data-current-filter-type="none"],
+			.dataset-filter-menus[data-current-filter-type="types"] .dataset-filter-menu:not([data-filter-type="types"]),
+			.dataset-filter-menus[data-current-filter-type="subjects"] .dataset-filter-menu:not([data-filter-type="subjects"]),
+			.dataset-filter-menus[data-current-filter-type="collections"] .dataset-filter-menu:not([data-filter-type="collections"]),
+			.dataset-filter-menus[data-current-filter-type="locations"] .dataset-filter-menu:not([data-filter-type="locations"]) {
+				display: none;
+			}
+			.dataset-filter-menus {
+				flex-basis: 100%;
+			}
+			.dataset-filter-menu {
+				display: flex;
+				flex-wrap: wrap;
+				column-gap: 1.5rem;
+				row-gap: 0.75rem;
+				padding: 0.75rem;
+				margin-block-start: 0.5rem;
+				background: var(--color-6);
+				border-radius: 0.5rem;
+				list-style: none;
+			}
+			.dataset-filter-menu a {
+				display: flex;
+				@include mixins.hover-text();
+			}
+			.dataset-filter-menu a::before {
+				content: attr(data-size);
+				content: attr(data-size) / "";
+				display: inline-block;
+				margin-inline-end: 0.5rem;
+				color: var(--color-2);
+			}
+			@media (min-width: 513px) {
+				.dataset-filter input:checked + label::after {
+					content: "";
+					position: absolute;
+					display: block;
+					left: 50%;
+					transform: translateX(-50%);
+					width: 1em;
+					height: 0.5em;
+					background: var(--color-7);
+					top: calc(100% + 1rem - 0.5em);
+					border-inline-start: 0.5em solid var(--color-7);
+					border-inline-end: 0.5em solid var(--color-7);
+					border-block-end: 0.5em solid var(--color-6);
+					pointer-events: none;
+				}
+			}
+			@media (min-width: 705px) {
+				& {
+					position: sticky;
+					top: var(--header-height);
+					z-index: 99;
+					background: var(--color-7);
+				}
+				.dataset-switches {
+					position: absolute;
+					top: 1rem;
+					right: 0;
+				}
+			}
+			@media (max-width: 704px) {
+				& {
+					position: relative;
+					display: flex;
+					flex-direction: column;
+					row-gap: 1rem;
+				}
+			}
+			@media (max-width: 512px) {
+				.dataset-header::before {
+					flex-basis: 100%;
+				}
 			}
 		}
-	}
-	.dataset-headers ~ .listing[data-set-type="list"] .listing-headers {
-		@media (max-width: 1024px) {
-			margin-inline-start: 0;
-		}
-	}
-	.listing[data-set-type="headlines"] {
-		.record-group {
-			grid-template-columns: 15% 1fr 15%;
-		}
-		.record-group-title {
-			display: none;
-		}
-		.record {
-			grid-column: 2/3;
-		}
-		@media (min-width: 1536px) {
+		// general layouting for listings
+		.listing[data-set-type="details"],
+		.listing[data-set-type="list"],
+		.listing[data-set-type="headlines"],
+		.listing[data-set-type="covers"] {
 			.record-group {
-				grid-template-columns: 20% 1fr 20%;
+				display: grid;
+				&[data-size="0"] {
+					display: none;
+				}
+				* {
+					min-width: 0;
+					min-height: 0;
+				}
 			}
 		}
-		@media (max-width: 1280px) {
+		.listing[data-set-type="details"],
+		.listing[data-set-type="list"],
+		.listing[data-set-type="headlines"] {
+			column-gap: 1.5rem;
+		}
+		.listing[data-set-type="details"],
+		.listing[data-set-type="list"] {
 			.record-group {
 				grid-template-columns: 15% 1fr 15%;
 			}
+			.record {
+				grid-column: 2/3;
+			}
+			.record-group-title {
+				grid-column: 1/2;
+				grid-row: 1/calc(var(--item-count) + 1);
+				position: sticky;
+				top: var(--header-height);
+				height: fit-content;
+				width: fit-content;
+				padding-block: 0.75rem;
+				color: var(--color-2);
+				text-wrap: balance;
+			}
+			@media (min-width: 1536px) {
+				.record-group {
+					grid-template-columns: 20% 1fr 20%;
+				}
+			}
+			@media (max-width: 1280px) {
+				.record-group {
+					grid-template-columns: 15% 1fr;
+				}
+			}
+			@media (max-width: 1024px) {
+				.record-group {
+					grid-template-columns: auto 1fr;
+				}
+				.record-group-title {
+					-webkit-writing-mode: vertical-lr;
+					writing-mode: vertical-lr;
+					line-height: var(--line-height-small);
+					padding-inline: calc(0.75rem + 0.3em);
+					padding-block-start: 0;
+					padding-block-end: calc(0.5em + 0.75rem);
+				}
+			}
 		}
-		@media (max-width: 1024px) {
+		.dataset-headers ~ .listing[data-set-type="details"] .record-group-title,
+		.dataset-headers ~ .listing[data-set-type="list"] .record-group-title {
+			@media (min-width: 705px) {
+				top: calc(var(--header-height) * 2);
+			}
+		}
+		.listing[data-set-type="details"] {
+			& {
+				margin-block: 0.75rem;
+			}
+		}
+		.listing[data-set-type="list"] {
+			.listing-headers {
+				display: grid;
+				grid-template-columns: var(--grid-template-columns-baseline);
+				grid-auto-flow: column;
+				margin-inline: 15%;
+				font-size: var(--font-size-medium);
+			}
+			.record-baseline-row {
+				display: grid;
+				grid-template-columns: var(--grid-template-columns-baseline);
+				grid-auto-flow: column;
+			}
+			.record-expanded-row {
+				display: grid;
+				grid-template-columns: var(--grid-template-columns-expanded);
+				grid-auto-flow: column;
+			}
+			@media (min-width: 1025px) {
+				& {
+					margin-block-end: 1.5rem;
+				}
+			}
+			@media (min-width: 1536px) {
+				.listing-headers {
+					margin-inline: 20%;
+				}
+			}
+			@media (max-width: 1280px) {
+				.listing-headers {
+					margin-inline: 15%;
+					margin-inline-end: 0;
+				}
+			}
+			@media (max-width: 1024px) {
+				& {
+					margin-block-end: 0.75rem;
+				}
+				.listing-headers {
+					grid-template-columns: unset;
+					margin-inline-start: calc(var(--font-size-large) + (var(--font-size-large) / 2) + 0.75rem);
+				}
+			}
+			@media (max-width: 640px) {
+				.listing-headers {
+					display: flex;
+					column-gap: 0.5rem;
+					justify-content: space-between;
+				}
+			}
+		}
+		.dataset-headers ~ .listing[data-set-type="list"] .listing-headers {
+			@media (max-width: 1024px) {
+				margin-inline-start: 0;
+			}
+		}
+		.listing[data-set-type="headlines"] {
+			& {
+				padding-block: 1.5rem;
+				@include mixins.polka-dot-background($density: 3);
+			}
 			.record-group {
-				grid-template-columns: unset;
+				grid-template-columns: 15% 1fr 15%;
+				row-gap: 1.5rem;
+			}
+			.record-group-title {
+				display: none;
 			}
 			.record {
-				grid-column: unset;
+				grid-column: 2/3;
+				@include mixins.hoverable-area($from-background-color: var(--color-7));
+			}
+			@media (min-width: 641px) {
+				.record-title {
+					font-size: var(--font-size-x-large);
+				}
+			}
+			@media (min-width: 1536px) {
+				.record-group {
+					grid-template-columns: 20% 1fr 20%;
+				}
+			}
+			@media (max-width: 1280px) {
+				.record-group {
+					grid-template-columns: 15% 1fr 15%;
+				}
+			}
+			@media (max-width: 1024px) {
+				& {
+					padding-inline: 1.5rem;
+				}
+				.record-group {
+					grid-template-columns: unset;
+				}
+				.record {
+					grid-column: unset;
+				}
+			}
+		}
+		.listing[data-set-type="covers"] {
+			.record-group {
+				grid-template-columns: 15% 1fr 1fr 1fr 15%;
+			}
+			.record-group-title {
+				display: none;
+			}
+			.record:nth-of-type(3n - 2) {
+				grid-column: 2/3;
+			}
+			.record:nth-of-type(3n - 1) {
+				grid-column: 3/4;
+			}
+			.record:nth-of-type(3n) {
+				grid-column: 4/5;
+			}
+			@media (min-width: 1025px) {
+				& {
+					margin-block: 0.75rem;
+				}
+				.record {
+					margin: 0.75rem;
+				}
+			}
+			@media (min-width: 1536px) {
+				.record-group {
+					grid-template-columns: 20% 1fr 1fr 1fr 20%;
+				}
+			}
+			@media (max-width: 1280px) {
+				.record-group {
+					grid-template-columns: 15% 1fr 1fr 1fr 15%;
+				}
+			}
+			@media (max-width: 1024px) {
+				& {
+					margin-block: 1.5rem;
+				}
+				.record-group {
+					grid-template-columns: 1fr 1fr 1fr;
+					gap: 1rem;
+				}
+				.record:nth-of-type(3n - 2) {
+					grid-column: 1/2;
+				}
+				.record:nth-of-type(3n - 1) {
+					grid-column: 2/3;
+				}
+				.record:nth-of-type(3n) {
+					grid-column: 3/4;
+				}
+			}
+			@media (max-width: 640px) {
+				.record-group {
+					grid-template-columns: 1fr 1fr;
+				}
+				.record:nth-of-type(2n - 1) {
+					grid-column: 1/2;
+				}
+				.record:nth-of-type(2n) {
+					grid-column: 2/3;
+				}
+			}
+			@media (max-width: 384px) {
+				.record-group {
+					gap: 0.75rem;
+				}
 			}
 		}
 	}
-	.listing[data-set-type="covers"] {
-		.record-group {
-			grid-template-columns: 15% 1fr 1fr 1fr 15%;
+	.dataset[data-location="page"] {
+		// general layouting for listings
+		& {
+			display: flex;
+			flex-direction: column;
+			row-gap: 1.5rem;
+			padding-block: 1.5rem;
 		}
 		.record-group-title {
 			display: none;
 		}
-		.record:nth-of-type(3n - 2) {
-			grid-column: 2/3;
-		}
-		.record:nth-of-type(3n - 1) {
-			grid-column: 3/4;
-		}
-		.record:nth-of-type(3n) {
-			grid-column: 4/5;
-		}
-		@media (min-width: 1536px) {
+		.listing[data-set-type="covers"],
+		.listing[data-set-type="headlines"] {
 			.record-group {
-				grid-template-columns: 20% 1fr 1fr 1fr 20%;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 1.5rem;
+				padding-inline: calc(10% + 1.5rem);
+				--related-project-columns: 4;
+				@media (max-width: 1024px) {
+					padding-inline: 0;
+				}
+				@media (max-width: 768px) {
+					--related-project-columns: 3;
+				}
+				@media (max-width: 640px) {
+					--related-project-columns: 2;
+				}
+				@media (max-width: 384px) {
+					--related-project-columns: 1;
+				}
+			}
+			.record {
+				flex-basis: calc((100% - ((var(--related-project-columns) - 1) * 1.5rem)) / var(--related-project-columns));
 			}
 		}
-		@media (max-width: 1280px) {
+		.listing[data-set-type="covers"] {
+			& {
+				color: var(--color-5);
+			}
 			.record-group {
-				grid-template-columns: 15% 1fr 1fr 1fr 15%;
+				justify-content: center;
 			}
 		}
-		@media (max-width: 1024px) {
+		.listing[data-set-type="headlines"] {
 			.record-group {
-				grid-template-columns: 1fr 1fr 1fr;
-				gap: 1rem;
+				flex-direction: column;
 			}
-			.record:nth-of-type(3n - 2) {
-				grid-column: 1/2;
+			.record[data-record-type="news"] {
+				position: relative;
+				.record-title a::after {
+					content: "";
+					position: absolute;
+					inset: 0;
+					z-index: 1;
+				}
 			}
-			.record:nth-of-type(3n - 1) {
-				grid-column: 2/3;
+			.record {
+				background: var(--color-7);
+				@include mixins.hover-text();
 			}
-			.record:nth-of-type(3n) {
-				grid-column: 3/4;
-			}
-		}
-		@media (max-width: 640px) {
-			.record-group {
-				grid-template-columns: 1fr 1fr;
-			}
-			.record:nth-of-type(2n - 1) {
-				grid-column: 1/2;
-			}
-			.record:nth-of-type(2n) {
-				grid-column: 2/3;
-			}
-		}
-		@media (max-width: 384px) {
-			.record-group {
-				gap: 0.75rem;
-			}
-		}
-	}
-	// specific layouting for detail sets
-	.listing[data-set-type="details"] {
-		& {
-			margin-block: 0.75rem;
 		}
 		.record {
-			position: relative;
+			@include mixins.hover-image();
 		}
-		.record-title {
-			text-wrap: balance;
-		}
-		.record-title a::after {
-			content: "";
-			position: absolute;
-			inset: 0;
-			z-index: 1;
-		}
-		.record-title-baseline {
-			font-weight: var(--font-weight-bold);
-		}
-		.record-date {
-			font-size: var(--font-size-small);
-			color: var(--color-2);
-		}
-		.record-date[data-format="yearOnly"] {
-			display: none;
-		}
-		.record-description {
-			font-size: var(--font-size-small);
-			color: var(--color-2);
-		}
-		.record-local-description,
-		.record-collection-description {
-			@include mixins.ellipsis-multiline($lines: 3);
-		}
-		.record-tags {
-			font-size: var(--font-size-small);
-			color: var(--color-1);
-		}
-		.record-tags dt {
-			display: none;
-		}
-		.record-tags dd {
-			display: inline;
-		}
-		.record-tags dd:not(:last-of-type)::after {
-			content: ", ";
-		}
-		.record-location-var1 {
-			display: none;
-		}
-		.record-image img {
-			display: block;
-			height: 100%;
-			width: 100%;
-			object-fit: cover;
-			aspect-ratio: 16/9;
-		}
-		@media (min-width: 641px) {
+	}
+	.dataset[data-location="listing"],
+	.dataset[data-location="page"] {
+		// specific layouting for detail sets
+		.listing[data-set-type="details"] {
 			.record {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				grid-template-rows: auto auto 1fr auto;
-				column-gap: 1rem;
-				row-gap: var(--_inner-gap);
-				--_inner-gap: 0.75rem;
-			}
-			.record-image {
-				grid-column: 1/2;
-				grid-row: 1/5;
-			}
-			.record-image picture {
-				height: 100%;
-			}
-			.record-title,
-			.record-tags,
-			.record-date,
-			.record-description {
-				grid-column: 2/3;
+				position: relative;
 			}
 			.record-title {
-				grid-row: 1/2;
+				text-wrap: balance;
+			}
+			.record-title a::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				z-index: 1;
+			}
+			.record-title-baseline {
+				font-weight: var(--font-weight-bold);
 			}
 			.record-date {
-				grid-row: 2/3;
-				margin-block-start: -0.15em;
+				font-size: var(--font-size-small);
+				color: var(--color-2);
 			}
-			.record-date[data-format="yearOnly"] ~ .record-description {
-				margin-block-start: calc(var(--_inner-gap) * -1);
-				min-height: calc(100% + var(--_inner-gap));
+			.record-date[data-format="yearOnly"] {
+				display: none;
 			}
 			.record-description {
-				grid-row: 3/4;
-				height: 0;
-				min-height: 100%;
-				overflow: hidden;
-				overflow: clip;
-				-webkit-mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
-				mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+				font-size: var(--font-size-small);
+				color: var(--color-2);
 			}
-			.record-local-description + .record-collection-description {
-				margin-block-start: var(--_inner-gap);
+			.record-local-description,
+			.record-collection-description {
+				@include mixins.ellipsis-multiline($lines: 3);
 			}
 			.record-tags {
-				grid-row: 4/5;
-				margin-block-end: var(--_inner-gap);
+				font-size: var(--font-size-small);
+				color: var(--color-1);
+			}
+			.record-tags dt {
+				display: none;
+			}
+			.record-tags dd {
+				display: inline;
+			}
+			.record-tags dd:not(:last-of-type)::after {
+				content: ", ";
+			}
+			.record-location-var1 {
+				display: none;
+			}
+			.record-image img {
+				display: block;
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+				aspect-ratio: var(--image-aspect-ratio);
+			}
+			@media (min-width: 641px) {
+				.record {
+					display: grid;
+					grid-template-columns: 1fr 1fr;
+					grid-template-rows: auto auto 1fr auto;
+					column-gap: 1rem;
+					row-gap: var(--_inner-gap);
+					--_inner-gap: 0.75rem;
+				}
+				.record-image {
+					grid-column: 1/2;
+					grid-row: 1/5;
+				}
+				.record-image picture {
+					height: 100%;
+				}
+				.record-title,
+				.record-tags,
+				.record-date,
+				.record-description {
+					grid-column: 2/3;
+				}
+				.record-title {
+					grid-row: 1/2;
+				}
+				.record-date {
+					grid-row: 2/3;
+					margin-block-start: -0.15em;
+				}
+				.record-date[data-format="yearOnly"] ~ .record-description {
+					margin-block-start: calc(var(--_inner-gap) * -1);
+					min-height: calc(100% + var(--_inner-gap));
+				}
+				.record-description {
+					grid-row: 3/4;
+					height: 0;
+					min-height: 100%;
+					overflow: hidden;
+					overflow: clip;
+					-webkit-mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+					mask-image: linear-gradient(to bottom, black, black calc(100% - 1.25rem), transparent);
+				}
+				.record-local-description + .record-collection-description {
+					margin-block-start: var(--_inner-gap);
+				}
+				.record-tags {
+					grid-row: 4/5;
+					margin-block-end: var(--_inner-gap);
+				}
+			}
+			@media (min-width: 1025px) {
+				.record {
+					padding: 0.75rem;
+					@include mixins.hoverable-area();
+				}
+			}
+			@media (max-width: 1024px) {
+				.record {
+					padding-block: 0.75rem;
+					--_inner-gap: 0.5rem;
+				}
+			}
+			@media (max-width: 640px) {
+				.record {
+					display: flex;
+					flex-direction: column;
+					row-gap: 0.375rem;
+				}
+				.record-image {
+					order: 1;
+					margin-block-end: 0.15em;
+				}
+				.record-date {
+					order: 2;
+				}
+				.record-title {
+					order: 3;
+					max-width: 50ch;
+				}
+				.record-description {
+					order: 4;
+				}
+				.record-description:has(.record-collection-description:only-child) {
+					display: none;
+				}
+				.record-collection-description { 
+					display: none;
+				}
+				.record-tags {
+					order: 5;
+				}
+			}
+			@media (max-width: 384px) {
+				.record-tags {
+					flex-wrap: nowrap;
+				}
+				.record-tags dd {
+					@include mixins.ellipsis();
+				}
 			}
 		}
-		@media (min-width: 1025px) {
-			.record {
-				padding: 0.75rem;
-				@include mixins.hoverable-area();
+		// specific layouting for list sets
+		.listing[data-set-type="list"] {
+			&[data-set-method="dynamic"][data-current-subset="alphabetic"] > .record-group:not([data-grouping-method="alphabetic"]),
+			&[data-set-method="dynamic"][data-current-subset="period"] > .record-group:not([data-grouping-method="period"]),
+			&[data-set-method="dynamic"][data-current-subset="types"] > .record-group:not([data-grouping-method="types"]),
+			&[data-set-method="dynamic"][data-current-subset="subjects"] > .record-group:not([data-grouping-method="subjects"]),
+			&[data-set-method="dynamic"][data-current-subset="collections"] > .record-group:not([data-grouping-method="collections"]) {
+				display: none;
+			}
+			.listing-headers {
+				border-block-end: 1px solid var(--color-5);
+				line-height: var(--line-height-small);
+			}
+			.listing-header {
+				position: relative;
+				padding-block: 1rem;
+				background: transparent;
+				transition: background-color 0.125s;
+				input:checked + label::before {
+					content: "↓";
+					content: "↓" / "";
+					font-family: var(--font-family-mono);
+					margin-inline-end: 0.25em;
+				}
+			}
+			.listing-header input {
+				position: absolute;
+				inset: 0;
+				opacity: 0;
+				cursor: pointer;
+			}
+			@media (min-width: 1025px) {
+				.listing-header {
+					padding-inline: 0.75rem;
+					@include mixins.hoverable-area($from-background-color: var(--color-7));
+				}
+				.record {
+					position: relative;
+					border-block-end: 1px solid var(--color-6);
+					@include mixins.hoverable-area();
+					// &::after {
+					// 	position: absolute;
+					// 	top: 0;
+					// 	right: 0;
+					// 	width: 1ch;
+					// 	height: 1.3rem;
+					// 	margin: 0.75rem;
+					// 	color: var(--color-4);
+					// 	font-size: var(--font-size-medium);
+					// 	font-family: var(--font-family-mono);
+					// 	line-height: 1.6;
+					// }
+					@media (any-hover: hover) {
+						// &:hover:not(:has(a:hover))::after {
+						// 	color: var(--color-3);
+						// }
+					}
+				}
+				.record[data-expanded="true"] {
+					margin-block-start: -1px;
+					background: var(--color-6);
+					border-block-end: 1px solid var(--color-5);
+					border-block-start: 1px solid var(--color-5);
+					// &::after {
+					// 	content: "×";
+					// 	content: "×" / "";
+					// 	color: var(--color-3);
+					// }
+				}
+				.record:not([data-expanded="true"]) {
+					.record-expanded-row {
+						display: none;
+					}
+					// &::after {
+					// 	content: "+";
+					// 	content: "+" / "";
+					// }
+				}
+				.record-baseline-row > * {
+					padding: 0.75rem;
+				}
+				.record-expanded-row > * {
+					padding: 0.75rem;
+					padding-block-start: 0;
+				}
+				.record-date,
+				.record-types,
+				.record-collections,
+				.record-description {
+					color: var(--color-2);
+				}
+				.record-title {
+					position: relative;
+				}
+				.record-title a {
+					@include mixins.hover-text();
+				}
+				.record-title a::after {
+					content: "";
+					display: block;
+					position: absolute;
+					inset: 0;
+					bottom: -1px;
+					z-index: 1;
+				}
+				.record-title-baseline {
+					font-weight: var(--font-weight-bold);
+				}
+				.record-date .date-baseline {
+					display: none;
+				}
+				.record-types dt,
+				.record-subjects dt,
+				.record-collections dt,
+				.record-locations dt {
+					display: none;
+				}
+				.record-types dd,
+				.record-subjects dd,
+				.record-collections dd,
+				.record-locations dd {
+					display: inline;
+					&:not(:last-of-type)::after {
+						content: ", ";
+					}
+				}
+				.record-description {
+					font-size: var(--font-size-medium);
+				}
+				.record-local-description + .record-collection-description {
+					margin-block-start: 0.5rem;
+				}
+			}
+			@media (max-width: 1024px) {
+				.listing-header {
+					@include mixins.hover-text();
+				}
+				.record {
+					padding-block: 0.75rem;
+				}
+				.record-baseline-row {
+					display: revert;
+				}
+				.record-expanded-row {
+					display: none;
+				}
+				.record-date,
+				.record-types,
+				.record-collections {
+					font-size: var(--font-size-small);
+					color: var(--color-2);
+				}
+				.record-date,
+				.record-types,
+				.record-collections,
+				.record-types dd,
+				.record-collections dd {
+					display: inline;
+				}
+				.record-title-baseline {
+					font-weight: var(--font-weight-bold);
+				}
+				.record-title a {
+					@include mixins.hover-text();
+				}
+				.record-date time::after {
+					content: ", ";
+				}
+				.record-types dt,
+				.record-collections dt {
+					display: none;
+				}
+				.record-types[data-has-value="false"],
+				.record-collections[data-has-value="false"] {
+					display: none;
+				}
+				.record-types + .record-collections:not([data-has-value="false"])::before {
+					content: ", ";
+				}
+				.record-types dd:not(:last-of-type)::after,
+				.record-collections dd:not(:last-of-type)::after {
+					content: ", ";
+				}
 			}
 		}
-		@media (max-width: 1024px) {
-			.record {
-				padding-block: 0.75rem;
-				--_inner-gap: 0.5rem;
-			}
-		}
-		@media (max-width: 640px) {
+		// specific layouting for headline sets
+		.listing[data-set-type="headlines"] {
 			.record {
 				display: flex;
+				flex-flow: column;
+				row-gap: 0.75rem;
+				align-self: start;
+				padding: 1.5rem;
+			}
+			.record[data-record-type="news"] {
+				background: var(--color-7);
+				scroll-margin-block-start: calc(var(--header-height) + 1.5rem);
+				// &:not([data-expanded="true"]) {
+				// 	.record-body {
+				// 		@include mixins.ellipsis-multiline($lines: 10);
+				// 	}
+				// }
+			}
+			.record:not([data-record-type="news"]) {
+				position: relative;
+				.record-title a::after {
+					content: "";
+					position: absolute;
+					inset: 0;
+					z-index: 1;
+				}
+				.record-description {
+					@include mixins.ellipsis-multiline($lines: 3);
+				}
+			}
+			.record-date {
+				order: 1;
+				font-size: var(--font-size-medium);
+				color: var(--color-2);
+			}
+			.record-image {
+				order: 2;
+			}
+			.record-title {
+				order: 3;
+				letter-spacing: var(--letter-spacing-small);
+				text-wrap: balance;
+			}
+			.record-title-baseline {
+				font-weight: var(--font-weight-bold);
+			}
+			.record-subtitle {
+				display: inline-block;
+			}
+			.record-description {
+				order: 4;
+				font-size: var(--font-size-medium);
+				color: var(--color-2);
+			}
+			.record-body {
+				order: 5;
+				font-size: var(--font-size-medium);
+				color: var(--color-2);
+			}
+			.record-related {
+				order: 6;
+				font-size: var(--font-size-medium);
+			}
+			.record-related a {
+				position: relative;
+				@include mixins.link();
+				@include mixins.hover-text();
+			}
+			.record-related dt {
+				display: inline
+			}
+			.record-related dd {
+				@include mixins.comma-separated-list();
+			}
+			@media (min-width: 641px) {
+				.record {
+					width: fit-content;
+					max-width: 50ch;
+				}
+				.record:nth-of-type(even) {
+					margin-inline-start: auto;
+				}
+				.record:nth-of-type(3n + 1) {
+					margin-inline: auto;
+				}
+			}
+			@media (max-width: 640px) {
+				.record {
+					justify-self: center;
+				}
+			}
+		}
+		// specific layouting for cover sets
+		.listing[data-set-type="covers"] {
+			.record {
+				position: relative;
+				display: flex;
 				flex-direction: column;
-				row-gap: 0.375rem;
+				row-gap: 0.25rem;
+				align-self: start;
 			}
 			.record-image {
 				order: 1;
 				margin-block-end: 0.15em;
 			}
-			.record-date {
-				order: 2;
-			}
-			.record-title {
-				order: 3;
-				max-width: 50ch;
-			}
-			.record-description {
-				order: 4;
-			}
-			.record-description:has(.record-collection-description:only-child) {
-				display: none;
-			}
-			.record-collection-description { 
-				display: none;
-			}
-			.record-tags {
-				order: 5;
-			}
-		}
-		@media (max-width: 384px) {
-			.record-tags {
-				flex-wrap: nowrap;
-			}
-			.record-tags dd {
-				@include mixins.ellipsis();
-			}
-		}
-	}
-	// specific layouting for list sets
-	.listing[data-set-type="list"] {
-		&[data-set-method="dynamic"][data-current-subset="alphabetic"] > .record-group:not([data-grouping-method="alphabetic"]),
-		&[data-set-method="dynamic"][data-current-subset="period"] > .record-group:not([data-grouping-method="period"]),
-		&[data-set-method="dynamic"][data-current-subset="types"] > .record-group:not([data-grouping-method="types"]),
-		&[data-set-method="dynamic"][data-current-subset="subjects"] > .record-group:not([data-grouping-method="subjects"]),
-		&[data-set-method="dynamic"][data-current-subset="collections"] > .record-group:not([data-grouping-method="collections"]) {
-			display: none;
-		}
-		.listing-headers {
-			border-block-end: 1px solid var(--color-5);
-			line-height: var(--line-height-small);
-		}
-		.listing-header {
-			position: relative;
-			padding-block: 1rem;
-			background: transparent;
-			transition: background-color 0.125s;
-			input:checked + label::before {
-				content: "↓";
-				content: "↓" / "";
-				font-family: var(--font-family-mono);
-				margin-inline-end: 0.25em;
-			}
-		}
-		.listing-header input {
-			position: absolute;
-			inset: 0;
-			opacity: 0;
-			cursor: pointer;
-		}
-		@media (min-width: 1025px) {
-			& {
-				margin-block-end: 1.5rem;
-			}
-			.listing-header {
-				padding-inline: 0.75rem;
-				@include mixins.hoverable-area($from-background-color: var(--color-7));
-			}
-			.record {
-				position: relative;
-				border-block-end: 1px solid var(--color-6);
-				@include mixins.hoverable-area();
-				// &::after {
-				// 	position: absolute;
-				// 	top: 0;
-				// 	right: 0;
-				// 	width: 1ch;
-				// 	height: 1.3rem;
-				// 	margin: 0.75rem;
-				// 	color: var(--color-4);
-				// 	font-size: var(--font-size-medium);
-				// 	font-family: var(--font-family-mono);
-				// 	line-height: 1.6;
-				// }
-				@media (any-hover: hover) {
-					// &:hover:not(:has(a:hover))::after {
-					// 	color: var(--color-3);
-					// }
-				}
-			}
-			.record[data-expanded="true"] {
-				margin-block-start: -1px;
-				background: var(--color-6);
-				border-block-end: 1px solid var(--color-5);
-				border-block-start: 1px solid var(--color-5);
-				// &::after {
-				// 	content: "×";
-				// 	content: "×" / "";
-				// 	color: var(--color-3);
-				// }
-			}
-			.record:not([data-expanded="true"]) {
-				.record-expanded-row {
-					display: none;
-				}
-				// &::after {
-				// 	content: "+";
-				// 	content: "+" / "";
-				// }
-			}
-			.record-baseline-row > * {
-				padding: 0.75rem;
-			}
-			.record-expanded-row > * {
-				padding: 0.75rem;
-				padding-block-start: 0;
-			}
-			.record-date,
-			.record-types,
-			.record-collections,
-			.record-description {
-				color: var(--color-2);
-			}
-			.record-title {
-				position: relative;
-			}
-			.record-title a {
-				@include mixins.hover-text();
-			}
-			.record-title a::after {
-				content: "";
+			.record-image img {
 				display: block;
-				position: absolute;
-				inset: 0;
-				bottom: -1px;
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+				aspect-ratio: var(--image-aspect-ratio);
 			}
-			.record-title-baseline {
-				font-weight: var(--font-weight-bold);
-			}
-			.record-date .date-baseline {
-				display: none;
-			}
-			.record-types dt,
-			.record-subjects dt,
-			.record-collections dt,
-			.record-locations dt {
-				display: none;
-			}
-			.record-types dd,
-			.record-subjects dd,
-			.record-collections dd,
-			.record-locations dd {
-				display: inline;
-				&:not(:last-of-type)::after {
-					content: ", ";
-				}
-			}
-			.record-description {
+			.record-title {
+				order: 2;
 				font-size: var(--font-size-medium);
 			}
-			.record-local-description + .record-collection-description {
-				margin-block-start: 0.5rem;
-			}
-		}
-		@media (max-width: 1024px) {
-			& {
-				margin-block-end: 0.75rem;
-			}
-			.listing-header {
-				@include mixins.hover-text();
-			}
-			.record {
-				padding-block: 0.75rem;
-			}
-			.record-baseline-row {
-				display: revert;
-			}
-			.record-expanded-row {
-				display: none;
-			}
-			.record-date,
-			.record-types,
-			.record-collections {
-				font-size: var(--font-size-small);
-				color: var(--color-2);
-			}
-			.record-date,
-			.record-types,
-			.record-collections,
-			.record-types dd,
-			.record-collections dd {
-				display: inline;
-			}
 			.record-title-baseline {
 				font-weight: var(--font-weight-bold);
 			}
-			.record-title a {
-				@include mixins.hover-text();
-			}
-			.record-date time::after {
-				content: ", ";
-			}
-			.record-types dt,
-			.record-collections dt {
-				display: none;
-			}
-			.record-types[data-has-value="false"],
-			.record-collections[data-has-value="false"] {
-				display: none;
-			}
-			.record-types + .record-collections:not([data-has-value="false"])::before {
-				content: ", ";
-			}
-			.record-types dd:not(:last-of-type)::after,
-			.record-collections dd:not(:last-of-type)::after {
-				content: ", ";
-			}
-		}
-	}
-	// specific layouting for headline sets
-	.listing[data-set-type="headlines"] {
-		& {
-			padding: 1rem;
-			@include mixins.polka-dot-background($density: 3);
-		}
-		.record-group-title {
-			display: none;
-		}
-		.record {
-			display: flex;
-			flex-flow: column;
-			row-gap: 0.75rem;
-			padding: 0.75rem;
-			margin: 1.5rem;
-			box-shadow: 0 0 0.75rem 0.75rem var(--color-7);
-		}
-		.record[data-record-type="news"] {
-			background: var(--color-7);
-			scroll-margin-block-start: calc(var(--header-height) + 1.5rem);
-			// &:not([data-expanded="true"]) {
-			// 	.record-body {
-			// 		@include mixins.ellipsis-multiline($lines: 10);
-			// 	}
-			// }
-		}
-		.record:not([data-record-type="news"]) {
-			position: relative;
-			@include mixins.hoverable-area($from-background-color: var(--color-7));
 			.record-title a::after {
 				content: "";
 				position: absolute;
 				inset: 0;
+				z-index: 1;
 			}
-			.record-description {
-				@include mixins.ellipsis-multiline($lines: 3);
+			.record-date-and-tags {
+				order: 3;
+				font-size: var(--font-size-small);
 			}
-		}
-		.record-date {
-			order: 1;
-			font-size: var(--font-size-medium);
-			color: var(--color-2);
-		}
-		.record-image {
-			order: 2;
-		}
-		.record-title {
-			order: 3;
-			font-size: var(--font-size-x-large);
-			letter-spacing: var(--letter-spacing-small);
-			text-wrap: balance;
-		}
-		.record-title-baseline {
-			font-weight: var(--font-weight-bold);
-		}
-		.record-subtitle {
-			display: inline-block;
-		}
-		.record-description {
-			order: 4;
-			font-size: var(--font-size-medium);
-			color: var(--color-2);
-		}
-		.record-body {
-			order: 5;
-			font-size: var(--font-size-medium);
-			color: var(--color-2);
-		}
-		.record-related {
-			order: 6;
-			font-size: var(--font-size-medium);
-		}
-		.record-related a {
-			position: relative;
-			@include mixins.link();
-			@include mixins.hover-text();
-		}
-		.record-related dt {
-			display: inline
-		}
-		.record-related dd {
-			@include mixins.comma-separated-list();
-		}
-		@media (min-width: 641px) {
-			.record {
-				width: fit-content;
-				max-width: 50ch;
+			.record-date {
+				display: inline;
 			}
-			.record:nth-of-type(even) {
-				margin-inline-start: auto;
+			.record-date::after {
+				content: ", ";
 			}
-			.record:nth-of-type(3n + 1) {
-				margin-inline: auto;
+			.record-tags {
+				display: inline;
 			}
-		}
-		@media (max-width: 640px) {
-			.record {
-				justify-self: center;
+			.record-tags dt {
+				display: none;
 			}
-		}
-	}
-	// specific layouting for cover sets
-	.listing[data-set-type="covers"] {
-		.record {
-			position: relative;
-			display: flex;
-			flex-direction: column;
-			row-gap: 0.25rem;
-			align-self: start;
-		}
-		.record-image {
-			order: 1;
-			margin-block-end: 0.15em;
-		}
-		.record-image img {
-			display: block;
-			height: 100%;
-			width: 100%;
-			object-fit: cover;
-			aspect-ratio: 2.1/3;
-		}
-		.record-title {
-			order: 2;
-			font-size: var(--font-size-medium);
-		}
-		.record-title-baseline {
-			font-weight: var(--font-weight-bold);
-		}
-		.record-title a::after {
-			content: "";
-			position: absolute;
-			inset: 0;
-		}
-		.record-date-and-tags {
-			order: 3;
-			font-size: var(--font-size-small);
-		}
-		.record-date {
-			display: inline;
-		}
-		.record-date::after {
-			content: ", ";
-		}
-		.record-tags {
-			display: inline;
-		}
-		.record-tags dt {
-			display: none;
-		}
-		.record-tags dd {
-			display: inline;
-		}
-		.record-tags dd + dd::before,
-		.record-tags dt:not(:first-of-type) + dd::before {
-			content: ", ";
-		}
-		@media (min-width: 1025px) {
-			& {
-				margin-block: 0.75rem;
+			.record-tags dd {
+				display: inline;
 			}
-			.record {
-				margin: 0.75rem;
-			}
-		}
-		@media (max-width: 1024px) {
-			& {
-				margin-block: 1.5rem;
+			.record-tags dd + dd::before,
+			.record-tags dt:not(:first-of-type) + dd::before {
+				content: ", ";
 			}
 		}
 	}

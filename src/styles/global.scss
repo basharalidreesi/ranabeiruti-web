@@ -1,5 +1,7 @@
 @charset "UTF-8";
 
+@use "@styles/mixins";
+
 :root {
 	// color
 	--color-1: #000000; // darkest // #191f45
@@ -46,23 +48,10 @@
 	width: 1px;
 }
 .hover-text {
-	transition: color 0.125s;
-	@media (any-hover: hover) {
-		&:hover {
-			color: var(--color-3);
-		}
-	}
+	@include mixins.hover-text();
 }
 .hover-image {
-	img {
-		filter: grayscale(1);
-		transition: filter 0.125s;
-	}
-	@media (any-hover: hover) {
-		&:hover img {
-			filter: grayscale(0);
-		}
-	}
+	@include mixins.hover-image();
 }
 a[aria-current] {
 	background-image: linear-gradient(to bottom, var(--color-4), var(--color-4));

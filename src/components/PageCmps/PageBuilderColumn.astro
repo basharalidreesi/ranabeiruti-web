@@ -1,5 +1,5 @@
 ---
-export type VerticalAlignments = "top" | "middle" | "bottom";
+import type { VerticalAlignments } from "@components/PageCmps/PageBuilder.astro";
 
 export type Props = {
 	ratio: number;
@@ -24,9 +24,7 @@ const {
 			"bottom": "flex-end",
 		}[verticalAlignment] || null,
 	}}
->
-	<slot />
-</div>
+><slot /></div>
 
 <style lang="scss">
 	@media (max-width: 896px) {

@@ -1,0 +1,183 @@
+---
+import PageBuilder, { type PageBuilderProps } from "@components/PageCmps/PageBuilder.astro";
+import PortableText from "@components/PortableText.astro";
+import type { ProjectProps } from "@projects/[slug].astro";
+import type { PublicationProps } from "@publications/[slug].astro";
+import type { SimplePageProps } from "@root/pages/[slug].astro";
+import Dataset, { assignRecordToGroup } from "./Dataset.astro";
+
+export type PageProps = {
+	body: PageBuilderProps[];
+	doesIncludeCollections: boolean;
+	doesIncludeCredits: boolean;
+	doesIncludeDescription: boolean;
+	doesIncludeRelatedProjects: boolean;
+	doesIncludeRelatedPublications: boolean;
+	doesIncludeRelatedNews: boolean;
+	doesIncludeRelatedPress: boolean;
+};
+
+export type Props = {
+	source: ProjectProps | PublicationProps | SimplePageProps;
+};
+
+const {
+	source,
+} = Astro.props;
+
+const hasBody = source && source.page && source.page.body && source.page.body.length !== 0;
+const hasCredits = source && (source.type === "project" || source.type === "publication") && source.page && source.page.doesIncludeCredits && source.credits && source.credits.length !== 0;
+const hasRelatedProjects = source && (source.type === "project" || source.type === "publication") && source.page && source.page.doesIncludeRelatedProjects && source.relatedProjects && source.relatedProjects.length !== 0;
+const hasRelatedPublications = source && (source.type === "project" || source.type === "publication") && source.page && source.page.doesIncludeRelatedPublications && source.relatedPublications && source.relatedPublications.length !== 0;
+const hasRelatedNews = source && (source.type === "project" || source.type === "publication") && source.page && source.page.doesIncludeRelatedNews && source.relatedNews && source.relatedNews.length !== 0;
+const hasRelatedPress = source && (source.type === "project" || source.type === "publication") && source.page && source.page.doesIncludeRelatedPress && source.relatedPress && source.relatedPress.length !== 0;
+const hasRelated = hasRelatedProjects || hasRelatedPublications || hasRelatedNews || hasRelatedPress;
+
+const allRelatedProjects = {};
+const allRelatedPublications = {};
+const allRelatedNewsAndPress = {};
+
+hasRelated && source.relatedProjects?.forEach((project) => {
+	assignRecordToGroup(project, {
+		group: allRelatedProjects,
+		key: "all",
+		title: "Related Projects",
+		description: "",
+		method: "period",
+	});
+});
+hasRelated && source.relatedPublications?.forEach((publication) => {
+	assignRecordToGroup(publication, {
+		group: allRelatedPublications,
+		key: "all",
+		title: "Related Publications",
+		description: "",
+		method: "period",
+	});
+});
+hasRelated && [...(source.relatedNews || []), ...(source.relatedPress || [])]?.filter(Boolean)?.forEach((newsOrPressItem) => {
+	assignRecordToGroup(newsOrPressItem, {
+		group: allRelatedNewsAndPress,
+		key: "all",
+		title: "Related News",
+		description: "",
+		method: "period",
+	});
+});
+---
+
+<article class="page">
+	<section class="page-body">
+		<h2 class="display-none">Body</h2>
+		<PageBuilder source={hasBody && source.page.body} />
+	</section>
+	{(hasCredits || hasRelated) && (
+		<footer
+			class="page-footer"
+			data-has-related-projects={hasRelatedProjects?.toString()}
+			data-has-related-publications={hasRelatedPublications?.toString()}
+			data-has-related-news={hasRelatedNews?.toString()}
+			data-has-related-press={hasRelatedPress?.toString()}
+		>
+			{hasCredits && (
+				<section class="page-credits" aria-label="Credits">
+					<h2 class="display-none">Credits</h2>
+					<PortableText source={source.credits} />
+				</section>
+			)}
+			{hasRelated && (
+				<section class="page-related" aria-label="Related Content">
+					<Dataset
+						location="page"
+						sets={[
+							{
+								name: "set-1",
+								method: "period",
+								type: "covers",
+								title: "List of Related Projects, Sorted By Date",
+								object: allRelatedProjects,
+								orderings: Object.keys(allRelatedProjects),
+								imageAspectRatio: "16/9",
+								options: {
+									withTagline: false,
+								},
+							},
+							{
+								name: "set-2",
+								method: "period",
+								type: "covers",
+								title: "List of Related Publications, Sorted By Date",
+								object: allRelatedPublications,
+								orderings: Object.keys(allRelatedPublications),
+								imageAspectRatio: "21/29.7",
+								options: {
+									withTagline: false,
+								},
+							},
+							{
+								name: "set-3",
+								method: "period",
+								type: "headlines",
+								title: "List of Related News Or Press Items, Sorted By Date",
+								object: allRelatedNewsAndPress,
+								orderings: Object.keys(allRelatedNewsAndPress),
+							},
+						]}
+					/>
+				</section>
+			)}
+		</footer>
+	)}
+</article>
+
+<style lang="scss" is:global>
+	.page {
+		flex: 1;
+		display: flex;
+		flex-flow: column nowrap;
+		padding-block-start: 1.5rem;
+		line-height: var(--line-height-large);
+	}
+	.page-body {
+		flex: 1;
+		display: grid;
+		grid-template-columns: [all-start] 10% [content-start] 1fr [content-end] 10% [all-end];
+		column-gap: 1.5rem;
+		* {
+			min-width: 0;
+			min-height: 0;
+		}
+		& > * {
+			grid-column: content;
+		}
+		& > *.breakout {
+			grid-column: all;
+		}
+		@media (max-width: 1024px) {
+			display: flex;
+			flex-direction: column;
+			column-gap: 0;
+			grid-template-columns: unset;
+		}
+	}
+	.page-credits {
+		margin-inline: calc(10% + 1.5rem);
+		margin-block-end: 1.5rem;
+		padding-block-start: 1.5rem;
+		border-block-start: 1px solid var(--color-5);
+		font-size: var(--font-size-small);
+		@media (max-width: 1024px) {
+			margin-inline: 0;
+		}
+	}
+	.page-related {
+		margin-inline: -1.5rem;
+		padding-inline: 1.5rem;
+		background: var(--color-1);
+	}
+	.page-footer:not([data-has-related-projects="true"]) .listing[data-set-name="set-1"],
+	.page-footer:not([data-has-related-publications="true"]) .listing[data-set-name="set-2"],
+	.page-footer:not([data-has-related-news="true"]):not([data-has-related-press="true"]) .listing[data-set-name="set-3"] {
+		display: none;
+	}
+</style>

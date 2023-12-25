@@ -1,8 +1,12 @@
 ---
-import Column, { type VerticalAlignments } from "@components/Column.astro";
+import PageBuilderColumn from "@components/PageCmps/PageBuilderColumn.astro";
 import PortableText from "@components/PortableText.astro";
-import Row from "@components/Row.astro";
+import PageBuilderRow from "@components/PageCmps/PageBuilderRow.astro";
 import type { TypedObject } from "astro-portabletext/types";
+
+export type VerticalAlignments = "top" | "middle" | "bottom";
+
+export type CaptionPlacements = "left" | "top" | "right" | "bottom";
 
 export type PageBuilderProps = {
 	columns: {
@@ -33,7 +37,7 @@ const {
 		return null;
 	};
 	return (
-		<Row index={index + 1} doesBreakout={row.doesBreakout}>
+		<PageBuilderRow index={index + 1} doesBreakout={row.doesBreakout}>
 			{row.columns?.map((column, index) => {
 				const ratio = Math.max(column.ratio, 1) || 1;
 				const verticalAlignment = column.verticalAlignment;
@@ -41,18 +45,18 @@ const {
 					case "column": {
 						if (column.content && column.content.length !== 0) {
 							return (
-								<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
+								<PageBuilderColumn ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
 									<PortableText source={column.content} />
-								</Column>
+								</PageBuilderColumn>
 							);
 						};
 						return (
-							<Column ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1} />
+							<PageBuilderColumn ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1} />
 						);
 					};
 					default: return null;
 				};
 			})}
-		</Row>
+		</PageBuilderRow>
 	);
 }) : null}

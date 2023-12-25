@@ -1,33 +1,17 @@
 ---
-import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import Main from "@layouts/Main.astro";
+import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import { PublicationsListingGroqQuery } from "@lib/groq";
 import { LOCALES } from "@lib/locales";
-import type { CollectionProps, LocationProps, SanityImageMetadataObject, SubjectProps, TypeProps } from "@lib/types.astro";
 import sanityClient from "@root/sanity";
-import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
-import type { TypedObject } from "astro-portabletext/types";
+import type { PublicationProps } from "@publications/[slug].astro";
 
 export type PublicationsListingProps = {
 	id: "publicationsListing";
 	type: "listing";
 	slug: { current: string; };
 	title: string;
-	allPublications: BasicPublicationProps[];
-};
-
-export type BasicPublicationProps = {
-	type: "publication";
-	slug: { current: string; };
-	title: string;
-	subtitle: string;
-	date: string;
-	locations?: LocationProps[];
-	types: TypeProps[];
-	subjects?: SubjectProps[];
-	collections?: CollectionProps[];
-	image: SanityImageObject & SanityImageMetadataObject;
-	description: TypedObject[];
+	allPublications: PublicationProps[];
 };
 
 export async function getStaticPaths() {
@@ -123,6 +107,7 @@ listing.allPublications.forEach((publication) => {
 				title: "List of Publications, Sorted by Date",
 				object: allPublications,
 				orderings: Object.keys(allPublications),
+				imageAspectRatio: "21/29.7",
 			},
 		]}
 		filters={[

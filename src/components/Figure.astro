@@ -4,9 +4,7 @@ import PortableText from "@components/PortableText.astro";
 import type { SanityImageMetadataObject } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
-import type { VerticalAlignments } from "./Column.astro";
-
-type CaptionPlacements = "left" | "top" | "right" | "bottom";
+import type { CaptionPlacements, VerticalAlignments } from "@components/PageCmps/PageBuilder.astro";
 
 type Props = {
 	source: SanityImageObject & SanityImageMetadataObject & {

@@ -3,8 +3,8 @@ import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@compone
 import Main from "@layouts/Main.astro";
 import { PressListingGroqQuery } from "@lib/groq";
 import type { SanityImageMetadataObject } from "@lib/types.astro";
-import type { BasicProjectProps } from "@projects/[slug].astro";
-import type { BasicPublicationProps } from "@publications/index.astro";
+import type { ProjectProps } from "@projects/[slug].astro";
+import type { PublicationProps } from "@publications/[slug].astro";
 import sanityClient from "@root/sanity";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
@@ -17,8 +17,8 @@ export type NewsProps = {
 	description?: TypedObject[] | string;
 	body?: TypedObject[];
 	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: BasicProjectProps[];
-	relatedPublications?: BasicPublicationProps[];
+	relatedProjects?: ProjectProps[];
+	relatedPublications?: PublicationProps[];
 };
 
 export type PressProps = {
@@ -27,10 +27,10 @@ export type PressProps = {
 	title: string;
 	publisher: string;
 	date: string;
-	description?: TypedObject[];
+	description?: TypedObject[] | string;
 	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: BasicProjectProps[];
-	relatedPublications?: BasicPublicationProps[];
+	relatedProjects?: ProjectProps[];
+	relatedPublications?: PublicationProps[];
 };
 
 export type NewsOrPressItemProps = NewsProps | PressProps;

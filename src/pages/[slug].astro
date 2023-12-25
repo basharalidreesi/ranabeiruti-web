@@ -1,13 +1,16 @@
 ---
+import Page, { type PageProps } from "@components/Page.astro";
 import Main from "@layouts/Main.astro";
 import { SimplePagesGroqQuery } from "@lib/groq";
 import sanityClient from "@root/sanity";
 
 export type SimplePageProps = {
+	type: "page";
 	slug: {
 		current: string;
 	};
 	title: string;
+	page: PageProps;
 };
 
 export async function getStaticPaths() {
@@ -28,7 +31,5 @@ const page = Astro.props;
 ---
 
 <Main title={page.title}>
-	<article>
-		{page.title}
-	</article>
+	<Page source={page} />
 </Main>

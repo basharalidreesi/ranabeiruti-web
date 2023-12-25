@@ -1,12 +1,13 @@
 ---
-import type { BasicProjectProps } from "@projects/[slug].astro";
-import type { BasicPublicationProps, PublicationsListingProps } from "@publications/index.astro";
+import type { ProjectProps } from "@projects/[slug].astro";
+import type { PublicationsListingProps } from "@publications/index.astro";
 import type { NewsOrPressItemProps, PressListingProps } from "@press/index.astro";
 import type { ImageFormat } from "@sanity/image-url/lib/types/types";
 import type { SanityImagePalette } from "@sanity/client";
 import type { TypedObject } from "astro-portabletext/types";
 import type { ProjectsListingProps } from "@projects/index.astro";
 import type { HomepageProps } from "@root/pages/index.astro";
+import type { PublicationProps } from "@publications/[slug].astro";
 
 export type SanityImageMetadataObject = {
 	metadata: {
@@ -30,7 +31,7 @@ export type SanityImageMetadataObject = {
 	};
 };
 
-export type RecordProps = BasicProjectProps | BasicPublicationProps | NewsOrPressItemProps;
+export type RecordProps = ProjectProps | PublicationProps | NewsOrPressItemProps;
 
 export type ListingProps = HomepageProps | ProjectsListingProps | PublicationsListingProps | PressListingProps;
 

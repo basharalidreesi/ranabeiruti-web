@@ -3,45 +3,18 @@ import Image from "@components/Image.astro";
 import Link from "@components/Link.astro";
 import Main from "@layouts/Main.astro";
 import { HomepageGroqQuery } from "@lib/groq";
-import type { BaseUrls, SanityImageMetadataObject } from "@lib/types.astro";
+import type { RecordProps, SanityImageMetadataObject } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import sanityClient from "@root/sanity";
 import SimpleDate from "@components/SimpleDate.astro";
+import TitleAndSubtitle, { separatorsByType } from "@components/TitleAndSubtitle.astro";
 
 export type HomepageProps = {
 	id: "homepage";
 	type: "listing";
 	title: string;
-	baseUrls: BaseUrls;
 	featuredItems: {
-		item: ({
-			type: "project";
-			slug: {
-				current: string;
-			};
-			title: string;
-			subtitle: string;
-		} | {
-			type: "publication";
-			slug: {
-				current: string;
-			};
-			title: string;
-			subtitle: string;
-		} | {
-			type: "news";
-			slug: {
-				current: string;
-			};
-			title: string;
-			date: string;
-		} | {
-			type: "press";
-			url: string;
-			title: string;
-			publisher: string;
-			date: string;
-		});
+		item: RecordProps;
 		displayMode: "expansive" | "constrained";
 		image?: SanityImageObject & SanityImageMetadataObject;
 	}[];
@@ -60,64 +33,50 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 					"--color-title": featuredItem.displayMode === "expansive" && featuredItem.image?.metadata?.palette?.darkMuted?.title || "var(--color-1)",
 				}}>
 					<header class="featured-item-header">
-						{
-							featuredItem.item.type === "project" ? (
-								<h2 class="featured-item-title">
-									<Link href={`/${homepage.baseUrls.projectsListingBaseUrl}/${featuredItem.item.slug.current}/`}>
-										<strong class="featured-item-title-baseline">{featuredItem.item.title?.trim()}{featuredItem.item.subtitle && (<span class="featured-item-title-separator">:&nbsp;</span>)}</strong>{featuredItem.item.subtitle && (<span class="featured-item-subtitle">{featuredItem.item.subtitle?.trim()}</span>)}
-									</Link>
-								</h2>
-								<p class="featured-item-cta">
-									<Link href={`/${homepage.baseUrls.projectsListingBaseUrl}/`}>Browse projects</Link>
-								</p>
-							)
-							: featuredItem.item.type === "publication" ? (
-								<h2 class="featured-item-title">
-									<Link href={`/${homepage.baseUrls.publicationsListingBaseUrl}/${featuredItem.item.slug.current}/`}>
-										<strong class="featured-item-title-baseline">{featuredItem.item.title?.trim()}{featuredItem.item.subtitle && (<span class="featured-item-title-separator">:&nbsp;</span>)}</strong>{featuredItem.item.subtitle && (<span class="featured-item-subtitle">{featuredItem.item.subtitle?.trim()}</span>)}
-									</Link>
-								</h2>
-								<p class="featured-item-cta">
-									<Link href={`/${homepage.baseUrls.publicationsListingBaseUrl}/`}>Browse publications</Link>
-								</p>
-							)
-							: featuredItem.item.type === "news" ? (
-								<h2 class="featured-item-title">
-									{featuredItem.item.date && (
-										<span class="featured-item-date"><SimpleDate source={featuredItem.item.date} /><span class="featured-item-title-separator">:&nbsp;</span></span>
-									)}
-									<Link href={`/${homepage.baseUrls.pressListingBaseUrl}/${featuredItem.item.slug.current}/`}>
-										<strong class="featured-item-title-baseline">{featuredItem.item.title?.trim()}</strong>
-									</Link>
-								</h2>
-								<p class="featured-item-cta">
-									<Link href={`/${homepage.baseUrls.pressListingBaseUrl}/`}>Browse news</Link>
-								</p>
-							)
-							: featuredItem.item.type === "press" ? (
-								<h2 class="featured-item-title">
-									{featuredItem.item.date && (
-										<span class="featured-item-date"><SimpleDate source={featuredItem.item.date} length="long" /><span class="featured-item-title-separator">:&nbsp;</span></span>
-									)}
-									<Link href={featuredItem.item.url}>
-										<strong class="featured-item-title-baseline">{featuredItem.item.title?.trim()}{featuredItem.item.publisher && (<span class="featured-item-title-separator">:&nbsp;</span>)}</strong>{featuredItem.item.publisher && (<span class="featured-item-subtitle">{featuredItem.item.publisher?.trim()}</span>)}
-									</Link>
-								</h2>
-								<p class="featured-item-cta">
-									<Link href={`/${homepage.baseUrls.pressListingBaseUrl}/`}>Browse press</Link>
-								</p>
-							)
-							: null
-						}
+						<h2 class="featured-item-title">
+							<Link to={featuredItem.item}>
+								<TitleAndSubtitle
+									title={featuredItem.item.title}
+									subtitle={
+										featuredItem.item.type === "project" ? featuredItem.item.subtitle
+										: featuredItem.item.type === "publication" ? featuredItem.item.subtitle
+										: featuredItem.item.type === "news" ? null
+										: featuredItem.item.type === "press" ? featuredItem.item.publisher
+										: null
+									}
+									separator={separatorsByType[featuredItem.item.type]}
+								/>
+							</Link>
+						</h2>
+						{(featuredItem.item.type === "news" || featuredItem.item.type === "press") && featuredItem.item.date && (
+							<div class="featured-item-date">
+								<SimpleDate source={featuredItem.item.date} length="long" />
+							</div>
+						)}
+						<div class="featured-item-cta">
+							<Link to={
+								featuredItem.item.type === "project" ? "projectsListing"
+								: featuredItem.item.type === "publication" ? "publicationsListing"
+								: featuredItem.item.type === "news" ? "pressListing"
+								: featuredItem.item.type === "press" ? "pressListing"
+								: null
+							}>Browse {
+								featuredItem.item.type === "project" ? "projects"
+								: featuredItem.item.type === "publication" ? "publications"
+								: featuredItem.item.type === "news" ? "news"
+								: featuredItem.item.type === "press" ? "press"
+								: null
+							}</Link>
+						</div>
 					</header>
 					{featuredItem.image && featuredItem.image.asset && (<>
 						{featuredItem.displayMode === "constrained"
 							? (
-								<Link class="featured-item-image-link" href={
-									featuredItem.item.type === "project" ? (`/${homepage.baseUrls.projectsListingBaseUrl}/${featuredItem.item.slug.current}/`)
-									: featuredItem.item.type === "publication" ? (`/${homepage.baseUrls.publicationsListingBaseUrl}/${featuredItem.item.slug.current}/`)
-									: featuredItem.item.type === "news" ? (`/${homepage.baseUrls.pressListingBaseUrl}/${featuredItem.item.slug.current}/`)
-									: featuredItem.item.type === "press" ? (featuredItem.item.url)
+								<Link class="featured-item-image-link" to={
+									featuredItem.item.type === "project" ? "projectsListing"
+									: featuredItem.item.type === "publication" ? "publicationsListing"
+									: featuredItem.item.type === "news" ? "pressListing"
+									: featuredItem.item.type === "press" ? "pressListing"
 									: null
 								}>
 									<Image class="featured-item-image" source={featuredItem.image} sizes="200vw" />

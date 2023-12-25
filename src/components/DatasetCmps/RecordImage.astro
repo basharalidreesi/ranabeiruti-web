@@ -4,13 +4,19 @@ import type { RecordProps } from "@lib/types.astro";
 
 type Props = {
 	record: RecordProps;
+	aspectRatio?: string;
 };
 
-const { record } = Astro.props;
+const {
+	record,
+	aspectRatio,
+} = Astro.props;
 ---
 
 {record && record.image && record.image.asset && (
-	<div class="record-image">
+	<div class="record-image" style={{
+		"--image-aspect-ratio": aspectRatio,
+	}}>
 		<Image
 			source={record.image}
 			sizes={

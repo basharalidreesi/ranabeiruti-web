@@ -1,6 +1,7 @@
 ---
 import { PressListingSlugGroqQuery, ProjectsListingSlugGroqQuery, PublicationsListingSlugGroqQuery } from "@lib/groq";
 import type { ListingProps, RecordProps } from "@lib/types.astro";
+import type { SimplePageProps } from "@root/pages/[slug].astro";
 import sanityClient from "@root/sanity";
 import type { HTMLAttributes } from "astro/types";
 
@@ -9,7 +10,7 @@ type Props = HTMLAttributes<"a"> & ({
 	to?: never;
 } | {
 	href?: never;
-	to: RecordProps | ListingProps;
+	to: RecordProps | ListingProps | SimplePageProps | "homepage" | "projectsListing" | "publicationsListing" | "pressListing";
 });
 
 const {
@@ -28,21 +29,22 @@ const pressListing = await sanityClient.fetch(PressListingSlugGroqQuery);
 const resolvedLink =
 	href && !to ? href
 	: !href && to ? (
-		to.type === "project" ? `/${projectsListing.slug.current}/${to.slug.current}/`
-		: to.type === "publication" ? `/${publicationsListing.slug.current}/${to.slug.current}/`
-		: to.type === "news" ? `/${pressListing.slug.current}/#${to.slug.current}/`
-		: to.type === "press" ? to.url
-		: to.type === "listing" && to.id === "homepage" ? "/"
-		: to.type === "listing" && to.id === "projectsListing" ? `/${projectsListing.slug.current}/`
-		: to.type === "listing" && to.id === "publicationsListing" ? `/${publicationsListing.slug.current}/`
-		: to.type === "listing" && to.id === "pressListing" ? `/${pressListing.slug.current}/`
+		typeof to === "object" && to.type === "page" ? `/${to.slug.current}/`
+		: typeof to === "object" && to.type === "project" ? `/${projectsListing.slug.current}/${to.slug.current}/`
+		: typeof to === "object" && to.type === "publication" ? `/${publicationsListing.slug.current}/${to.slug.current}/`
+		: typeof to === "object" && to.type === "news" ? `/${pressListing.slug.current}/#news-${to.slug.current}`
+		: typeof to === "object" && to.type === "press" ? to.url
+		: ((typeof to === "object" && to.type === "listing" && to.id === "homepage") || (typeof to === "string" && to === "homepage")) ? "/"
+		: ((typeof to === "object" && to.type === "listing" && to.id === "projectsListing") || (typeof to === "string" && to === "projectsListing")) ? `/${projectsListing.slug.current}/`
+		: ((typeof to === "object" && to.type === "listing" && to.id === "publicationsListing") || (typeof to === "string" && to === "publicationsListing")) ? `/${publicationsListing.slug.current}/`
+		: ((typeof to === "object" && to.type === "listing" && to.id === "pressListing") || (typeof to === "string" && to === "pressListing")) ? `/${pressListing.slug.current}/`
 		: null
 	)
 	: null
 ---
 
 {resolvedLink && (
-	<a class={className} href={resolvedLink} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || to?.title} role={role} {...rest}>
+	<a class={className} href={resolvedLink} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || (typeof to === "object" && to?.title)} role={role} {...rest}>
 		<slot />
 	</a>
 ) || (
