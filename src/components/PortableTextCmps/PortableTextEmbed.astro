@@ -1,0 +1,96 @@
+---
+const { node } = Astro.props;
+
+const supportedHosts = [
+	{
+		name: "youtube.com",
+		title: "YouTube",
+		oEmbedURIComponents: [
+			"https://youtube.com/oembed?url=",
+			"${uri}",
+			"&format=json",
+		],
+	},
+	{
+		name: "youtu.be",
+		title: "YouTube",
+		oEmbedURIComponents: [
+			"https://youtube.com/oembed?url=",
+			"${uri}",
+			"&format=json",
+		],
+	},
+	{
+		name: "vimeo.com",
+		title: "Vimeo",
+		oEmbedURIComponents: [
+			"https://vimeo.com/api/oembed.json?url=",
+			"${uri}",
+		],
+	},
+	{
+		name: "open.spotify.com",
+		title: "Spotify",
+		oEmbedURIComponents: [
+			"https://open.spotify.com/oembed?url=",
+			"${uri}",
+		],
+	},
+	{
+		name: "soundcloud.com",
+		title: "SoundCloud",
+		oEmbedURIComponents: [
+			"https://soundcloud.com/oembed?url=",
+			"${uri}",
+			"&format=json",
+		],
+	},
+];
+function encodeOEmbedQuery(url) {
+	if (!url) { return null; };
+	try {
+		const uri = encodeURIComponent(url);
+		const hostname = new URL(url)?.hostname?.replace("www.", "");
+		const hostConfig = supportedHosts.find((host) => host.name === hostname);
+		const uriIndexInHostOEmbedURIComponents = hostConfig?.oEmbedURIComponents?.indexOf("${uri}");
+		if (!hostConfig || uriIndexInHostOEmbedURIComponents === -1) { return null; };
+		return hostConfig.oEmbedURIComponents?.toSpliced(uriIndexInHostOEmbedURIComponents, 1, uri)?.join("");
+	} catch {
+		return false;
+	};
+};
+async function performOEmbedQuery(encodedOEmbedQuery) {
+	if (!encodedOEmbedQuery) { return; };
+	return await fetch(encodedOEmbedQuery)?.then((res) => res?.json());
+};
+async function getOEmbed(url) {
+	try {
+		const data = await performOEmbedQuery(encodeOEmbedQuery(url));
+		return data ? data : null;
+	} catch {
+		return null;
+	};
+};
+async function validateOEmbed(url) {
+	const data = await getOEmbed(url);
+	if (data) { return true; };
+	return false;
+};
+---
+
+{node && node.type === "url" && node.url && validateOEmbed(node.url) && (
+	<div class="embed-object" data-type="url" set:html={getOEmbed(node.url).then((data) => data.html)} />
+)}
+
+<style lang="scss" is:global>
+	.embed-object {
+		aspect-ratio: 16/9;
+		position: relative;
+	}
+	.embed-object iframe {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+</style>

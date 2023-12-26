@@ -6,11 +6,12 @@ import PortableTextMark from "@components/PortableTextCmps/PortableTextMark.astr
 import PortableTextTitle from "@components/PortableTextCmps/PortableTextTitle.astro";
 import { PortableText as SanityPortableText } from "astro-portabletext";
 import type { SomePortableTextComponents, TypedObject } from "astro-portabletext/types";
+import PortableTextEmbed from "./PortableTextCmps/PortableTextEmbed.astro";
 
 const components: SomePortableTextComponents = {
 	type: {
 		image: PortableTextImage,
-		// embed TODO
+		embed: PortableTextEmbed,
 		title: PortableTextTitle,
 		description: PortableTextDescription,
 	},
@@ -95,7 +96,7 @@ const {
 			background-position: 0 100%;
 			// color: var(--color-1);
 		}
-		:is(p, h3, blockquote, .note, ul, ol, figure, .document-header, .document-description) {
+		:is(p, h3, blockquote, .note, ul, ol, figure, .embed-object, .document-header, .document-description) {
 			&:empty {
 				display: none;
 			}
@@ -104,6 +105,9 @@ const {
 			}
 			&:not(:empty) + figure {
 				margin-block-start: calc(1.5rem - 0.3em);
+			}
+			&:not(:empty) + .embed-object {
+				margin-block-start: 1.5rem;
 			}
 			&:not(:empty) + .document-header {
 				margin-block-start: 1.5rem;
@@ -114,6 +118,9 @@ const {
 		}
 		figure + :is(p, h3, blockquote, .note, ul, ol, .document-description) {
 			margin-block-start: calc(1.5rem - 0.3em);
+		}
+		.embed-object + :is(p, h3, blockquote, .note, ul, ol, .document-description) {
+			margin-block-start: 1.5rem;
 		}
 		.document-header + :is(p, h3, blockquote, .note, ul, ol, .document-description) {
 			margin-block-start: 1.5rem;

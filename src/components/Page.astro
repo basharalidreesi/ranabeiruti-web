@@ -37,7 +37,7 @@ const allRelatedProjects = {};
 const allRelatedPublications = {};
 const allRelatedNewsAndPress = {};
 
-hasRelated && source.relatedProjects?.forEach((project) => {
+hasRelated && hasRelatedProjects && source.relatedProjects?.forEach((project) => {
 	assignRecordToGroup(project, {
 		group: allRelatedProjects,
 		key: "all",
@@ -46,7 +46,7 @@ hasRelated && source.relatedProjects?.forEach((project) => {
 		method: "period",
 	});
 });
-hasRelated && source.relatedPublications?.forEach((publication) => {
+hasRelated && hasRelatedPublications && source.relatedPublications?.forEach((publication) => {
 	assignRecordToGroup(publication, {
 		group: allRelatedPublications,
 		key: "all",
@@ -55,7 +55,7 @@ hasRelated && source.relatedPublications?.forEach((publication) => {
 		method: "period",
 	});
 });
-hasRelated && [...(source.relatedNews || []), ...(source.relatedPress || [])]?.filter(Boolean)?.forEach((newsOrPressItem) => {
+hasRelated && (hasRelatedNews || hasRelatedPress) && [...(source.relatedNews || []), ...(source.relatedPress || [])]?.filter(Boolean)?.forEach((newsOrPressItem) => {
 	assignRecordToGroup(newsOrPressItem, {
 		group: allRelatedNewsAndPress,
 		key: "all",
