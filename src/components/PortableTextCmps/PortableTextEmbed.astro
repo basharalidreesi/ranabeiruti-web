@@ -46,7 +46,7 @@ const supportedHosts = [
 		],
 	},
 ];
-function encodeOEmbedQuery(url) {
+function encodeOEmbedQuery(url: string) {
 	if (!url) { return null; };
 	try {
 		const uri = encodeURIComponent(url);
@@ -56,14 +56,19 @@ function encodeOEmbedQuery(url) {
 		if (!hostConfig || uriIndexInHostOEmbedURIComponents === -1) { return null; };
 		return hostConfig.oEmbedURIComponents?.toSpliced(uriIndexInHostOEmbedURIComponents, 1, uri)?.join("");
 	} catch {
-		return false;
+		return null;
 	};
 };
-async function performOEmbedQuery(encodedOEmbedQuery) {
+async function performOEmbedQuery(encodedOEmbedQuery: string) {
 	if (!encodedOEmbedQuery) { return; };
-	return await fetch(encodedOEmbedQuery)?.then((res) => res?.json());
+	try {
+		const data = await fetch(encodedOEmbedQuery)?.then((res) => res?.json());
+		return data;
+	} catch {
+		return null;
+	}
 };
-async function getOEmbed(url) {
+async function getOEmbed(url: string) {
 	try {
 		const data = await performOEmbedQuery(encodeOEmbedQuery(url));
 		return data ? data : null;
@@ -71,10 +76,14 @@ async function getOEmbed(url) {
 		return null;
 	};
 };
-async function validateOEmbed(url) {
-	const data = await getOEmbed(url);
-	if (data) { return true; };
-	return false;
+async function validateOEmbed(url: string) {
+	try {
+		const data = await getOEmbed(url);
+		if (data) { return true; };
+		return false;
+	} catch {
+		return false;
+	}
 };
 ---
 
