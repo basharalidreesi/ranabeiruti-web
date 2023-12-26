@@ -76,17 +76,8 @@ async function getOEmbed(url: string) {
 		return null;
 	};
 };
-async function validateOEmbed(url: string) {
-	try {
-		const data = await getOEmbed(url);
-		if (data) { return true; };
-		return false;
-	} catch {
-		return false;
-	}
-};
 
-const oEmbedHtml = node && node.type === "url" && node.url && getOEmbed(node.url).then((data) => data?.html) || null;
+const oEmbedHtml = node && node.type === "url" && node.url && await getOEmbed(node.url).then((data) => data?.html) || null;
 ---
 
 {oEmbedHtml && (
