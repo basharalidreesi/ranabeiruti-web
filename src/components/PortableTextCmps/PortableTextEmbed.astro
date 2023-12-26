@@ -85,10 +85,12 @@ async function validateOEmbed(url: string) {
 		return false;
 	}
 };
+
+const oEmbedHtml = node && node.type === "url" && node.url && getOEmbed(node.url).then((data) => data.html) || null;
 ---
 
-{node && node.type === "url" && node.url && validateOEmbed(node.url) && (
-	<div class="embed-object" data-type="url" set:html={getOEmbed(node.url).then((data) => data.html) || ""} />
+{oEmbedHtml && (
+	<div class="embed-object" data-type="url" set:html={oEmbedHtml} />
 )}
 
 <style lang="scss" is:global>
