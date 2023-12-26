@@ -86,7 +86,7 @@ async function validateOEmbed(url: string) {
 	}
 };
 
-const oEmbedHtml = node && node.type === "url" && node.url && getOEmbed(node.url).then((data) => data.html) || null;
+const oEmbedHtml = node && node.type === "url" && node.url && getOEmbed(node.url).then((data) => data?.html) || null;
 ---
 
 {oEmbedHtml && (
