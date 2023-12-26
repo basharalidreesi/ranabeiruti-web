@@ -34,8 +34,14 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 				}}>
 					<header class="featured-item-header">
 						<h2 class="featured-item-title">
+							{(featuredItem.item.type === "news" || featuredItem.item.type === "press") && featuredItem.item.date && (
+								<div class="featured-item-date">
+									<SimpleDate source={featuredItem.item.date} length="long" />
+								</div>
+							)}
 							<Link to={featuredItem.item}>
 								<TitleAndSubtitle
+									classPrefix="featured-item"
 									title={featuredItem.item.title}
 									subtitle={
 										featuredItem.item.type === "project" ? featuredItem.item.subtitle
@@ -48,11 +54,6 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 								/>
 							</Link>
 						</h2>
-						{(featuredItem.item.type === "news" || featuredItem.item.type === "press") && featuredItem.item.date && (
-							<div class="featured-item-date">
-								<SimpleDate source={featuredItem.item.date} length="long" />
-							</div>
-						)}
 						<div class="featured-item-cta">
 							<Link to={
 								featuredItem.item.type === "project" ? "projectsListing"
@@ -300,7 +301,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			color: var(--color-2);
 		}
 		.featured-item-title-baseline {
-			font-size: 1.5rem;
+			font-size: var(--font-size-x-large);
 			font-weight: var(--font-weight-bold);
 			letter-spacing: -0.02em;
 		}

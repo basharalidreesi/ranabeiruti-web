@@ -1101,7 +1101,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 			}
 			.record-date {
 				order: 1;
-				font-size: var(--font-size-medium);
+				font-size: var(--font-size-small);
 				color: var(--color-2);
 			}
 			.record-image {
@@ -1120,20 +1120,21 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 			}
 			.record-description {
 				order: 4;
-				font-size: var(--font-size-medium);
+				font-size: var(--font-size-small);
 				color: var(--color-2);
 			}
 			.record-body {
 				order: 5;
-				font-size: var(--font-size-medium);
+				font-size: var(--font-size-small);
 				color: var(--color-2);
 			}
 			.record-related {
 				order: 6;
-				font-size: var(--font-size-medium);
+				font-size: var(--font-size-small);
 			}
 			.record-related a {
 				position: relative;
+				z-index: 100;
 				@include mixins.link();
 				@include mixins.hover-text();
 			}
