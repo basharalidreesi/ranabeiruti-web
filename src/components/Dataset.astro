@@ -1136,7 +1136,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 			}
 			.record-related a {
 				position: relative;
-				z-index: 100;
+				z-index: 1;
 				@include mixins.link();
 				@include mixins.hover-text();
 			}
@@ -1268,10 +1268,10 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 		return;
 	};
 
-	// var upcomingRecords = []
-	// var ongoingRecords = [];
-	// const upcomingRecordsGroup = document.querySelector("#date-group-upcoming");
-	// const ongoingRecordsGroup = document.querySelector("#date-group-ongoing");
+	var upcomingRecords = []
+	var ongoingRecords = [];
+	const upcomingRecordsGroup = document.querySelectorAll(`.record-group[data-grouping-method="period"][id*="upcoming"]`);
+	const ongoingRecordsGroup = document.querySelectorAll(`.record-group[data-grouping-method="period"][id*="ongoing"]`);
 	// const recordsWithStartDates = document.querySelectorAll(`.listing[data-grouping="date"] .record[data-start-date]`);
 	// recordsWithStartDates.forEach((record) => {
 	// 	const startDateString = record.getAttribute("data-start-date");
