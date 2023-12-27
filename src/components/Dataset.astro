@@ -319,6 +319,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 				@include mixins.hover-text();
 			}
 			.dataset-header-item input {
+				all: unset;
 				position: absolute;
 				inset: 0;
 				opacity: 0;
@@ -910,6 +911,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 				}
 			}
 			.listing-header input {
+				all: unset;
 				position: absolute;
 				inset: 0;
 				opacity: 0;
@@ -1159,6 +1161,7 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 			@media (max-width: 640px) {
 				.record {
 					justify-self: center;
+					padding: 1rem;
 				}
 			}
 		}
@@ -1306,19 +1309,19 @@ const hasDatasetHeaders = hasDatasetSwitches || hasDatasetFilters;
 	// 	return group.setAttribute("data-size", (parseFloat(group.getAttribute("data-size")) + modifier)?.toString());
 	// };
 
-	// const records = document.querySelectorAll(".record");
-	// records.forEach((record) => {
-	// 	record.addEventListener("click", handleRecordClick);
-	// });
-	// function handleRecordClick(event: Event) {
-	// 	if ((event.target as HTMLElement).closest("a") && !(event.target as HTMLElement).closest(`.record[data-record-type="news"]`)) { return; };
-	// 	const closestRecord = (event.target as HTMLElement).closest(".record");
-	// 	if (closestRecord.getAttribute("data-expanded") === "false") {
-	// 		closestRecord.setAttribute("data-expanded", "true");
-	// 	} else {
-	// 		if ((event.target as HTMLElement).closest("p, img, span, dd, time")) { return; };
-	// 		closestRecord.setAttribute("data-expanded", "false");
-	// 	};
-	// 	return;
-	// };
+	const expandableRecords = document.querySelectorAll(".record[data-expanded]");
+	expandableRecords.forEach((expandableRecord) => {
+		expandableRecord.addEventListener("click", handleRecordExpand);
+	});
+	function handleRecordExpand(event: Event) {
+		if ((event.target as HTMLElement).closest("a")) { return; };
+		const closestRecord = (event.target as HTMLElement).closest(".record");
+		if (closestRecord.getAttribute("data-expanded") === "false") {
+			closestRecord.setAttribute("data-expanded", "true");
+		} else {
+			// if ((event.target as HTMLElement).closest("p, img, span, dd, time")) { return; };
+			closestRecord.setAttribute("data-expanded", "false");
+		};
+		return;
+	};
 </script>

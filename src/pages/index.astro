@@ -73,13 +73,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 					{featuredItem.image && featuredItem.image.asset && (<>
 						{featuredItem.displayMode === "constrained"
 							? (
-								<Link class="featured-item-image-link" to={
-									featuredItem.item.type === "project" ? "projectsListing"
-									: featuredItem.item.type === "publication" ? "publicationsListing"
-									: featuredItem.item.type === "news" ? "pressListing"
-									: featuredItem.item.type === "press" ? "pressListing"
-									: null
-								}>
+								<Link class="featured-item-image-link" to={featuredItem.item}>
 									<Image class="featured-item-image" source={featuredItem.image} sizes="200vw" />
 								</Link>
 							)
