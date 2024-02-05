@@ -122,6 +122,7 @@ const {
 								: "left";
 							return (
 								<article
+									id={record.type === "news" && record.slug.current}
 									class="record"
 									data-type={record.type}
 									data-size={record.type === "project" ? record.listingDisplaySize : "medium"}
