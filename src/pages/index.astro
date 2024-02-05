@@ -62,7 +62,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 				))}
 			</div>
 			{homepage.featuredItems.length > 1 && (
-				<div class="featured-items-seekers">
+				<div class="featured-items-seekers" style={{ "--image-title-color": homepage.featuredItems[0].item?.image?.metadata?.palette?.darkMuted?.title || null }}>
 					<div class="featured-items-previous">
 						<button name="seek" value="previous" title="Previous">Previous</button>
 						<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +82,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 				</div>
 			)}
 			{homepage.page && homepage.page.body && homepage.page.body.length !== 0 && (
-				<div class="featured-items-down">
+				<div class="featured-items-down" style={{ "--image-title-color": homepage.featuredItems[0].item?.image?.metadata?.palette?.darkMuted?.title || null }}>
 					<button name="seek" value="down" title="Down">Down</button>
 					<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 						<title>Previous</title>
