@@ -366,6 +366,7 @@ const ProjectOrPublicationExtendedGroqPartial = (`
 export const SiteSettingsGroqQuery = (`
 	*[_id == "settings"][0] {
 		title,
+		description,
 		navigationItems[] -> {
 			"type": _type,
 			"id": _id,

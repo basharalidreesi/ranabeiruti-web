@@ -10,6 +10,7 @@ export type NavigationItemProps = Exclude<RecordProps, StoryProps> | ListingProp
 
 export type SiteSettingsProps = {
 	title: string;
+	description: string;
 	navigationItems: NavigationItemProps[];
 };
 
@@ -17,12 +18,14 @@ const settings: SiteSettingsProps = await sanityClient.fetch(SiteSettingsGroqQue
 
 type Props = {
 	title: string;
+	description?: string;
 	headerMode?: HeaderProps;
 	clearHeaderColor?: string;
 };
 
 const {
 	title,
+	description,
 	headerMode,
 	clearHeaderColor,
 } = Astro.props;
@@ -31,16 +34,17 @@ const {
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<title>{[title, settings.title]?.filter(Boolean)?.join(" • ")}</title>
+		<meta name="description" content={description || settings.description} />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover" />
+		<meta name="theme-color" content="#fafafa" />
 		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="manifest" href="/site.webmanifest" />
-		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
-		<meta name="msapplication-TileColor" content="#da532c" />
-		<meta name="theme-color" content="#fafafa" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{[title, settings.title]?.filter(Boolean)?.join(" • ")}</title>
+		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000" />
+		<meta name="msapplication-TileColor" content="#ffffff" />
 	</head>
 	<body>
 		<NavigationMenu title={settings.title} items={settings.navigationItems} mode={headerMode} color={clearHeaderColor} />
