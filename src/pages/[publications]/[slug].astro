@@ -6,7 +6,6 @@ import type { CollectionProps, LocationProps, SanityImageMetadataObject, Subject
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
 import Page, { type PageProps } from "@components/Page.astro";
-import type { NewsProps, PressProps } from "@press/index.astro";
 import type { ProjectProps } from "@projects/[slug].astro";
 import type { PublicationsListingProps } from "./index.astro";
 
@@ -25,13 +24,12 @@ export type PublicationProps = {
 	credits?: TypedObject[];
 	relatedProjects?: ProjectProps[];
 	relatedPublications?: PublicationProps[];
-	relatedNews?: NewsProps[];
-	relatedPress?: PressProps[];
 	page: PageProps;
 };
 
 export async function getStaticPaths() {
-	const publications: PublicationProps[] = await sanityClient.fetch(PublicationsGroqQuery);
+	// const publications: PublicationProps[] = await sanityClient.fetch(PublicationsGroqQuery);
+	const publications: PublicationProps[] = [];
 	const publicationsListing: PublicationsListingProps = await sanityClient.fetch(PublicationsListingGroqQuery);
 	return publications?.map((publication) => {
 		return {

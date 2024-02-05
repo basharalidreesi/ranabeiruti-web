@@ -1,0 +1,32 @@
+---
+import ComplexDate from "@components/ComplexDate.astro";
+import SimpleDate from "@components/SimpleDate.astro";
+import type { RecordProps } from "@lib/types.astro";
+
+type Props = {
+	source: RecordProps;
+};
+
+const {
+	source,
+} = Astro.props;
+
+const recordType = source.type;
+const isValidRecord = source && recordType !== "story";
+const isValidSimpleDate = isValidRecord && source.date && typeof source.date === "string";
+const isValidComplexDate = isValidRecord && source.date && typeof source.date === "object" && source.date.startDate && source.date.dateFormat ? true : false;
+const isValidDateSource = isValidSimpleDate || isValidComplexDate;
+---
+
+{source && recordType && isValidDateSource && (
+	/** @ts-ignore */
+	<div class="record-date" data-format={isValidComplexDate ? source.date.dateFormat : "fullDate"}>
+		{
+			recordType === "project" ? (<ComplexDate source={source.date} />)
+			: recordType === "publication" ? (<SimpleDate source={source.date} format="yearOnly" />)
+			: recordType === "news" ? (<SimpleDate source={source.date} format="fullDate" />)
+			: recordType === "press" ? (<SimpleDate source={source.date} format="fullDate" />)
+			: null
+		}
+	</div>
+)}

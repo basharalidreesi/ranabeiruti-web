@@ -4,25 +4,8 @@ import Link from "@components/Link.astro";
 const { markDef } = Astro.props.node;
 
 const type = markDef?.type;
-
-function resolveHref() {
-	const internalTarget = markDef?.internalTarget;
-	const externalTarget = markDef?.externalTarget;
-	if (type === "internal" && internalTarget?.type && internalTarget?.slug?.current) {
-		let route = null;
-		if (internalTarget.type === "project") { route = "projects"; };
-		if (internalTarget.type === "news") { route = "news"; };
-		return (`/${route}/${internalTarget.slug.current}/`);
-	};
-	if (type === "external" && externalTarget) {
-		return externalTarget;
-	};
-	return null;
-};
-
-const href = resolveHref() || null;
 ---
 
-<Link class="link hover-text" href={href}>
+<Link class="link hover-text" {...(((type === "external" && markDef?.externalTarget) && { href: markDef?.externalTarget }) || ((type === "internal" && markDef?.internalTarget) && { to: markDef?.internalTarget }))}>
 	<slot />
 </Link>

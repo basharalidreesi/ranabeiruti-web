@@ -9,7 +9,6 @@ import type { TypedObject } from "astro-portabletext/types";
 import type { ProjectsListingProps } from "@projects/index.astro";
 import Page, { type PageProps } from "@components/Page.astro";
 import type { PublicationProps } from "@publications/[slug].astro";
-import type { NewsProps, PressProps } from "@press/index.astro";
 
 export type ProjectProps = {
 	type: "project";
@@ -28,13 +27,15 @@ export type ProjectProps = {
 	credits?: TypedObject[];
 	relatedProjects?: ProjectProps[];
 	relatedPublications?: PublicationProps[];
-	relatedNews?: NewsProps[];
-	relatedPress?: PressProps[];
 	page: PageProps;
+	isListed: boolean,
+	listingAlignment: "auto" | "left" | "middle" | "right",
+	listingDisplaySize: "small" | "medium" | "large" | "breakout",
 };
 
 export async function getStaticPaths() {
-	const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
+	// const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
+	const projects: ProjectProps[] = [];
 	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingSlugGroqQuery);
 	return projects?.map((project) => {
 		return {

@@ -1,0 +1,285 @@
+---
+import Link from "@components/Link.astro";
+import type { NavigationItemProps } from "@layouts/Main.astro";
+
+export type HeaderProps = "border" | "contrast" | "clear";
+
+type Props = {
+	title: string;
+	items?: NavigationItemProps[];
+	mode?: HeaderProps;
+	color?: string;
+};
+
+const {
+	title,
+	items,
+	mode = "contrast",
+	color,
+} = Astro.props;
+---
+
+<header data-mode={mode} data-expanded="false" style={{ "--clear-header-color": mode === "clear" && color }}>
+	{items && items.length !== 0 && (
+		<div class="nav-expand">
+			<button name="expand-nav-menu" title="Menu">Menu</button>
+			<svg width="24" height="18" viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg">
+				<title>Menu</title>
+				<line x1="0" y1="0" x2="24" y2="0"/>
+				<line x1="0" y1="9" x2="24" y2="9"/>
+				<line x1="0" y1="18" x2="24" y2="18"/>
+			</svg>
+		</div>
+	)}
+	<h1 class="nav-home">
+		<Link to="homepage">
+			{title}
+		</Link>
+	</h1>
+	{items && items.length !== 0 && (
+		<nav class="nav-menu">
+			<ul>
+				{items.map((item) => {
+					const slug = item.type !== "press" && item.slug.current;
+					const pathName = Astro.url.pathname;
+					const basePath = pathName.split("/")?.filter(Boolean)?.[0];
+					const isCurrent = (slug.replaceAll("/", "") === pathName.replaceAll("/", "")) || (slug.replaceAll("/", "") === basePath);
+					return (
+						<li>
+							<Link to={item} {...isCurrent && { "aria-current": "page" }}>
+								{item.title}
+							</Link>
+						</li>
+					);
+				})}
+			</ul>
+			<div class="nav-collapse">
+				<button name="collapse-nav-menu" title="Collapse">Collapse</button>
+			</div>
+		</nav>
+	)}
+</header>
+
+<style lang="scss">
+	@use "@styles/mixins";
+	header {
+		& {
+			position: sticky;
+			top: calc(var(--header-offset) * -1);
+			z-index: 100;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			column-gap: var(--spacer-400);
+			height: calc(var(--header-height) + var(--header-offset));
+			padding-inline: var(--body-inline-spacing);
+			transition: background-color 0.25s;
+		}
+		* {
+			transition: color 0.0625s;
+		}
+		&[data-mode="border"] {
+			background: var(--color-7);
+			border-block-end: 1px solid var(--color-5);
+		}
+		&[data-mode="contrast"] {
+			background: var(--color-6);
+		}
+		&[data-mode="clear"] {
+			& {
+				pointer-events: none;
+			}
+			.nav-expand,
+			.nav-expand button,
+			.nav-home,
+			.nav-home a,
+			.nav-menu li,
+			.nav-menu a,
+			.nav-collapse,
+			.nav-collapse button {
+				pointer-events: all;
+			}
+			a {
+				@include mixins.hover-text($withOpacity: true, $opacity: 0.5);
+			}
+			@media (min-width: 641px) {
+				.nav-expand,
+				.nav-home,
+				.nav-menu {
+					color: var(--color-1);
+					color: var(--clear-header-color);
+				}
+			}
+			@media (max-width: 640px) {
+				.nav-expand,
+				.nav-home {
+					color: var(--color-1);
+					color: var(--clear-header-color);
+				}
+			}
+		}
+		&:not([data-mode="clear"]) {
+			a {
+				@include mixins.hover-text();
+			}
+		}
+		@media (min-width: 641px) {
+			.nav-expand {
+				display: none;
+			}
+			.nav-collapse {
+				display: none;
+			}
+			.nav-home,
+			.nav-menu {
+				position: sticky;
+				top: calc((var(--header-height) - 1em) / 2);
+			}
+			.nav-menu {
+				display: flex;
+				column-gap: var(--spacer-400);
+			}
+			ul {
+				list-style: none;
+				display: contents;
+			}
+		}
+		@media (max-width: 640px) {
+			.nav-expand,
+			.nav-home {
+				position: sticky;
+				top: calc((var(--header-height) - 1em) / 2);
+			}
+			.nav-expand {
+				z-index: 2;
+				@include mixins.hover-text();
+			}
+			.nav-expand button {
+				all: unset;
+				position: absolute;
+				inset: calc(var(--spacer-200) * -1);
+				opacity: 0;
+				cursor: pointer;
+				z-index: 1;
+				font-size: 0px;
+			}
+			.nav-expand svg {
+				display: block;
+				width: 1em;
+				height: 100%;
+				margin-block-start: 0.15em;
+				fill: transparent;
+				stroke: currentColor;
+				stroke-width: 1.1px;
+				overflow: visible;
+				stroke-linejoin: round;
+				stroke-linecap: round;
+				cursor: pointer;
+				* {
+					vector-effect: non-scaling-stroke;
+				}
+			}
+			.nav-menu {
+				& {
+					position: absolute;
+					inset: 0;
+					width: calc(50% + 1px);
+					height: 100vh;
+					height: 100dvh;
+					padding-block-start: var(--header-height);
+					padding-inline-start: var(--body-inline-spacing);
+					padding-inline-end: var(--spacer-400);
+					background: var(--color-7);
+					border-inline-end: 1px solid var(--color-5);
+					box-shadow: 0 0 1em 0 var(--color-2);
+					z-index: 1;
+					@media (max-width: 512px) {
+						width: calc(66.666% + 1px);
+					}
+				}
+				&::before {
+					content: "";
+					display: block;
+					position: absolute;
+					inset: 0;
+					height: var(--header-height);
+					background: var(--color-7);
+				}
+			}
+			ul {
+				list-style: none;
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				padding-block-end: var(--spacer-400);
+				border-block-start: 1px solid var(--color-5);
+				overflow-y: auto;
+				@include mixins.no-scrollbar();
+			}
+			li {
+				& {
+					position: relative;
+					padding-block: var(--spacer-350);
+					border-block-end: 1px solid var(--color-5);
+				}
+				&:first-of-type {
+					margin-block-start: -1px;
+				}
+			}
+			a::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				z-index: 1;
+			}
+			.nav-collapse {
+				position: absolute;
+				inset: 0;
+				transform: translateX(100%);
+				background: var(--color-2);
+				opacity: 0.25;
+				@media (max-width: 512px) {
+					width: 50%;
+					transform: translateX(200%);
+				}
+			}
+			.nav-collapse button {
+				all: unset;
+				position: absolute;
+				inset: 0;
+				opacity: 0;
+				cursor: pointer;
+				z-index: 1;
+				font-size: 0px;
+			}
+			&:not([data-expanded="true"]) {
+				.nav-menu {
+					display: none;
+				}
+			}
+			&[data-expanded="true"] {
+				.nav-expand {
+					color: var(--color-1);
+				}
+			}
+		}
+	}
+</style>
+
+<script>
+	const expandNavMenuButton = document.querySelector(`button[name="expand-nav-menu"]`);
+	expandNavMenuButton.addEventListener("click", handleNavExpand);
+	function handleNavExpand() {
+		const navContainer = expandNavMenuButton.closest("header");
+		const currentNavState = navContainer.getAttribute("data-expanded");
+		navContainer.setAttribute("data-expanded", currentNavState === "true" ? "false" : "true");
+	};
+
+	const collapseNavButton = document.querySelector(`button[name="collapse-nav-menu"]`);
+	collapseNavButton.addEventListener("click", handleNavCollapse);
+	function handleNavCollapse() {
+		const navContainer = collapseNavButton.closest("header");
+		const currentNavState = navContainer.getAttribute("data-expanded");
+		navContainer.setAttribute("data-expanded", currentNavState === "true" ? "false" : "true");
+	};
+</script>

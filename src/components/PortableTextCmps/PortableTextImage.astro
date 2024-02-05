@@ -4,4 +4,4 @@ import Figure from "@components/Figure.astro";
 const { node } = Astro.props;
 ---
 
-<Figure source={node} />
+<Figure source={node} sizes={`(min-width: 1025px) ${((node.columnRatio || 1) / (node.rowRatios || 1) * (node.isBreakoutRow ? 100 : 80)) + "vw"}, 100vw`} />

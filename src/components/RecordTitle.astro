@@ -1,0 +1,38 @@
+---
+import Link from "@components/Link.astro";
+import TitleAndSubtitle from "@components/TitleAndSubtitle.astro";
+import type { RecordProps } from "@lib/types.astro";
+
+type Props = {
+	source: RecordProps;
+	level?: 1 | 2 | 3 | 4 | 5 | 6;
+	withLink?: boolean;
+};
+
+const {
+	source,
+	level = 2,
+	withLink = false,
+} = Astro.props;
+
+const recordType = source.type;
+const recordTitle = recordType !== "story" && source.title;
+const recordSubtitle = ((recordType === "project" || recordType === "publication") && source.subtitle) || (recordType === "press" && source.publisher);
+const separatorsByType = {
+	project: ":&nbsp;",
+	publication: ":&nbsp;",
+	news: ":&nbsp;",
+	press: " →&nbsp;",
+};
+const HeadingTag = `h${level}`;
+---
+
+{source && recordType && recordTitle && (
+	<div class="record-title">
+		<HeadingTag>
+			<Link to={withLink ? source : null}>
+				<TitleAndSubtitle title={recordTitle} subtitle={recordSubtitle} separator={separatorsByType[recordType]} classPrefix="record" />
+			</Link>
+		</HeadingTag>
+	</div>
+)}

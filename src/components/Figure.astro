@@ -1,6 +1,6 @@
 ---
 import Image from "@components/Image.astro";
-import PortableText from "@components/PortableText.astro";
+import RichText from "@components/RichText.astro";
 import type { SanityImageMetadataObject } from "@lib/types.astro";
 import type { SanityImageObject } from "@sanity/image-url/lib/types/types";
 import type { TypedObject } from "astro-portabletext/types";
@@ -14,60 +14,85 @@ type Props = {
 		imageRatio: number;
 		captionRatio: number;
 	};
+	sizes?: string;
 };
 
-const { source } = Astro.props;
+const {
+	source,
+	sizes,
+} = Astro.props;
 ---
 
 <figure data-caption-placement={source.captionPlacement || "bottom"}>
-	<Image source={source} style={{
-		flex: Math.max(source.imageRatio, 1) || 1,
-	}} />
+	<Image
+		source={source}
+		style={{
+			"--image-flex-ratio": Math.max(source.imageRatio, 1) || 1,
+			"--image-vertical-alignment": "flex-start",
+		}}
+		sizes={sizes}
+	/>
 	{source.caption && source.caption?.length !== 0
 		? (
 			<figcaption style={{
-				flex: Math.max(source.captionRatio, 1) || 1,
-				alignSelf: {
+				"--caption-flex-ratio": Math.max(source.captionRatio, 1) || 1,
+				"--caption-vertical-alignment": {
 						"top": "flex-start",
 						"middle": "center",
 						"bottom": "flex-end",
+						"baseline": "baseline",
 				}[source.captionVerticalAlignment] || null,
 			}}>
-				<PortableText source={source.caption} />
+				<RichText source={source.caption} />
 			</figcaption>
 		)
 		: null
 	}
 </figure>
 
-<style lang="scss">
+<style lang="scss" is:global>
 	figure {
-		display: flex;
+		& {
+			display: flex;
+		}
+		picture {
+			flex: var(--image-flex-ratio);
+			align-self: var(--image-vertical-alignment);
+		}
 		figcaption {
-			font-size: var(--font-size-small);
+			flex: var(--caption-flex-ratio);
+			align-self: var(--caption-vertical-alignment);
 			color: var(--color-2)
 		}
-	}
-	figure:where([data-caption-placement="left"]) {
-		flex-flow: row-reverse nowrap;
-		gap: 0.75rem;
-	}
-	figure:where([data-caption-placement="top"]) {
-		flex-flow: column-reverse nowrap;
-		gap: calc(0.5rem + 0.15em);
-	}
-	figure:where([data-caption-placement="right"]) {
-		flex-flow: row nowrap;
-		gap: 0.75rem;
-	}
-	figure:where([data-caption-placement="bottom"]) {
-		flex-flow: column nowrap;
-		gap: calc(0.5rem + 0.15em);
-	}
-	@media (max-width: 768px) {
-		figure {
+		&:where([data-caption-placement="left"]) {
+			flex-flow: row-reverse nowrap;
+			gap: var(--spacer-200);
+		}
+		&:where([data-caption-placement="top"]) {
+			flex-flow: column-reverse nowrap;
+			gap: calc(var(--spacer-100) + 0.15em);
+		}
+		&:where([data-caption-placement="right"]) {
+			flex-flow: row nowrap;
+			gap: var(--spacer-200);
+		}
+		&:where([data-caption-placement="bottom"]) {
 			flex-flow: column nowrap;
-			gap: calc(0.5rem + 0.15em);
+			gap: calc(var(--spacer-100) + 0.15em);
+		}
+		@media (max-width: 768px) {
+			& {
+				flex-flow: column nowrap;
+				gap: calc(var(--spacer-100) + 0.15em);
+			}
+			picture {
+				flex: unset;
+				align-self: unset;
+			}
+			figcaption {
+				flex: unset;
+				align-self: unset;
+			}
 		}
 	}
 </style>

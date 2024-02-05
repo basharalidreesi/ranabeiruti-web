@@ -1,10 +1,10 @@
 ---
 import PageBuilderColumn from "@components/PageCmps/PageBuilderColumn.astro";
-import PortableText from "@components/PortableText.astro";
+import RichText from "@components/RichText.astro";
 import PageBuilderRow from "@components/PageCmps/PageBuilderRow.astro";
 import type { TypedObject } from "astro-portabletext/types";
 
-export type VerticalAlignments = "top" | "middle" | "bottom";
+export type VerticalAlignments = "top" | "middle" | "bottom" | "baseline";
 
 export type CaptionPlacements = "left" | "top" | "right" | "bottom";
 
@@ -16,6 +16,7 @@ export type PageBuilderProps = {
 		content: TypedObject[];
 	}[];
 	doesBreakout: boolean;
+	isEnabled: boolean;
 };
 
 export type Props = {
@@ -27,7 +28,7 @@ const {
 } = Astro.props;
 ---
 
-{source ? source?.map((row, index) => {
+{source && source.length !== 0 && source.filter((row) => row.isEnabled)?.map((row, index) => {
 	if (row.columns.filter((column) => {
 		switch (column._type) {
 			case "column": return (!column.content || column.content?.length === 0) ? true : false;
@@ -46,7 +47,7 @@ const {
 						if (column.content && column.content.length !== 0) {
 							return (
 								<PageBuilderColumn ratio={ratio} verticalAlignment={verticalAlignment} index={index + 1}>
-									<PortableText source={column.content} />
+									<RichText source={column.content} />
 								</PageBuilderColumn>
 							);
 						};
@@ -59,4 +60,4 @@ const {
 			})}
 		</PageBuilderRow>
 	);
-}) : null}
+})}

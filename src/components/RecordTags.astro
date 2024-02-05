@@ -1,0 +1,51 @@
+---
+import { LOCALES } from "@lib/locales";
+import type { RecordProps, TagNames } from "@lib/types.astro";
+import Link from "@components/Link.astro";
+
+type Props = {
+	source: RecordProps;
+	tags?: TagNames[] | "all";
+	withLinks?: boolean;
+};
+
+const {
+	source,
+	tags = "all",
+	withLinks = false,
+} = Astro.props;
+
+const recordType = source.type;
+const isValidRecordType = recordType !== "story" && recordType !== "news" && recordType !== "press";
+const recordTypes = isValidRecordType && source.types;
+const recordCollections = isValidRecordType && source.collections;
+const recordSubjects = isValidRecordType && source.subjects;
+const recordLocations = isValidRecordType && source.locations;
+const tagArray =  [...((tags === "all" || tags.includes("types")) && recordTypes || []), ...((tags === "all" || tags.includes("collections")) && recordCollections || []), ...((tags === "all" || tags.includes("subjects")) && recordSubjects || []), ...((tags === "all" || tags.includes("locations")) && recordLocations || [])]?.filter(Boolean);
+---
+
+{source && recordType && isValidRecordType && tagArray && tagArray.length !== 0 && (
+	<div class="record-tags">
+		<ul>
+			{tagArray.map((tag) => {
+				const tagType = tag.type;
+				const tagName = tag.name?.trim();
+				return (
+					<li data-type={tag.type}>
+						<Link to={
+							withLinks && recordType === "project" ? "projectsListing"
+							: withLinks && recordType === "publication" ? "publicationsListing"
+							: null
+						}>
+							{
+								(tagType === "type" || tagType === "collection" || tagType === "subject") ? (tagName)
+								: tagType === "location" ? ([tagName, LOCALES.find((locale) => locale.value === tag.locale)?.title]?.filter(Boolean)?.join(", "))
+								: null
+							}
+						</Link>
+					</li>
+				);
+			})}
+		</ul>
+	</div>
+)}

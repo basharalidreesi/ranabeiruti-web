@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 @mixin tag($hover: true, $border-color: var(--color-3)) {
-	display: block;
+	display: inline-block;
 	padding-block: 0.1875rem;
 	padding-inline: 0.5625rem;
 	border-radius: 9999px;
@@ -16,11 +16,20 @@
 	}
 }
 
-@mixin hover-text($hover-color: var(--color-3)) {
-	transition: color 0.125s;
-	@media (any-hover: hover) {
-		&:hover {
-			color: $hover-color;
+@mixin hover-text($hover-color: var(--color-3), $withOpacity: false, $opacity: 0.5) {
+	@if $withOpacity == true {
+		transition: opacity 0.125s, color 0.125s;
+		@media (any-hover: hover) {
+			&:hover {
+				opacity: $opacity;
+			}
+		}
+	} @else {
+		transition: color 0.125s;
+		@media (any-hover: hover) {
+			&:hover {
+				color: $hover-color;
+			}
 		}
 	}
 }
@@ -52,10 +61,10 @@
 	overflow: clip;
 }
 
-@mixin polka-dot-background($density: 2) {
-	background-image: radial-gradient(var(--color-4) 1px, transparent 1px), radial-gradient(var(--color-4) 1px, transparent 1px);
-	background-size: calc(1.5rem / $density) calc(1.5rem / $density);
-	background-position: 0 0, calc(1.5rem / ($density * 2)) calc(1.5rem / ($density * 2));
+@mixin polka-dot-background($density: 2, $dot-color: var(--color-4), $background-color: transparent) {
+	background-image: radial-gradient($dot-color 1px, $background-color 1px), radial-gradient($dot-color 1px, $background-color 1px);
+	background-size: calc(var(--spacer-400) / $density) calc(var(--spacer-400) / $density);
+	background-position: 0 0, calc(var(--spacer-400) / ($density * 2)) calc(var(--spacer-400) / ($density * 2));
 }
 
 @mixin stroke($color: var(--color-7)) {
@@ -111,5 +120,30 @@
 				background: $to-background-color;
 			}
 		}
+	}
+}
+
+@mixin boxed-area() {
+	border: 1px solid var(--color-4);
+	box-shadow:
+		-0.5rem 0.5rem 0px -1px var(--color-7),
+		-0.5rem 0.5rem var(--color-4),
+		-1rem 1rem 0px -1px var(--color-7),
+		-1rem 1rem var(--color-4);
+	margin-left: 1rem;
+	margin-bottom: 1rem;
+	@media (min-width: 1025px) {
+		.column:first-of-type & {
+			margin-left: 0;
+		}
+	}
+}
+
+@mixin no-scrollbar() {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;  /* Internet Explorer 10+ */
+	&::-webkit-scrollbar { /* WebKit */
+		width: 0;
+		height: 0;
 	}
 }

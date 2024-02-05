@@ -1,10 +1,9 @@
 ---
 import Main from "@layouts/Main.astro";
-import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import { PublicationsListingGroqQuery } from "@lib/groq";
-import { LOCALES } from "@lib/locales";
 import sanityClient from "@root/sanity";
 import type { PublicationProps } from "@publications/[slug].astro";
+import Listing, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Listing.astro";
 
 export type PublicationsListingProps = {
 	id: "publicationsListing";
@@ -29,68 +28,15 @@ export async function getStaticPaths() {
 const listing = Astro.props;
 
 const allPublications: DatasetRecordGroups = {};
-const publicationsByType: DatasetRecordGroups = {};
-const publicationsByCollection: DatasetRecordGroups = {};
-const publicationsBySubject: DatasetRecordGroups = {};
-const publicationsByLocation: DatasetRecordGroups = {};
 
 listing.allPublications.forEach((publication) => {
 	assignRecordToGroup(publication, {
 		group: allPublications,
 		key: "all",
-		title: "All",
+		marker: "All",
 		description: "All publications",
 		method: "period",
 	});
-	publication.types && publication.types.length !== 0
-		? publication.types?.forEach((type) => assignRecordToGroup(publication, {
-			group: publicationsByType,
-			key: type.slug.current,
-			title: type.name,
-			description: `${type.name?.trim()} publications`,
-			method: "types",
-		})) : assignRecordToGroup(publication, {
-			group: publicationsByType,
-			key: "other",
-			title: "Other",
-			description: "Other publications",
-			method: "types",
-		});
-	publication.collections && publication.collections.length !== 0
-		? publication.collections?.forEach((collection) => assignRecordToGroup(publication, {
-			group: publicationsByCollection,
-			key: collection.slug.current,
-			title: collection.name,
-			description: `Publications from ${collection.name?.trim()}`,
-			method: "collections",
-		})) : assignRecordToGroup(publication, {
-			group: publicationsByCollection,
-			key: "other",
-			title: "Other",
-			description: "Other publications",
-			method: "collections",
-		});
-	publication.subjects && publication.subjects.length !== 0
-		? publication.subjects?.forEach((subject) => assignRecordToGroup(publication, {
-			group: publicationsBySubject,
-			key: subject.slug.current,
-			title: subject.name,
-			description: `${subject.name?.trim()} publications`,
-			method: "subjects",
-		})) : assignRecordToGroup(publication, {
-			group: publicationsBySubject,
-			key: "other",
-			title: "Other",
-			description: "Other publications",
-			method: "subjects",
-		});
-	publication.locations?.forEach((location) => assignRecordToGroup(publication, {
-		group: publicationsByLocation,
-		key: location.locale,
-		title: LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale,
-		description: `Publications from ${LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale}`,
-		method: "locations",
-	}));
 });
 ---
 
@@ -98,43 +44,43 @@ listing.allPublications.forEach((publication) => {
 	<h1 class="display-none">
 		{listing.title}
 	</h1>
-	<Dataset
-		sets={[
-			{
-				name: "set-1",
-				method: "period",
-				type: "covers",
-				title: "List of Publications, Sorted by Date",
-				object: allPublications,
-				orderings: Object.keys(allPublications),
-				imageAspectRatio: "21/29.7",
-			},
-		]}
-		filters={[
-			{
-				type: "types",
-				object: publicationsByType,
-				orderings: Object.keys(publicationsByType)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allPublications?.length,
-			},
-			{
-				type: "subjects",
-				object: publicationsBySubject,
-				orderings: Object.keys(publicationsBySubject)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allPublications?.length,
-			},
-			{
-				type: "collections",
-				object: publicationsByCollection,
-				orderings: Object.keys(publicationsByCollection)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allPublications?.length,
-			},
-			{
-				type: "locations",
-				object: publicationsByLocation,
-				orderings: Object.keys(publicationsByLocation)?.filter((key) => !["other"].includes(key))?.sort((a, b) => LOCALES.find((locale) => locale.value === a)?.title?.localeCompare(LOCALES.find((locale) => locale.value === b)?.title)),
-				unfilteredSize: listing.allPublications?.length,
-			},
-		]}
-	/>
+	<div class="coming-soon">
+		<p>
+			Coming Soon
+		</p>
+	</div>
+	<!-- <Listing
+		source={allPublications}
+		originalSet={listing.allPublications}
+		keys={Object.keys(allPublications)}
+		densities={["2"]}
+		filters={["types", "subjects", "collections", "locations"]}
+	/> -->
 </Main>
+
+<style lang="scss">
+	@use "@styles/mixins";
+	.coming-soon {
+		flex: 1;
+		display: flex;
+		// margin-inline: calc(var(--body-inline-spacing) * -1);
+		// animation: polka-dot-movement 100s linear infinite;
+		// @include mixins.polka-dot-background();
+		// @keyframes polka-dot-movement {
+		// 	from {
+		// 		background-position: 0 0, calc(var(--spacer-400) / 4) calc(var(--spacer-400) / 4);
+		// 	}
+		// 	to {
+		// 		background-position: 100% 0, calc(var(--spacer-400) / 4 - 100%) calc(var(--spacer-400) / 4);
+		// 	}
+		// }
+	}
+	.coming-soon p {
+		display: block;
+		// padding: var(--spacer-400);
+		margin: auto;
+		// background: var(--color-7);
+		// font-size: var(--font-size-700);
+		// font-weight: 700;
+	}
+</style>

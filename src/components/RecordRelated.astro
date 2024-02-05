@@ -1,0 +1,30 @@
+---
+import type { RecordProps } from "@lib/types.astro";
+import Link from "@components/Link.astro";
+
+type Props = {
+	source: RecordProps;
+};
+
+const {
+	source,
+} = Astro.props;
+
+const recordType = source.type;
+const isValidRecord = recordType === "news" || recordType === "press";
+const recordRelated = isValidRecord && source.relatedProjectsAndPublications;
+---
+
+{source && isValidRecord && recordRelated && recordRelated.length !== 0 && (
+	<div class="record-related">
+		<ul>
+			{recordRelated.map((relatedRecord) => (
+				<li>
+					<Link to={relatedRecord}>
+						{relatedRecord.title}
+					</Link>
+				</li>
+			))}
+		</ul>
+	</div>
+)}

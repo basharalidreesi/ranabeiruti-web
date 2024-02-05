@@ -1,0 +1,22 @@
+---
+import type { RecordProps } from "@lib/types.astro";
+import RichText from "@components/RichText.astro";
+
+type Props = {
+	source: RecordProps;
+};
+
+const {
+	source,
+} = Astro.props;
+
+const recordType = source.type;
+const isValidRecord = recordType === "news" || recordType === "story";
+const recordBody = isValidRecord && source.body;
+---
+
+{source && recordType && isValidRecord && recordBody && recordBody.length !== 0 && (
+	<div class="record-body">
+		<RichText source={recordBody} />
+	</div>
+)}

@@ -22,7 +22,6 @@ const {
 } = Astro.props;
 
 function renderComplexDate(complexDate: ComplexDateProps) {
-	if (!complexDate || !complexDate?.startDate || (!format && !complexDate?.dateFormat)) { return null; };
 	const startDate = complexDate.startDate;
 	const endDate = complexDate.endDate;
 	const hasDuration = complexDate.hasDuration;
@@ -104,11 +103,13 @@ function renderComplexDate(complexDate: ComplexDateProps) {
 };
 ---
 
-<time
-	datetime={source && source.startDate && source.dateFormat ? (
-		source.dateFormat === "yearWithMonth" ? source.startDate.split("-").splice(0, -1).join("-")
-		: source.dateFormat === "yearOnly" ? source.startDate.split("-")[0]
-		: source.startDate
-	) : null}
-	set:html={renderComplexDate(source)}
-/>
+{source && source.startDate && (format || source.dateFormat) && (
+	<time
+		datetime={
+			source.dateFormat === "yearWithMonth" ? [source.startDate.split("-")?.[0], source.startDate.split("-")?.[1]]?.filter(Boolean)?.join("-")
+			: source.dateFormat === "yearOnly" ? source.startDate.split("-")?.[0]
+			: source.startDate
+		}
+		set:html={renderComplexDate(source)}
+	/>
+)}

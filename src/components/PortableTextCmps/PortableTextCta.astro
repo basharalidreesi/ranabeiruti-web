@@ -1,0 +1,37 @@
+---
+import Link from "@components/Link.astro";
+
+const { node } = Astro.props;
+
+const {
+	label,
+	type,
+	internalTarget,
+	externalTarget,
+} = node;
+---
+
+{label && type && ((type === "internal" && internalTarget) || (type === "external" && externalTarget)) && (
+	<div class="cta boxed-area">
+		<Link {...(((type === "external" && externalTarget) && { href: externalTarget }) || ((type === "internal" && internalTarget) && { to: internalTarget }))}>
+			{label}
+		</Link>
+	</div>
+)}
+
+<style lang="scss" is:global>
+	@use "@styles/mixins";
+	.cta {
+		position: relative;
+		width: fit-content;
+		padding: var(--spacer-200);
+		font-weight: 700;
+		@include mixins.boxed-area();
+		@include mixins.hoverable-area();
+	}
+	.cta a::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+	}
+</style>

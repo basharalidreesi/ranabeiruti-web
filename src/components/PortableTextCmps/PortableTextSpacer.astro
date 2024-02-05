@@ -1,0 +1,24 @@
+---
+const { node } = Astro.props;
+
+const {
+	lineCount,
+} = node;
+---
+
+{lineCount && (
+	<div class="spacer" style={{
+		"--line-count": lineCount,
+	}}></div>
+)}
+
+<style lang="scss">
+	.spacer {
+		height: calc(1em * 1.3 * var(--line-count));
+	}
+	@media (max-width: 768px) {
+		.spacer {
+			display: none;
+		}
+	}
+</style>

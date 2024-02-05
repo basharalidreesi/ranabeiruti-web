@@ -1,78 +1,53 @@
 ---
-import Link from "@components/Link.astro";
 import { SiteSettingsGroqQuery } from "@lib/groq";
 import "@styles/reset.scss";
 import "@styles/global.scss";
 import sanityClient from "@root/sanity";
+import type { ListingProps, RecordProps, StoryProps } from "@lib/types.astro";
+import NavigationMenu, { type HeaderProps } from "@components/NavigationMenu.astro";
+
+export type NavigationItemProps = Exclude<RecordProps, StoryProps> | ListingProps;
 
 export type SiteSettingsProps = {
 	title: string;
-	navigationItems: {
-		title: string;
-		slug: {
-			current: string;
-		};
-	}[];
+	navigationItems: NavigationItemProps[];
 };
 
 const settings: SiteSettingsProps = await sanityClient.fetch(SiteSettingsGroqQuery);
 
 type Props = {
 	title: string;
-	headerMode?: "sticky" | "overlay";
+	headerMode?: HeaderProps;
+	clearHeaderColor?: string;
 };
 
 const {
 	title,
-	headerMode = "sticky",
+	headerMode,
+	clearHeaderColor,
 } = Astro.props;
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover">
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#fafafa" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{[title, settings.title]?.filter(Boolean)?.join(" • ")}</title>
 	</head>
 	<body>
-		<header id="header-outer" data-mode={headerMode}>
-			<button id="header-expand" aria-label="Expand menu">
-				<svg class="hover-text" width="24" height="18" viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg">
-					<line x1="0" y1="0" x2="24" y2="0"/>
-					<line x1="0" y1="9" x2="24" y2="9"/>
-					<line x1="0" y1="18" x2="24" y2="18"/>
-				</svg>
-			</button>
-			<div id="header-inner">
-				<h1>
-					<Link class="hover-text" href="/">
-						{settings.title}
-					</Link>
-				</h1>
-				<nav id="nav" aria-label="Navigation Menu">
-					<h2 class="display-none">Navigation Menu</h2>
-					<ul>
-						{settings.navigationItems.map((item) => {
-							const slug = item.slug.current;
-							const isCurrent = slug.replaceAll("/", "") === Astro.url.pathname.replaceAll("/", "");
-							return (
-								<li>
-									<Link class="hover-text" href={(`/${slug}/`).replace("///", "/")} {...isCurrent && { "aria-current": "page" }}>
-										{item.title}
-									</Link>
-								</li>
-							);
-						})}
-					</ul>
-				</nav>
-			</div>
-		</header>
-		<main id="main">
+		<NavigationMenu title={settings.title} items={settings.navigationItems} mode={headerMode} color={clearHeaderColor} />
+		<main>
 			<slot />
 		</main>
-		<footer id="footer"></footer>
+		<footer></footer>
 	</body>
 </html>
 
@@ -82,90 +57,17 @@ const {
 		flex-flow: column nowrap;
 		min-height: 100vh;
 		min-height: 100dvh;
-		--header-height: calc(var(--font-size-medium) + 1rem + 1rem + 1px);
-		--spacing-inline: calc(1.5rem + env(safe-area-inset-left, 0px));
-	}
-	#header-outer {
-		position: sticky;
-		top: -1.5rem;
-		z-index: 100;
-		padding-inline: var(--spacing-inline);
-		font-size: var(--font-size-medium);
-	}
-	#header-inner {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		column-gap: 1.5rem;
-		row-gap: 1rem;
-		height: calc(var(--header-height) + 1.5rem);
-		& > * {
-			position: sticky;
-			top: 1rem;
+		--header-height: calc(1em * 4);
+		--header-offset: var(--spacer-400);
+		--body-inline-spacing: calc(var(--spacer-400) + env(safe-area-inset-left, 0px));
+		@media (max-width: 640px) {
+			--header-offset: 0px;
 		}
 	}
-	#header-outer[data-mode="sticky"] {
-		background: var(--color-7);
-		#header-inner {
-			border-block-end: 1px solid var(--color-4);
-		}
-	}
-	#header-outer[data-mode="overlay"] {
-		pointer-events: none;
-		#header-inner > * {
-			pointer-events: all;
-		}
-	}
-	@media (min-width: 641px) {
-		#header-expand {
-			display: none;
-		}
-	}
-	@media (max-width: 640px) {
-		#header-inner {
-			justify-content: flex-end;
-		}
-		#header-expand {
-			all: unset;
-			position: absolute;
-			top: 0;
-			left: 1.5rem;
-			width: 1rem;
-			height: calc(var(--header-height) + 1.5rem);
-			cursor: pointer;
-			svg {
-				position: sticky;
-				top: 1rem;
-				display: block;
-				width: 100%;
-				height: 1rem;
-				fill: transparent;
-				stroke: currentColor;
-				stroke-width: 1px;
-				overflow: visible;
-				& > * {
-					vector-effect: non-scaling-stroke;
-				}
-			}
-		}
-		#nav {
-			display: none;
-		}
-	}
-	#nav {
-		ul {
-			list-style: none;
-			display: flex;
-			column-gap: 1.5rem;
-			row-gap: 0.75rem;
-		}
-	}
-	#main {
+	main {
 		flex: 1;
 		display: flex;
 		flex-flow: column nowrap;
-		margin-inline: var(--spacing-inline);
-		line-height: var(--line-height-large);
+		margin-inline: var(--body-inline-spacing);
 	}
 </style>

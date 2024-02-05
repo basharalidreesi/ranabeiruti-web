@@ -1,17 +1,17 @@
 ---
 import Main from "@layouts/Main.astro";
-import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
 import { ProjectsListingGroqQuery } from "@lib/groq";
-import { LOCALES } from "@lib/locales";
 import type { ProjectProps } from "@projects/[slug].astro";
 import sanityClient from "@root/sanity";
+import type { StoryProps } from "@lib/types.astro";
+import Listing, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Listing.astro";
 
 export type ProjectsListingProps = {
 	id: "projectsListing";
 	type: "listing";
 	slug: { current: string; };
 	title: string;
-	allProjects: ProjectProps[];
+	allProjectsAndStories: (ProjectProps | StoryProps)[];
 };
 
 export async function getStaticPaths() {
@@ -28,82 +28,19 @@ export async function getStaticPaths() {
 
 const listing = Astro.props;
 
-const projectsByTitle: DatasetRecordGroups = {};
-const projectsByPeriod: DatasetRecordGroups = {
-	"ongoing": { title: "Now", records: [], description: "Ongoing projects", method: "period", },
-	"upcoming": { title: "Upcoming", records: [], description: "Upcoming projects", method: "period", },
+const projectsAndStoriesByPeriod: DatasetRecordGroups = {
+	"ongoing": { marker: "Now", records: [], description: "Ongoing projects", method: "period", },
+	"upcoming": { marker: "Upcoming", records: [], description: "Upcoming projects", method: "period", },
 };
-const projectsByType: DatasetRecordGroups = {};
-const projectsByCollection: DatasetRecordGroups = {};
-const projectsBySubject: DatasetRecordGroups = {};
-const projectsByLocation: DatasetRecordGroups = {};
 
-const stripTitle = (title: string) => title.replace(/^(a |the |an )/gi, "").replace(/[^\p{L}\p{N}]/gu, "");
-
-listing.allProjects?.forEach((project) => {
-	assignRecordToGroup(project, {
-		group: projectsByTitle,
-		method: "alphabetic",
-		key: Array.from(stripTitle(project.title))[0].toLowerCase(),
-		title: Array.from(stripTitle(project.title))[0].toUpperCase(),
-		description: `Projects beginning with ${Array.from(stripTitle(project.title))[0].toUpperCase()}`,
-	});
-	assignRecordToGroup(project, {
-		group: projectsByPeriod,
+listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type === "story") || (projectOrStory.type === "project" && projectOrStory.isListed))?.forEach((projectOrStory) => {
+	assignRecordToGroup(projectOrStory, {
+		group: projectsAndStoriesByPeriod,
 		method: "period",
-		key: project.date.sortDate === "ongoing" ? "ongoing" : project.date.sortDate.split("-")[0],
-		title: project.date.sortDate === "ongoing" ? "Now" : project.date.sortDate.split("-")[0],
-		description: project.date.sortDate === "ongoing" ? "Ongoing projects" : `Projects from ${project.date.sortDate.split("-")[0]}`,
+		key: projectOrStory.date.sortDate === "ongoing" ? "ongoing" : projectOrStory.date.sortDate?.split("-")?.[0],
+		marker: projectOrStory.date.sortDate === "ongoing" ? "Now" : projectOrStory.date.sortDate.split("-")[0],
+		description: projectOrStory.date.sortDate === "ongoing" ? "Ongoing projects" : `Projects from ${projectOrStory.date.sortDate.split("-")[0]}`,
 	});
-	project.types && project.types.length !== 0
-		? project.types?.forEach((type) => assignRecordToGroup(project, {
-			group: projectsByType,
-			method: "types",
-			key: type.slug.current,
-			title: type.name,
-			description: `${type.name?.trim()} projects`,
-		})) : assignRecordToGroup(project, {
-			group: projectsByType,
-			method: "types",
-			key: "other",
-			title: "Other",
-			description: "Other projects",
-		});
-	project.collections && project.collections.length !== 0
-		? project.collections?.forEach((collection) => assignRecordToGroup(project, {
-			group: projectsByCollection,
-			method: "collections",
-			key: collection.slug.current,
-			title: collection.name,
-			description: `Projects from ${collection.name?.trim()}`,
-		})) : assignRecordToGroup(project, {
-			group: projectsByCollection,
-			method: "collections",
-			key: "other",
-			title: "Other",
-			description: "Other projects",
-		});
-	project.subjects && project.subjects.length !== 0
-		? project.subjects?.forEach((subject) => assignRecordToGroup(project, {
-			group: projectsBySubject,
-			method: "subjects",
-			key: subject.slug.current,
-			title: subject.name,
-			description: `${subject.name?.trim()} projects`,
-		})) : assignRecordToGroup(project, {
-			group: projectsBySubject,
-			method: "subjects",
-			key: "other",
-			title: "Other",
-			description: "Other projects",
-		});
-	project.locations?.forEach((location) => assignRecordToGroup(project, {
-		group: projectsByLocation,
-		method: "subjects",
-		key: location.locale,
-		title: LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale,
-		description: `Projects from ${LOCALES.find((locale) => location.locale === locale.value)?.title || location.locale}`,
-	}));
 });
 ---
 
@@ -111,107 +48,43 @@ listing.allProjects?.forEach((project) => {
 	<h1 class="display-none">
 		{listing.title}
 	</h1>
-	<Dataset
-		sets={[
-			{
-				name: "set-1",
-				label: "Images",
-				method: "period",
-				type: "details",
-				title: "List of Projects By Date",
-				object: projectsByPeriod,
-				orderings: ["ongoing", "upcoming", ...Object.keys(projectsByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()],
-				imageAspectRatio: "16/9",
-			},
-			{
-				name: "set-2",
-				label: "List",
-				method: "dynamic",
-				type: "list",
-				title: "List of Projects, Sortable",
-				object: {...projectsByTitle, ...projectsByPeriod, ...projectsByType, ...projectsByCollection},
-				orderings: [
-					...Object.keys(projectsByTitle).sort(),
-					...["ongoing", "upcoming", ...Object.keys(projectsByPeriod)?.filter((key) => !["ongoing", "upcoming"].includes(key))?.sort()?.reverse()],
-					...[...Object.keys(projectsByType)?.filter((key) => !["other"].includes(key))?.sort(), Object.keys(projectsByType)?.includes("other") && "other"]?.filter(Boolean),
-					...[...Object.keys(projectsByCollection)?.filter((key) => !["other"].includes(key))?.sort((a, b) => projectsByCollection[b]?.records?.length - projectsByCollection[a]?.records?.length || a?.localeCompare(b)), Object.keys(projectsByCollection)?.includes("other") && "other"]?.filter(Boolean),
-				],
-				rows: [
-					{
-						type: "baseline",
-						columns: [
-							{
-								method: "alphabetic",
-								name: "title",
-								title: "Project",
-								width: "2fr",
-							},
-							{
-								method: "period",
-								name: "date",
-								title: "Date",
-								width: "1fr",
-							},
-							{
-								method: "types",
-								name: "types",
-								title: "Type",
-								width: "1fr",
-							},
-							{
-								method: "collections",
-								name: "collections",
-								title: "Collection",
-								width: "1fr",
-							},
-						],
-					},
-					{
-						type: "expanded",
-						columns: [
-							{
-								name: "image",
-								width: "2fr",
-							},
-							{
-								name: "descriptions",
-								width: "3fr",
-							},
-						],
-					},
-				],
-				default: "period",
-			},
-		]}
-		switches={{
-			enabled: true,
-			default: "set-1",
-		}}
-		filters={[
-			{
-				type: "types",
-				object: projectsByType,
-				orderings: Object.keys(projectsByType)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allProjects?.length,
-			},
-			{
-				type: "subjects",
-				object: projectsBySubject,
-				orderings: Object.keys(projectsBySubject)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allProjects?.length,
-			},
-			{
-				type: "collections",
-				object: projectsByCollection,
-				orderings: Object.keys(projectsByCollection)?.filter((key) => !["other"].includes(key))?.sort(),
-				unfilteredSize: listing.allProjects?.length,
-			},
-			{
-				type: "locations",
-				object: projectsByLocation,
-				orderings: Object.keys(projectsByLocation)?.filter((key) => !["other"].includes(key))?.sort((a, b) => LOCALES.find((locale) => locale.value === a)?.title?.localeCompare(LOCALES.find((locale) => locale.value === b)?.title)),
-				unfilteredSize: listing.allProjects?.length,
-			},
-		]}
-	/>
+	<div class="coming-soon">
+		<p>
+			Coming Soon
+		</p>
+	</div>
+	<!-- <Listing
+		source={projectsAndStoriesByPeriod}
+		originalSet={listing.allProjectsAndStories}
+		keys={["ongoing", "upcoming", ...Object.keys(projectsAndStoriesByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()]?.filter(Boolean)}
+		densities={["1", "2", "3"]}
+		filters={["types", "subjects", "collections", "locations"]}
+	/> -->
 </Main>
+
+<style lang="scss">
+	@use "@styles/mixins";
+	.coming-soon {
+		flex: 1;
+		display: flex;
+		// margin-inline: calc(var(--body-inline-spacing) * -1);
+		// animation: polka-dot-movement 100s linear infinite;
+		// @include mixins.polka-dot-background();
+		// @keyframes polka-dot-movement {
+		// 	from {
+		// 		background-position: 0 0, calc(var(--spacer-400) / 4) calc(var(--spacer-400) / 4);
+		// 	}
+		// 	to {
+		// 		background-position: 100% 0, calc(var(--spacer-400) / 4 - 100%) calc(var(--spacer-400) / 4);
+		// 	}
+		// }
+	}
+	.coming-soon p {
+		display: block;
+		// padding: var(--spacer-400);
+		margin: auto;
+		// background: var(--color-7);
+		// font-size: var(--font-size-700);
+		// font-weight: 700;
+	}
+</style>

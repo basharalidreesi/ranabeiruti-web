@@ -1,93 +1,21 @@
 ---
 const { node } = Astro.props;
 
-const supportedHosts = [
-	{
-		name: "youtube.com",
-		title: "YouTube",
-		oEmbedURIComponents: [
-			"https://youtube.com/oembed?url=",
-			"${uri}",
-			"&format=json",
-		],
-	},
-	{
-		name: "youtu.be",
-		title: "YouTube",
-		oEmbedURIComponents: [
-			"https://youtube.com/oembed?url=",
-			"${uri}",
-			"&format=json",
-		],
-	},
-	{
-		name: "vimeo.com",
-		title: "Vimeo",
-		oEmbedURIComponents: [
-			"https://vimeo.com/api/oembed.json?url=",
-			"${uri}",
-		],
-	},
-	{
-		name: "open.spotify.com",
-		title: "Spotify",
-		oEmbedURIComponents: [
-			"https://open.spotify.com/oembed?url=",
-			"${uri}",
-		],
-	},
-	{
-		name: "soundcloud.com",
-		title: "SoundCloud",
-		oEmbedURIComponents: [
-			"https://soundcloud.com/oembed?url=",
-			"${uri}",
-			"&format=json",
-		],
-	},
-];
-function encodeOEmbedQuery(url: string) {
-	if (!url) { return null; };
-	try {
-		const uri = encodeURIComponent(url);
-		const hostname = new URL(url)?.hostname?.replace("www.", "");
-		const hostConfig = supportedHosts.find((host) => host.name === hostname);
-		const uriIndexInHostOEmbedURIComponents = hostConfig?.oEmbedURIComponents?.indexOf("${uri}");
-		if (!hostConfig || uriIndexInHostOEmbedURIComponents === -1) { return null; };
-		return hostConfig.oEmbedURIComponents?.toSpliced(uriIndexInHostOEmbedURIComponents, 1, uri)?.join("");
-	} catch {
-		return null;
-	};
-};
-async function performOEmbedQuery(encodedOEmbedQuery: string) {
-	if (!encodedOEmbedQuery) { return; };
-	try {
-		const data = await fetch(encodedOEmbedQuery)?.then((res) => res?.json());
-		return data;
-	} catch {
-		return null;
-	}
-};
-async function getOEmbed(url: string) {
-	try {
-		const data = await performOEmbedQuery(encodeOEmbedQuery(url));
-		return data ? data : null;
-	} catch {
-		return null;
-	};
-};
-
-const oEmbedHtml = node && node.type === "url" && node.url && await getOEmbed(node.url).then((data) => data?.html) || null;
+const {
+	code,
+	aspectRatio,
+} = node;
 ---
 
-{oEmbedHtml && (
-	<div class="embed-object" data-type="url" set:html={oEmbedHtml} />
+{code && (
+	<div class="embed-object" data-type="code" set:html={code} style={{ "--embed-aspect-ratio": aspectRatio }} />
 )}
 
 <style lang="scss" is:global>
 	.embed-object {
-		aspect-ratio: 16/9;
 		position: relative;
+		overflow: hidden;
+		aspect-ratio: var(--embed-aspect-ratio);
 	}
 	.embed-object iframe {
 		position: absolute;

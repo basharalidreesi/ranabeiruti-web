@@ -1,5 +1,5 @@
 ---
-import PortableText from "@components/PortableText.astro";
+import RichText from "@components/RichText.astro";
 
 const { node } = Astro.props;
 ---
@@ -7,11 +7,11 @@ const { node } = Astro.props;
 {node.doesInclude && node.doesInclude.length !== 0 && (
 	<div class="document-description">
 		{node.doesInclude.includes("projectDescription") && node.projectDescription && node.projectDescription.length !== 0 && (
-			<PortableText source={node.projectDescription} />
+			<RichText source={node.projectDescription} />
 		)}
 		{node.doesInclude.includes("collectionDescriptions") && node.collectionDescriptions && node.collectionDescriptions.length !== 0 && (
 			node.collectionDescriptions.filter((collection) => collection.description && collection.description.length !== 0).map((collection) => (
-				<PortableText source={collection.description} />
+				<RichText source={collection.description} />
 			))
 		)}
 	</div>

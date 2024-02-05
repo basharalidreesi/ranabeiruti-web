@@ -2,16 +2,19 @@
 type Props = {
 	source: string;
 	length?: SimpleDateLengths;
+	format?: SimpleDateFormats;
 };
 
 type SimpleDateLengths =  "numeric" | "2-digit" | "long" | "short" | "narrow";
+type SimpleDateFormats = "fullDate" | "yearWithMonth" | "yearOnly";
 
 const {
 	source,
 	length = "long",
+	format = "fullDate",
 } = Astro.props;
 
-export function SimpleDateString(source_: string, length_: SimpleDateLengths) {
+export function SimpleDateString(source_: string, length_: SimpleDateLengths, format_: SimpleDateFormats) {
 	return new Date(source_).toLocaleDateString("en-gb", {
 		day: "numeric",
 		month: length_,
@@ -19,9 +22,13 @@ export function SimpleDateString(source_: string, length_: SimpleDateLengths) {
 	});
 };
 
-const dateString = source && SimpleDateString(source, length)
+const dateString = source && SimpleDateString(source, length, format)
 ---
 
 {source && (
-	<time datetime={source}>{dateString}</time>
+	<time datetime={source}>{
+		format === "yearOnly"
+			? source.split("-")[0]
+			: dateString
+	}</time>
 )}

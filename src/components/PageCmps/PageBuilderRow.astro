@@ -18,9 +18,11 @@ const {
 	.row {
 		display: flex;
 		flex-flow: row nowrap;
-		margin-block-end: 1.5rem;
-		gap: 1.5rem;
-		@media (max-width: 768px) {
+		margin-block-end: var(--spacer-400);
+		gap: var(--spacer-400);
+	}
+	@media (max-width: 768px) {
+		.row {
 			flex-direction: column;
 		}
 	}

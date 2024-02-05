@@ -1,68 +1,55 @@
 ---
-import ComplexDate from "@components/ComplexDate.astro";
-import Link from "@components/Link.astro";
-import { LOCALES } from "@lib/locales";
+import RecordDate from "@components/RecordDate.astro";
+import RecordTags from "@components/RecordTags.astro";
+import RecordTitle from "@components/RecordTitle.astro";
 
 const { node } = Astro.props;
 ---
 
 {node.title && (
 	<div class="document-header">
-		<div class="document-title">
-			<h1 class="document-title-baseline">{node.title?.trim()}</h1>
-			{node.subtitle && (
-				<p class="document-subtitle">{node.subtitle?.trim()}</p>
-			)}
-		</div>
-		{node.date && node.date.startDate && node.date.dateFormat && (
-			<div class="document-date">
-				<ComplexDate source={node.date} />
-			</div>
-		)}
-		<div class="document-tags">
-			<ul>
-				{[...(node.types || []), ...(node.collections || []), ...(node.subjects || []), ...(node.locations || [])]?.filter(Boolean)?.map((tag) => (
-					<li>
-						<Link class="link hover-text" href={`/${node.baseUrl}/?${tag.type}=${tag.type === "location" ? tag.locale : tag.slug.current}`}>
-							{tag.type === "location" ? `${tag.name?.trim()} (${LOCALES.find((locale) => locale.value === tag.locale)?.title})` : tag.name?.trim()}
-						</Link>
-					</li>
-				))}
-			</ul>
-		</div>
+		<RecordTitle source={node} level={3} />
+		<RecordDate source={node} />
+		<RecordTags source={node} tags={["types", "collections", "locations"]} withLinks={true} />
 	</div>
 )}
 
-<style lang="scss">
+<style lang="scss" is:global>
 	@use "@styles/mixins";
 	.document-header {
-		display: flex;
-		flex-direction: column;
-		row-gap: 0.5rem;
-	}
-	.document-title-baseline {
-		font-weight: var(--font-weight-bold);
-	}
-	.document-subtitle {
-		margin-block-start: 0.5rem;
-	}
-	.document-date {
-		// margin-block-start: 0.5rem;
-		font-size: var(--font-size-small);
-	}
-	.document-tags {
-		// margin-block-start: 0.5rem;
-		font-size: var(--font-size-small);
-	}
-	.document-tags ul {
-		list-style: none;
-	}
-	.document-tags li {
-		display: inline;
-		margin: 0;
-		padding: 0;
-	}
-	.document-tags li:not(:last-of-type)::after {
-		content: ", ";
+		& {
+			display: flex;
+			flex-direction: column;
+			row-gap: var(--spacer-200);
+			text-wrap: balance;
+		}
+		.record-title-baseline {
+			font-weight: 700;
+		}
+		.record-subtitle {
+			display: block;
+			margin-block-start: var(--spacer-200);
+		}
+		.record-title-separator {
+			position: absolute;
+			opacity: 0;
+			font-size: 0px;
+		}
+		.record-tags ul {
+			list-style: none;
+			display: flex;
+			flex-flow: row wrap;
+			column-gap: var(--spacer-200);
+			row-gap: var(--spacer-100);
+		}
+		.record-tags li {
+			display: inline;
+			margin: 0;
+			padding: 0;
+		}
+		.record-tags a {
+			@include mixins.link();
+			@include mixins.hover-text();
+		}
 	}
 </style>

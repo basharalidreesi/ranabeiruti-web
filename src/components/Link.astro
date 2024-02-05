@@ -1,7 +1,6 @@
 ---
 import { PressListingSlugGroqQuery, ProjectsListingSlugGroqQuery, PublicationsListingSlugGroqQuery } from "@lib/groq";
-import type { ListingProps, RecordProps } from "@lib/types.astro";
-import type { SimplePageProps } from "@root/pages/[slug].astro";
+import type { ListingProps, RecordProps, StoryProps } from "@lib/types.astro";
 import sanityClient from "@root/sanity";
 import type { HTMLAttributes } from "astro/types";
 
@@ -10,7 +9,7 @@ type Props = HTMLAttributes<"a"> & ({
 	to?: never;
 } | {
 	href?: never;
-	to: RecordProps | ListingProps | SimplePageProps | "homepage" | "projectsListing" | "publicationsListing" | "pressListing";
+	to: Exclude<RecordProps, StoryProps> | ListingProps | "homepage" | "projectsListing" | "publicationsListing" | "pressListing";
 });
 
 const {
@@ -29,8 +28,7 @@ const pressListing = await sanityClient.fetch(PressListingSlugGroqQuery);
 const resolvedLink =
 	href && !to ? href
 	: !href && to ? (
-		typeof to === "object" && to.type === "page" ? `/${to.slug.current}/`
-		: typeof to === "object" && to.type === "project" ? `/${projectsListing.slug.current}/${to.slug.current}/`
+		typeof to === "object" && to.type === "project" ? `/${projectsListing.slug.current}/${to.slug.current}/`
 		: typeof to === "object" && to.type === "publication" ? `/${publicationsListing.slug.current}/${to.slug.current}/`
 		: typeof to === "object" && to.type === "news" ? `/${pressListing.slug.current}/#news-${to.slug.current}`
 		: typeof to === "object" && to.type === "press" ? to.url

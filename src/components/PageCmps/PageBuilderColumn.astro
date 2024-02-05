@@ -17,19 +17,30 @@ const {
 <div class="column"
 	data-index={index}
 	style={{
-		flex: ratio,
-		alignSelf: {
+		"--column-flex-ratio": ratio,
+		"--column-vertical-alignment": {
 			"top": "flex-start",
 			"middle": "center",
 			"bottom": "flex-end",
+			"baseline": "baseline",
 		}[verticalAlignment] || null,
 	}}
 ><slot /></div>
 
 <style lang="scss">
+	.column {
+		flex: var(--column-flex-ratio);
+		align-self: var(--column-vertical-alignment);
+	}
 	@media (max-width: 896px) {
 		.column:empty {
 			display: none;
+		}
+	}
+	@media (max-width: 768px) {
+		.column {
+			flex: unset;
+			align-self: unset;
 		}
 	}
 </style>

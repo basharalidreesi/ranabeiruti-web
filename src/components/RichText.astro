@@ -1,0 +1,142 @@
+---
+import { PortableText } from "astro-portabletext";
+import PortableTextBlock from "@components/PortableTextCmps/PortableTextBlock.astro";
+import PortableTextMark from "@components/PortableTextCmps/PortableTextMark.astro";
+import PortableTextImage from "@components/PortableTextCmps/PortableTextImage.astro";
+import PortableTextEmbed from "@components/PortableTextCmps/PortableTextEmbed.astro";
+import PortableTextDocumentReference from "@components/PortableTextCmps/PortableTextDocumentReference.astro";
+import PortableTextCta from "@components/PortableTextCmps/PortableTextCta.astro";
+import PortableTextSpacer from "@components/PortableTextCmps/PortableTextSpacer.astro";
+import PortableTextTitle from "@components/PortableTextCmps/PortableTextTitle.astro";
+import PortableTextDescription from "@components/PortableTextCmps/PortableTextDescription.astro";
+import type { SomePortableTextComponents, TypedObject } from "astro-portabletext/types";
+
+const components: SomePortableTextComponents = {
+	type: {
+		image: PortableTextImage,
+		embed: PortableTextEmbed,
+		documentReference: PortableTextDocumentReference,
+		cta: PortableTextCta,
+		spacer: PortableTextSpacer,
+		title: PortableTextTitle,
+		description: PortableTextDescription,
+	},
+	mark: {
+		// strong (default)
+		// em (default)
+		// underline (default)
+		// strike-through (default)
+		sup: PortableTextMark,
+		link: PortableTextMark,
+	},
+	block: {
+		normal: PortableTextBlock,
+		h2: PortableTextBlock,
+		// blockquote (default)
+		note: PortableTextBlock,
+	},
+	list: {
+		// bullet (default)
+		// number (default)
+	},
+};
+
+export type Props = {
+	source: string | TypedObject[];
+};
+
+const {
+	source,
+} = Astro.props;
+---
+
+{source && source.length !== 0 && (
+	<div class="rich-text">
+		{
+			typeof source === "string" ? (<p>{source}</p>)
+			: typeof source === "object" ? (<PortableText value={source} components={components} />)
+			: null
+		}
+	</div>
+)}
+
+
+<style lang="scss" is:global>
+	@use "@styles/mixins";
+	.rich-text {
+		& {
+			line-height: 1.3;
+			text-wrap: pretty;
+		}
+		& + .rich-text {
+			margin-block-start: var(--spacer-100);
+		}
+		.heading {
+			font-size: var(--font-size-700);
+		}
+		blockquote {
+			font-family: var(--font-family-serif);
+			padding-inline: var(--spacer-400);
+			border-inline-start: 1px solid var(--color-4);
+		}
+		.note {
+			color: var(--color-2);
+		}
+		strong {
+			font-weight: 700;
+		}
+		em {
+			font-style: italic;
+		}
+		del {
+			text-decoration: line-through;
+		}
+		sup {
+			font-size: 0.61875em;
+		}
+		li {
+			padding-inline-start: calc(var(--spacer-400) - 1em);
+			margin-inline-start: calc(var(--spacer-400) - 0.5em);
+		}
+		.link {
+			@include mixins.link();
+			@include mixins.hover-text();
+		}
+		.boxed-area {
+			@media (max-width: 768px) {
+				max-width: 80%;
+			}
+		}
+		:is(p, .heading, blockquote, .note, ul, ol, figure, .embed-object, .document-header, .document-description, .boxed-area):empty {
+			display: none;
+		}
+		:is(p, .heading, blockquote, .note, ul, ol, .document-description) + :is(p, .heading, blockquote, .note, ul, ol, .document-description) {
+			margin-block-start: var(--spacer-100);
+		}
+		:is(figure, .embed-object, .document-header, .boxed-area) + :is(figure, .embed-object, .document-header, .boxed-area),
+		:is(p, .heading, blockquote, .note, ul, ol, .document-description) + :is(figure, .embed-object, .document-header, .boxed-area),
+		:is(figure, .embed-object, .document-header, .boxed-area) + :is(p, .heading, blockquote, .note, ul, ol, .document-description) {
+			margin-block-start: var(--spacer-400);
+		}
+		@media (max-width: 768px) {
+			.spacer:not(:first-child) + :is(p, .heading, blockquote, .note, ul, ol, .document-description) {
+				margin-block-start: var(--spacer-100);
+			}
+			.spacer:not(:first-child) + :is(figure, .embed-object, .document-header, .boxed-area),
+			:is(p, .heading, blockquote, .note, ul, ol, .document-description) + .spacer + :is(figure, .embed-object, .document-header, .boxed-area),
+			:is(figure, .embed-object, .document-header, .boxed-area) + .spacer + :is(p, .heading, blockquote, .note, ul, ol, .document-description) {
+				margin-block-start: var(--spacer-400);
+			}
+			.boxed-area + .spacer + .boxed-area {
+				margin-block-start: calc(var(--spacer-400) + (var(--spacer-100) * 2)) !important;
+			}
+		}
+		blockquote + blockquote {
+			margin-block-start: 0 !important;
+			padding-block-start: var(--spacer-100);
+		}
+		.boxed-area + :is(p, .heading, blockquote, .note, ul, ol, figure, .embed-object, .document-header, .document-description, .boxed-area) {
+			margin-block-start: calc(var(--spacer-400) + (var(--spacer-100) * 2)) !important;
+		}
+	}
+</style>

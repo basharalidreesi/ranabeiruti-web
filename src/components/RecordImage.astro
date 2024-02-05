@@ -1,0 +1,29 @@
+---
+import type { RecordProps } from "@lib/types.astro";
+import Image from '@components/Image.astro';
+
+type Props = {
+	source: RecordProps;
+	sizes?: string;
+	aspectRatio?: string;
+};
+
+const {
+	source,
+	sizes,
+	aspectRatio,
+} = Astro.props;
+
+const recordType = source.type;
+const isValidRecord = recordType !== "story";
+const recordImage = isValidRecord && source.image;
+---
+
+{source && recordImage && recordImage.asset && (
+	<div class="record-image" style={{ "--image-aspect-ratio": aspectRatio }}>
+		<Image
+			source={recordImage}
+			sizes={sizes}
+		/>
+	</div>
+)}

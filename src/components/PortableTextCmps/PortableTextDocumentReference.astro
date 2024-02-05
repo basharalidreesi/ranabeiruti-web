@@ -1,0 +1,102 @@
+---
+import RecordBody from "@components/RecordBody.astro";
+import RecordDate from "@components/RecordDate.astro";
+import RecordDescription from "@components/RecordDescription.astro";
+import RecordImage from "@components/RecordImage.astro";
+import RecordTags from "@components/RecordTags.astro";
+import RecordTitle from "@components/RecordTitle.astro";
+import type { RecordProps } from "@lib/types.astro";
+
+const { node } = Astro.props;
+
+const reference: RecordProps = node?.reference;
+---
+
+{reference && (
+	<article class="document-reference boxed-area" data-type={reference.type}>
+		<RecordTitle source={reference} withLink={true} level={4} />
+		<RecordDate source={reference} />
+		<RecordDescription source={reference} />
+		<RecordImage source={reference} sizes={`(min-width: 1025px) ${((node.columnRatio || 1) / (node.rowRatios || 1) * (node.isBreakoutRow ? 100 : 80)) + "vw"}, 100vw`} />
+		<RecordTags source={reference} tags={["types", "collections"]} />
+		{reference.type === "news" && (
+			<RecordBody source={reference} />
+		)}
+	</article>
+)}
+
+<style lang="scss" is:global>
+	@use "@styles/mixins";
+	.document-reference {
+		& {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			row-gap: var(--record-inner-spacing);
+			padding: var(--spacer-200);
+			--record-inner-spacing: var(--spacer-100);
+			@include mixins.boxed-area();
+			@include mixins.hoverable-area();
+			@media (max-width: 640px) {
+				--record-inner-spacing: var(--spacer-50);
+			}
+		}
+		.record-image {
+			order: 1;
+			margin-block-end: 0.15em;
+		}
+		.record-title {
+			order: 2;
+			text-wrap: balance;
+		}
+		.record-title-baseline {
+			font-weight: 700;
+		}
+		.record-title a::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+		}
+		.record-date {
+			order: 3;
+		}
+		.record-description {
+			order: 4;
+			color: var(--color-2);
+			@include mixins.ellipsis-multiline($lines: 3);
+		}
+		.record-tags {
+			order: 5;
+		}
+		.record-tags ul {
+			list-style: none;
+			display: flex;
+			flex-flow: row wrap;
+			column-gap: calc(var(--record-inner-spacing) * 1.6);
+			row-gap: var(--record-inner-spacing);
+		}
+		.record-tags li {
+			display: inline;
+			margin: 0;
+			padding: 0;
+		}
+		.record-tags a {
+			@include mixins.link();
+			@include mixins.hover-text();
+		}
+		&[data-type="news"],
+		&[data-type="press"] {
+			.record-date {
+				order: 1;
+				color: var(--color-2);
+			}
+		}
+		&[data-type="news"] {
+			.record-body {
+				order: 6;
+				color: var(--color-2);
+				@include mixins.ellipsis-multiline($lines: 3);
+			}
+		}
+	}
+</style>

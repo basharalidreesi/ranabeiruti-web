@@ -1,0 +1,708 @@
+---
+import RecordTitle from "@components/RecordTitle.astro";
+import RecordDate from "@components/RecordDate.astro";
+import RecordDescription from "@components/RecordDescription.astro";
+import RecordBody from "@components/RecordBody.astro";
+import RecordTags from "@components/RecordTags.astro";
+import RecordImage from "@components/RecordImage.astro";
+import RecordRelated from "@components/RecordRelated.astro";
+import type { RecordProps, TagNames } from "@lib/types.astro";
+
+type DatasetGroupingMethods = "period" | "aesthetic";
+
+type DatasetRecordGroup = {
+	marker: string;
+	records: RecordProps[];
+	description?: string;
+	method: DatasetGroupingMethods;
+};
+
+export type DatasetRecordGroups = {
+	[key: string]: DatasetRecordGroup;
+};
+
+export function assignRecordToGroup(record: RecordProps, params: { group: DatasetRecordGroups; method: DatasetGroupingMethods; key: string; marker: string; description: string; }) {
+	const {
+		group,
+		method,
+		key,
+		marker,
+		description,
+	} = params;
+	if (!group[key]) {
+		group[key] = {
+			marker: marker,
+			records: [],
+			description: description,
+			method: method,
+		};
+	};
+	if (group[key] && group[key].records) {
+		group[key].records.push(record);
+	};
+};
+
+type Props = {
+	source: DatasetRecordGroups;
+	originalSet?: RecordProps[];
+	keys?: string[];
+	densities?: ("1" | "2" | "3")[];
+	filters?: TagNames[];
+	background?: "none" | "polka-dot";
+};
+
+const {
+	source,
+	originalSet,
+	keys = source && typeof source === "object" && Object.keys(source),
+	densities = [1],
+	filters,
+	background = "none",
+} = Astro.props;
+---
+
+{keys && keys.length !== 0 && (
+	<div
+		class="listing"
+		data-density={densities[0]}
+		data-has-multiple-densities={densities?.length > 1 ? "true" : "false"}
+		data-has-multiple-keys={keys.length > 1 ? "true" : "false"}
+		data-has-filters={filters && filters.length !== 0 ? "true" : "false"}
+		data-background={background}
+	>
+		{(densities?.length > 1 || (filters && filters.length !== 0)) && (
+			<div class="listing-headers">
+				{filters && filters.length !== 0 && (
+					<div class="filter-switches listing-header">
+						{filters.map((filter) => (
+							<div class="filter-switch listing-header-item">
+								<input type="checkbox" name="switch-filter-to" id={`switch-filter-to-${filter}`} value={filter} autocomplete="off" />
+								<label for={`switch-filter-to-${filter}`}>{`${filter.charAt(0)?.toUpperCase()}${filter.slice(1)}`}</label>
+							</div>
+						))}
+					</div>
+				)}
+				{densities && densities.length > 1 && (
+					<div class="density-switches listing-header">
+						{densities.sort().map((density, index) => (
+							<div class="density-switch listing-header-item">
+								<input type="radio" name="switch-density-to" id={`switch-density-to-${density}`} value={density} autocomplete="off" checked={index === 0} />
+								<label for={`switch-density-to-${density}`}>
+									{
+										density === "1" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>Timeline</title><path d="M7.3,8.9V6 M4.8,6V3.1 M2.2,6h7.7 M2.2,8.9h7.7V3.1H2.2V8.9z"></path></svg>)
+										: density === "2" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>Grid</title><path d="M2.2,3.1h7.7v5.8H2.2V3.1z M2.2,6h7.7 M6,3.1v5.8"></path></svg>)
+										: density === "3" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>List</title><path d="M2.2,7.5h7.7 M2.2,4.6h7.7 M2.2,6h7.7 M2.2,3.1h7.7v5.8H2.2V3.1z"></path></svg>)
+										: null
+									}
+								</label>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
+		)}
+		{keys?.map((key) => {
+			const correspondingObject = source[key];
+			const correspondingObjectLength = correspondingObject.records?.length || 0;
+			return (
+				<div class="listing-row" data-length={correspondingObjectLength.toString()}>
+					{correspondingObject.marker && (
+						<div class="record-marker">
+							<h2>
+								{correspondingObject.marker}
+							</h2>
+						</div>
+					)}
+					<div class="record-group" data-method={correspondingObject.method}>
+						{correspondingObject.records?.map((record) => {
+							const originalIndex = originalSet?.findIndex((item) => item === record) || 0;
+							const alignment =
+								originalIndex % 3 === 0 ? "middle"
+								: originalIndex % 2 === 0 ? "right"
+								: "left";
+							return (
+								<article
+									class="record"
+									data-type={record.type}
+									data-size={record.type === "project" ? record.listingDisplaySize : "medium"}
+									data-alignment={record.type === "project" ? record.listingAlignment : "auto"}
+									data-has-image={record.type !== "story" && record.image?.asset ? "true" : "false"}
+									data-orientation={record.type !== "story" && record.image?.asset ? (record.image?.metadata?.dimensions?.aspectRatio > 1.1 ? "landscape" : "portrait") : (record.type === "news" ? "landscape" : "portrait")}
+									data-start-date={(record.type === "project" || record.type === "story") ? record.date.startDate : record.date}
+									data-end-date={(record.type === "project" || record.type === "story") ? (record.date.endDate || record.date.startDate) : record.date}
+									data-half={originalIndex <= originalSet.filter((record) => record.type !== "story")?.length / 2 ? "upper" : "lower"}
+								>
+									<RecordTitle source={record} level={3} withLink={true} />
+									<RecordDate source={record} />
+									<RecordDescription source={record} />
+									<RecordBody source={record} />
+									<RecordTags source={record} tags={["types", "collections"]} withLinks={true} />
+									<RecordImage
+										source={record}
+										sizes={
+											record.type === "project" && record.listingDisplaySize === "large" ? "(min-width: 1025px) 80vw, 100vw"
+											: record.type === "project" && record.listingDisplaySize === "medium" ? "(min-width: 1025px) 50vw, (max-width: 768px) 100vw, 70vw"
+											: record.type === "project" && record.listingDisplaySize === "small" ? "(min-width: 1025px) 30vw, (max-width: 640px) 100vw, (max-width: 768px) 70vw, 40vw"
+											: record.type === "publication" ? "(min-width: 1025px) 30vw, (max-width: 768px) 60vw, 40vw"
+											: record.type === "news" || record.type === "press" ? "(min-width: 1025px) 50vw, (max-width: 768px) 100vw, 70vw"
+											: null
+										}
+									/>
+									<RecordRelated source={record} />
+								</article>
+							);
+						})}
+					</div>
+				</div>
+			);
+		})}
+	</div>
+)}
+
+<style lang="scss" is:global>
+	@use "@styles/mixins";
+	.listing {
+		flex: 1;
+		display: grid;
+		grid-template-columns: [all-start] 0 [left-start] var(--left) [left-end] var(--spacer-left) [content-start] 1fr [content-end] var(--spacer-right) [right-start] var(--right) [right-end] 0 [all-end];
+		margin-block-start: var(--listing-inner-spacing);
+		--left: 10%;
+		--right: 10%;
+		&:where([data-has-multiple-densities="false"]) {
+			--left: 15%;
+			--right: 15%;
+		}
+		--spacer-left: var(--spacer-400);
+		--spacer-right: var(--spacer-400);
+		@media (max-width: 1024px) {
+			--right: 0;
+			--spacer-right: 0;
+			&:not([data-has-multiple-keys="true"]) {
+				--left: 0;
+				--spacer-left: 0;
+			}
+		}
+		@media (max-width: 896px) {
+			&[data-has-multiple-keys="true"] {
+				--left: 1em;
+			}
+		}
+		&[data-density="1"] {
+			--listing-inner-spacing: calc(var(--spacer-400) * 3);
+			@media (max-width: 896px) {
+				--listing-inner-spacing: calc(var(--spacer-400) * 2);
+			}
+			&[data-background="polka-dot"] {
+				@include mixins.polka-dot-background();
+			}
+			&:not([data-background="none"]) {
+				margin-block: 0;
+				padding-block-start: var(--listing-inner-spacing);
+				padding-inline: var(--body-inline-spacing);
+				margin-inline: calc(var(--body-inline-spacing) * -1);
+			}
+		}
+		&[data-density="2"] {
+			--listing-inner-spacing: var(--spacer-400);
+		}
+		&[data-density="3"] {
+			--listing-inner-spacing: calc(var(--spacer-400) / 2);
+			margin-block-end: var(--listing-inner-spacing);
+		}
+	}
+	.listing-headers {
+		& {
+			@media (min-width: 513px) {
+				position: sticky;
+				min-height: calc(1em + var(--spacer-350) + var(--spacer-350) + 1px);
+			}
+			top: calc(var(--header-height));
+			grid-column: all;
+			display: flex;
+			justify-content: space-between;
+			column-gap: var(--spacer-400);
+			min-height: 0;
+			height: fit-content;
+			margin-block-start: calc(var(--listing-inner-spacing) * -1);
+			margin-block-end: var(--listing-inner-spacing);
+			padding-block: var(--spacer-350);
+			background: var(--color-7);
+			border-block-end: 1px solid var(--color-5);
+			z-index: 4;
+		}
+		.listing-header {
+			display: flex;
+			column-gap: var(--spacer-350);
+		}
+		.listing-header-item {
+			position: relative;
+			@include mixins.hover-text();
+		}
+		input {
+			position: absolute;
+			inset: 0;
+			opacity: 0;
+			cursor: pointer;
+		}
+		label {
+			cursor: pointer;
+		}
+		.density-switches {
+			@media (min-width: 513px) {
+				position: absolute;
+				right: 0;
+				top: var(--spacer-350);
+			}
+		}
+		.density-switch input:not(:checked) + label svg {
+			opacity: 0.5;
+			stroke-width: 1px;
+		}
+		.density-switch svg {
+			display: block;
+			width: 1.6em;
+			height: 1.6em;
+			margin-block-start: -0.3em;
+			fill: transparent;
+			stroke: currentColor;
+			stroke-width: 1.2px;
+			stroke-linejoin: round;
+			* {
+				vector-effect: non-scaling-stroke;
+			}
+		}
+		.filter-switch label::before {
+			font-family: var(--font-family-mono);
+			margin-inline-end: calc(var(--spacer-50) * 1.3);
+		}
+		.filter-switch input:checked + label::before {
+			content: "×";
+			content: "×" / "";
+		}
+		.filter-switch input:not(:checked) + label::before {
+			content: "+";
+			content: "+" / "";
+			opacity: 0.375;
+		}
+	}
+	.listing-row {
+		&[data-length="0"] {
+			display: none;
+		}
+		&:not([data-length="0"]) {
+			display: contents;
+		}
+		.listing:not([data-has-multiple-keys="true"]) & {
+			.record-marker {
+				display: none;
+			}
+			.record-group {
+				@media (max-width: 896px) {
+					grid-column: all;
+				}
+			}
+		}
+		&:has(.record[data-type="story"]:only-of-type) {
+			.record-marker {
+				display: none;
+			}
+		}
+	}
+	.record-marker {
+		& {
+			grid-column: left;
+		}
+		h2 {
+			position: sticky;
+			top: calc(var(--header-height) + var(--spacer-350) + 0.15em);
+			height: fit-content;
+			margin-bottom: var(--listing-inner-spacing);
+			color: var(--color-2);
+		}
+		.listing[data-has-filters="true"] &,
+		.listing[data-has-other-densities="true"] & {
+			@media (min-width: 513px) {
+				h2 {
+					top: calc(var(--header-height) + (1em + (var(--spacer-350) * 2) + 1px) + var(--spacer-350) + 0.15em);
+				}
+			}
+		}
+		@media (max-width: 896px) {
+			h2 {
+				writing-mode: vertical-rl;
+			}
+		}
+		.listing[data-density="3"] & {
+			h2 {
+				margin-top: var(--listing-inner-spacing);
+			}
+		}
+	}
+	.record-group {
+		& {
+			grid-column: content;
+		}
+		.listing[data-density="1"] &,
+		.listing[data-density="2"] & {
+			display: flex;
+			flex-flow: row wrap;
+			align-items: flex-start;
+		}
+		.listing[data-density="1"] & {
+			column-gap: calc(100% - 66.66% - 25%);
+		}
+		.listing[data-density="2"] & {
+			column-gap: var(--listing-inner-spacing);
+		}
+	}
+	.record {
+		& {
+			position: relative;
+			line-height: 1.3;
+			text-wrap: balance;
+			row-gap: var(--record-inner-spacing);
+			background: var(--color-7);
+		}
+		.listing[data-density="1"] &,
+		.listing[data-density="2"] & {
+			display: flex;
+			flex-direction: column;
+			margin-block-end: var(--listing-inner-spacing);
+		}
+		.listing[data-density="1"] & {
+			&[data-type="story"] {
+				width: fit-content;
+			}
+			&:not([data-type="story"]) {
+				width: 100%;
+			}
+			&:not([data-type="press"]):not([data-type="news"]) {
+				--record-inner-spacing: var(--spacer-50);
+			}
+			&[data-type="press"],
+			&[data-type="news"] {
+				padding: var(--spacer-400);
+				--record-inner-spacing: var(--spacer-100);
+			}
+			&[data-alignment="auto"]:nth-of-type(even),
+			&[data-alignment="right"] {
+				@media (min-width: 769px) {
+					margin-inline-start: auto;
+				}
+			}
+			&[data-alignment="auto"]:nth-of-type(3n + 1),
+			&[data-alignment="middle"] {
+				@media (min-width: 769px) {
+					margin-inline: auto;
+				}
+			}
+			&[data-size="small"] {
+				&[data-orientation="landscape"] {
+					max-width: 33.33%;
+				}
+				&[data-orientation="portrait"] {
+					max-width: 25%;
+				}
+				@media (max-width: 768px) {
+					&[data-orientation="landscape"] {
+						max-width: 66.66%;
+					}
+					&[data-orientation="portrait"] {
+						max-width: 50%;
+					}
+				}
+			}
+			&[data-size="medium"] {
+				&[data-orientation="landscape"] {
+					max-width: 66.66%;
+				}
+				&[data-orientation="portrait"] {
+					max-width: 50%;
+				}
+				@media (max-width: 768px) {
+					&[data-orientation="landscape"] {
+						max-width: 100%;
+					}
+					&[data-orientation="portrait"] {
+						max-width: 75%;
+					}
+				}
+			}
+			&[data-size="small"],
+			&[data-size="medium"] {
+				@media (max-width: 640px) {
+					&[data-orientation="landscape"] {
+						max-width: 100%;
+					}
+					&[data-orientation="portrait"] {
+						max-width: 100%;
+					}
+				}
+			}
+			&[data-size="large"] {
+				&[data-orientation="landscape"] {
+					max-width: 100%;
+				}
+				&[data-orientation="portrait"] {
+					max-width: 100%;
+				}
+			}
+		}
+		.listing[data-density="2"] & {
+			&[data-type="story"] {
+				display: none;
+			}
+			&:not([data-type="story"]) {
+				width: calc((100% - (var(--record-group-column-count) - 1) * var(--listing-inner-spacing)) / var(--record-group-column-count));
+				--record-group-column-count: 3;
+				--record-inner-spacing: var(--spacer-50);
+				@media (max-width: 768px) {
+					--record-group-column-count: 2;
+				}
+			}
+		}
+		.listing[data-density="3"] & {
+			&[data-type="story"] {
+				display: none;
+			}
+			&:not([data-type="story"]) {
+				display: flex;
+				flex-flow: row wrap;
+				column-gap: calc(var(--spacer-50) * 1.6);
+				row-gap: var(--spacer-50);
+				margin-block-start: -0.15em;
+				margin-inline-start: calc(var(--listing-inner-spacing) * -1);
+				padding: var(--listing-inner-spacing);
+				@include mixins.hoverable-area($from-background-color: var(--color-7));
+			}
+		}
+	}
+	.record-image {
+		& {
+			order: 1;
+		}
+		.listing[data-density="1"] &,
+		.listing[data-density="2"] & {
+			margin-block-end: 0.15em;
+		}
+		.listing[data-density="2"] .record[data-type="publication"] & {
+			img {
+				aspect-ratio: 21/29.7;
+			}
+		}
+		.listing[data-density="2"] .record:not([data-type="publication"]) & {
+			img {
+				aspect-ratio: 16/9;
+			}
+		}
+		.listing[data-density="3"] & {
+			position: absolute;
+			width: 25%;
+			right: 0;
+			background: var(--color-7);
+			box-shadow: 0 0 calc(var(--listing-inner-spacing) * 3) calc(var(--listing-inner-spacing) * 3) var(--color-7);
+			z-index: 1;
+			@media (any-hover: none) {
+				display: none;
+			}
+			@media (max-width: 896px) {
+				display: none;
+			}
+		}
+		.listing[data-density="3"] .record[data-half="upper"] & {
+			top: 0;
+		}
+		.listing[data-density="3"] .record[data-half="lower"] & {
+			bottom: 0;
+		}
+		@media (any-hover: hover) {
+			.listing[data-density="3"] .record:not(:hover) & {
+				display: none;
+			}
+		}
+	}
+	.record-title {
+		& {
+			order: 2;
+		}
+		.record:not([data-type="news"]) & {
+			a::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				z-index: 2;
+			}
+		}
+		.listing[data-density="1"] &,
+		.listing[data-density="2"] & {
+			.record-title-baseline {
+				font-weight: 700;
+			}
+		}
+		.listing[data-density="1"] .record:not([data-type="news"]):not([data-type="press"]) &,
+		.listing[data-density="2"] .record:not([data-type="news"]):not([data-type="press"]) & {
+			.record-title-separator {
+				position: absolute;
+				opacity: 0;
+				font-size: 0px;
+			}
+			.record-subtitle {
+				display: block;
+				margin-block-start: calc(var(--record-inner-spacing) * 0.7);
+				@media (max-width: 512px) {
+					display: none;
+				}
+			}
+		}
+		.listing[data-density="1"] .record[data-type="news"] &,
+		.listing[data-density="1"] .record[data-type="press"] & {
+			font-size: var(--font-size-700);
+		}
+		.listing[data-density="3"] & {
+			& {
+				flex-basis: 100%;
+			}
+			.record-title-baseline {
+				font-weight: 700;
+			}
+		}
+	}
+	.record-date {
+		.record:not([data-type="press"]):not([data-type="news"]) & {
+			order: 3;
+		}
+		.record[data-type="press"] &,
+		.record[data-type="news"] & {
+			order: 1;
+		}
+		.listing[data-density="1"] & {
+			&[data-format="yearOnly"] {
+				display: none;
+			}
+		}
+		.listing[data-density="1"] .record[data-type="press"] &,
+		.listing[data-density="1"] .record[data-type="news"] & {
+			// color: var(--color-2);
+		}
+		.listing[data-density="2"] & {
+			display: none;
+		}
+		.listing[data-density="3"] & {
+			&:not([data-format="yearOnly"]) {
+				display: inline;
+			}
+			&[data-format="yearOnly"] {
+				display: none;
+			}
+			&::after {
+				content: ",";
+			}
+		}
+	}
+	.record-description {
+		& {
+			order: 4;
+		}
+		.listing[data-density="1"] & {
+			// color: var(--color-2);
+			@include mixins.ellipsis-multiline($lines: 3);
+		}
+		.listing[data-density="2"] &,
+		.listing[data-density="3"] & {
+			display: none;
+		}
+	}
+	.record-body {
+		& {
+			order: 5;
+		}
+		.listing[data-density="1"] & {
+		}
+		.listing[data-density="2"] &,
+		.listing[data-density="3"] & {
+			display: none;
+		}
+		.record[data-type="story"] & {
+			font-size: var(--font-size-700);
+			margin-block-start: -0.3em;
+		}
+		.record[data-type="news"] & {
+			margin-block-start: calc(var(--spacer-400) - var(--record-inner-spacing) - 0.3em - 0.3em);
+		}
+	}
+	.record-tags,
+	.record-related {
+		ul {
+			list-style: none;
+		}
+		a {
+			position: relative;
+			z-index: 3;
+			@include mixins.link();
+			@include mixins.hover-text();
+		}
+		.listing[data-density="1"] &,
+		.listing[data-density="2"] & {
+			ul {
+				display: flex;
+				flex-wrap: wrap;
+				column-gap: var(--spacer-200);
+			}
+			li {
+				display: inline;
+				margin: 0;
+				padding: 0;
+			}
+		}
+		.listing[data-density="1"] & {
+			ul {
+				row-gap: calc(var(--record-inner-spacing) / 2);
+			}
+		}
+		.listing[data-density="2"] & {
+			@media (max-width: 640px) {
+				li ~ li {
+					display: none;
+				}
+			}
+		}
+		.listing[data-density="3"] & {
+			&, ul {
+				display: contents;
+			}
+			ul {
+				list-style: none;
+			}
+			li {
+				&:not(:last-of-type)::after {
+					content: ",";
+				}
+			}
+		}
+	}
+	.record-tags {
+		&, li {
+			order: 6;
+		}
+	}
+	.record-related {
+		&, li {
+			order: 7;
+		}
+		.record .record-body ~ & {
+			margin-block-start: calc(var(--spacer-400) - var(--record-inner-spacing) - 0.3em - 0.15em);
+		}
+	}
+</style>
+
+<script>
+	const densitySwitches = document.querySelectorAll(`input[name="switch-density-to"]`);
+	densitySwitches?.forEach((densitySwitch) => {
+		return densitySwitch.addEventListener("change", handleDensitySwitch);
+	});
+	function handleDensitySwitch(event: Event) {
+		const selectedDensityValue = (event.target as HTMLInputElement).value;
+		const parentListing = (event.target as HTMLInputElement).closest(".listing");
+		return parentListing.setAttribute("data-density", selectedDensityValue);
+	};
+</script>

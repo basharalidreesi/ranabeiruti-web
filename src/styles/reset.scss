@@ -7,18 +7,14 @@ body {
 	left: 0;
 	width: 100%;
 	min-height: 100%;
-	font-size: max(18px, 100%);
+	font-size: max(16px, 100%);
 	font-family: var(--font-family-sans);
-	font-weight: var(--font-weight-medium);
+	font-weight: 400;
 	font-style: normal;
 	line-height: 1.0;
 	color: var(--color-1);
 	scroll-behavior: smooth;
-	// scroll-padding-block-start: calc(var(--header-height-collapsed) + 1.5rem);
 	background: var(--color-7);
-	@media (max-width: 384px) {
-		font-size: 16px;
-	}
 }
 
 *,

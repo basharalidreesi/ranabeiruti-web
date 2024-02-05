@@ -4,26 +4,38 @@
 
 :root {
 	// color
-	--color-1: #000000; // darkest // #191f45
-	--color-2: #5f6368; // dark // #5f6368
-	--color-3: #94979b; // medium-dark
-	--color-4: #dadce0; // medium
-	--color-5: #e8e9eb; // medium-light
-	--color-6: #f8f8f8; // light
+	--color-1: #000000; // darkest
+	--color-2: #767676; // dark
+	--color-3: #a7a7a7; // medium-dark
+	--color-4: #e0e0e0; // medium
+	--color-5: #efefef; // medium-light
+	--color-6: #fafafa; // light
 	--color-7: #ffffff; // lightest
+	// spacers
+	--spacer-700: 2rem;
+	--spacer-400: 1.5rem;
+	--spacer-350: 1.25rem;
+	--spacer-300: 1rem;
+	--spacer-200: 0.75rem;
+	--spacer-100: 0.5rem;
+	--spacer-50: 0.25rem;
+	@media (max-width: 512px) {
+		--spacer-400: var(--spacer-350);
+	}
+	@media (max-width: 384px) {
+		--spacer-400: var(--spacer-300);
+		--spacer-350: var(--spacer-300);
+	}
 	// font-family
 	--font-family-sans: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 	--font-family-serif: "Times", "Times New Roman", serif;
 	--font-family-mono: monospace;
-	// font-weight
-	--font-weight-bold: 700;
-	--font-weight-medium: 400;
-	--font-weight-light: 300;
 	// font-size
-	--font-size-x-large: 1.2222222222rem; // 22px @ 18px
-	--font-size-large: 1rem; // 18px @ 18px
-	--font-size-medium: 0.8888888889rem; // 16px @ 18px
-	--font-size-small: 0.7777777778rem; // 14px @ 18px
+	--font-size-700: 1.309rem;
+	--font-size-400: 1rem;
+	@media (max-width: 512px) {
+		--font-size-700: 1.2rem;
+	}
 	// line-height
 	--line-height-large: 1.3;
 	--line-height-medium: 1.15;
@@ -60,7 +72,7 @@ a[aria-current] {
 	background-position: 0 100%;
 }
 a:focus-visible,
-button:focus-visible,
+button:focus-visible + svg,
 input:focus-visible + label {
 	outline: red auto 5px;
 	outline-offset: 0.175em;

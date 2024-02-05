@@ -8,6 +8,7 @@ import type { TypedObject } from "astro-portabletext/types";
 import type { ProjectsListingProps } from "@projects/index.astro";
 import type { HomepageProps } from "@root/pages/index.astro";
 import type { PublicationProps } from "@publications/[slug].astro";
+import type { ComplexDateProps } from "@components/ComplexDate.astro";
 
 export type SanityImageMetadataObject = {
 	metadata: {
@@ -16,7 +17,7 @@ export type SanityImageMetadataObject = {
 		dimensions: {
 			height: number;
 			width: number;
-			aspectRatio: string;
+			aspectRatio: number;
 		};
 		palette: {
 			muted: SanityImagePalette;
@@ -31,11 +32,19 @@ export type SanityImageMetadataObject = {
 	};
 };
 
-export type RecordProps = ProjectProps | PublicationProps | NewsOrPressItemProps;
+export type RecordProps = ProjectProps | PublicationProps | NewsOrPressItemProps | StoryProps;
 
 export type ListingProps = HomepageProps | ProjectsListingProps | PublicationsListingProps | PressListingProps;
 
 export type TagNames = "types" | "collections" | "subjects" | "locations";
+
+export type StoryProps = {
+	type: "story",
+	date: ComplexDateProps & {
+		sortDate: string;
+	};
+	body: TypedObject[];
+};
 
 export type TypeProps = {
 	type: "type";

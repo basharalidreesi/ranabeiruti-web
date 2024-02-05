@@ -1,5 +1,5 @@
 ---
-import Dataset, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Dataset.astro";
+import Listing, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Listing.astro";
 import Main from "@layouts/Main.astro";
 import { PressListingGroqQuery } from "@lib/groq";
 import type { SanityImageMetadataObject } from "@lib/types.astro";
@@ -14,11 +14,9 @@ export type NewsProps = {
 	slug: { current: string; };
 	title: string;
 	date: string;
-	description?: TypedObject[] | string;
 	body?: TypedObject[];
 	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: ProjectProps[];
-	relatedPublications?: PublicationProps[];
+	relatedProjectsAndPublications?: (ProjectProps | PublicationProps)[];
 };
 
 export type PressProps = {
@@ -29,8 +27,7 @@ export type PressProps = {
 	date: string;
 	description?: TypedObject[] | string;
 	image?: SanityImageObject & SanityImageMetadataObject;
-	relatedProjects?: ProjectProps[];
-	relatedPublications?: PublicationProps[];
+	relatedProjectsAndPublications?: (ProjectProps | PublicationProps)[];
 };
 
 export type NewsOrPressItemProps = NewsProps | PressProps;
@@ -40,7 +37,7 @@ export type PressListingProps = {
 	type: "listing";
 	slug: { current: string; };
 	title: string;
-	allItems: NewsOrPressItemProps[];
+	allNewsAndPressItems: NewsOrPressItemProps[];
 };
 
 export async function getStaticPaths() {
@@ -57,14 +54,14 @@ export async function getStaticPaths() {
 
 const listing = Astro.props;
 
-const allPressItems: DatasetRecordGroups = {};
+const allNewsAndPressItems: DatasetRecordGroups = {};
 
-listing.allItems.forEach((item) => {
-	assignRecordToGroup(item, {
-		group: allPressItems,
+listing.allNewsAndPressItems.forEach((newsOrPressItem) => {
+	assignRecordToGroup(newsOrPressItem, {
+		group: allNewsAndPressItems,
 		key: "all",
-		title: "All",
-		description: "All press items",
+		marker: "All",
+		description: "All news and press items",
 		method: "period",
 	});
 });
@@ -74,16 +71,11 @@ listing.allItems.forEach((item) => {
 	<h1 class="display-none">
 		{listing.title}
 	</h1>
-	<Dataset
-		sets={[
-			{
-				name: "set-1",
-				method: "period",
-				type: "headlines",
-				title: "List of Press Items, Sorted By Date",
-				object: allPressItems,
-				orderings: Object.keys(allPressItems),
-			},
-		]}
+	<Listing
+		source={allNewsAndPressItems}
+		originalSet={listing.allNewsAndPressItems}
+		keys={Object.keys(allNewsAndPressItems)}
+		densities={["1"]}
+		background="polka-dot"
 	/>
 </Main>
