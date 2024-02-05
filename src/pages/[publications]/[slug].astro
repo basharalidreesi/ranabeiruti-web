@@ -8,6 +8,7 @@ import type { TypedObject } from "astro-portabletext/types";
 import Page, { type PageProps } from "@components/Page.astro";
 import type { ProjectProps } from "@projects/[slug].astro";
 import type { PublicationsListingProps } from "./index.astro";
+import { portableTextToPlainText } from "@components/RichText.astro";
 
 export type PublicationProps = {
 	type: "publication";
@@ -47,6 +48,6 @@ export async function getStaticPaths() {
 const publication = Astro.props;
 ---
 
-<Main title={publication.title}>
+<Main title={publication.title} description={portableTextToPlainText(publication.description)} image={{ url: publication.image.url, transformationQuery: `?w=1200&h=630&fit=crop&fp-x=${publication.image.hotspot?.x || 0.5}&fp-y=${publication.image.hotspot?.y || 0.5}&auto=format` }}>
 	<Page source={publication} />
 </Main>

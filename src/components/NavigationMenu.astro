@@ -62,6 +62,15 @@ const {
 
 <style lang="scss">
 	@use "@styles/mixins";
+	:global(body) {
+		--header-height: calc(1em * 4);
+		// --header-offset: var(--spacer-400);
+		--header-offset: 0px;
+		--body-inline-spacing: calc(var(--spacer-400) + env(safe-area-inset-left, 0px));
+		@media (max-width: 640px) {
+			--header-offset: 0px;
+		}
+	}
 	header {
 		& {
 			position: sticky;
@@ -83,7 +92,7 @@ const {
 			border-block-end: 1px solid var(--color-5);
 		}
 		&[data-mode="contrast"] {
-			background: var(--color-6);
+			background: var(--color-7);
 		}
 		&[data-mode="clear"] {
 			& {

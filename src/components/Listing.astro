@@ -215,7 +215,7 @@ const {
 		& {
 			@media (min-width: 513px) {
 				position: sticky;
-				min-height: calc(1em + var(--spacer-350) + var(--spacer-350) + 1px);
+				min-height: calc(1em + var(--spacer-350) + var(--spacer-350) + 1px + 1px);
 			}
 			top: calc(var(--header-height));
 			grid-column: all;
@@ -230,6 +230,9 @@ const {
 			background: var(--color-7);
 			border-block-end: 1px solid var(--color-5);
 			z-index: 4;
+			header[data-mode="contrast"] ~ main .listing & {
+				border-block-start: 1px solid var(--color-5);
+			}
 		}
 		.listing-header {
 			display: flex;

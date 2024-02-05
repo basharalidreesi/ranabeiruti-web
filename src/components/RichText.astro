@@ -10,6 +10,7 @@ import PortableTextSpacer from "@components/PortableTextCmps/PortableTextSpacer.
 import PortableTextTitle from "@components/PortableTextCmps/PortableTextTitle.astro";
 import PortableTextDescription from "@components/PortableTextCmps/PortableTextDescription.astro";
 import type { SomePortableTextComponents, TypedObject } from "astro-portabletext/types";
+import { toPlainText } from "astro-portabletext/utils";
 
 const components: SomePortableTextComponents = {
 	type: {
@@ -48,6 +49,14 @@ export type Props = {
 const {
 	source,
 } = Astro.props;
+
+export function portableTextToPlainText(source: string | TypedObject[]) {
+	return (
+		source && typeof source === "string" ? source
+		: source && typeof source === "object" ? toPlainText(source)
+		: null
+	)
+};
 ---
 
 {source && source.length !== 0 && (

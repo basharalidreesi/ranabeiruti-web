@@ -43,6 +43,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 						style={{
 							"--title-color": featuredItem.item.image && featuredItem.displayMode === "expansive" && featuredItem.item.image.metadata?.palette?.darkMuted?.title,
 							"--background-color": featuredItem.item.image && featuredItem.displayMode === "expansive" && featuredItem.item.image.metadata?.palette?.darkMuted?.background,
+							"--image-aspect-ratio": featuredItem.item.image && featuredItem.displayMode === "constrained" && featuredItem.item.image.metadata?.dimensions?.aspectRatio,
 						}}
 					>
 						{featuredItem.item.image && featuredItem.item.image.asset ? (
@@ -177,7 +178,8 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			position: absolute;
 			bottom: 0;
 			right: 0;
-			padding-block: calc(var(--header-height) - var(--header-offset) - 0.25em);
+			// padding-block: calc(var(--header-height) - var(--header-offset) - 0.25em);
+			padding-block: var(--spacer-400);
 			padding-inline-start: calc(var(--spacer-400) + var(--spacer-100));
 			padding-inline-end: calc(var(--body-inline-spacing) + var(--spacer-100));
 			z-index: 50;
@@ -219,27 +221,30 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		flex: 0 0 100%;
 		height: 100%;
 		scroll-snap-align: center;
-		&[data-has-image="true"][data-display="constrained"],
-		&[data-has-image="false"] {
+		&[data-has-image="true"][data-display="constrained"] {
 			padding-inline: var(--body-inline-spacing);
 			padding-block-start: calc(var(--header-height) + var(--header-offset));
 		}
 		&[data-has-image="true"][data-display="constrained"] {
 			display: flex;
 			flex-direction: column;
-			row-gap: calc(var(--header-height) - var(--header-offset) - 0.25em - 0.15em);
-			padding-block-end: calc(var(--header-height) - var(--header-offset) - 0.25em);
+			// row-gap: calc(var(--header-height) - var(--header-offset) - 0.25em - 0.15em);
+			row-gap: var(--spacer-400);
+			// padding-block-end: calc(var(--header-height) - var(--header-offset) - 0.25em);
+			padding-block-end: var(--spacer-400);
 			background: var(--color-6);
 			@media (max-width: 640px) {
-				row-gap: var(--spacer-400);
-				padding-block-end: calc((var(--header-height) - 1em) / 2);
+				// row-gap: var(--spacer-400);
+				// padding-block-end: calc((var(--header-height) - 1em) / 2);
 			}
 		}
 		&[data-has-image="false"] {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding-block-end: calc(var(--header-height) + var(--header-offset));
+			// padding-block-end: calc(var(--header-height) + var(--header-offset));
+			// padding-block-end: var(--spacer-400);
+			padding-block: calc(var(--header-height) + var(--header-offset));
 		}
 		&[data-has-image="false"] {
 			margin-inline: var(--spacer-400);
@@ -333,11 +338,12 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		.featured-item[data-has-image="true"][data-display="expansive"] & {
 			& {
 				position: absolute;
-				bottom: calc(var(--header-height) - var(--header-offset) - 0.25em);
+				// bottom: calc(var(--header-height) - var(--header-offset) - 0.25em);
+				bottom: var(--spacer-400);
 				left: var(--body-inline-spacing);
 				right: var(--body-inline-spacing);
 				@media (max-width: 640px) {
-					bottom: calc((var(--header-height) - 1em) / 2);
+					// bottom: calc((var(--header-height) - 1em) / 2);
 				}
 				color: var(--title-color);
 			}
@@ -351,15 +357,17 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			&::before {
 				content: "";
 				position: absolute;
-				bottom: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1);
-				top: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1 - var(--spacer-400));
+				// bottom: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1);
+				bottom: calc(var(--spacer-400) * -1);
+				// top: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1 - var(--spacer-400));
+				top: calc(var(--spacer-400) * -2);
 				left: calc(var(--body-inline-spacing) * -1);
 				right: calc(var(--body-inline-spacing) * -1);
 				background: linear-gradient(to top, var(--background-color) var(--header-offset), transparent);
 				opacity: 0.333;
 				@media (max-width: 640px) {
-					bottom: calc(((var(--header-height) - 1em) / 2) * -1);
-					top: calc(((var(--header-height) - 1em) / 2) * -1 - var(--spacer-400));
+					// bottom: calc(((var(--header-height) - 1em) / 2) * -1);
+					// top: calc(((var(--header-height) - 1em) / 2) * -1 - var(--spacer-400));
 				}
 			}
 		}

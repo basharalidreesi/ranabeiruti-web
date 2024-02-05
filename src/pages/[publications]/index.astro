@@ -46,7 +46,7 @@ listing.allPublications.forEach((publication) => {
 	</h1>
 	<div class="coming-soon">
 		<p>
-			Coming Soon
+			Coming soon
 		</p>
 	</div>
 	<!-- <Listing
@@ -59,28 +59,11 @@ listing.allPublications.forEach((publication) => {
 </Main>
 
 <style lang="scss">
-	@use "@styles/mixins";
 	.coming-soon {
 		flex: 1;
 		display: flex;
-		// margin-inline: calc(var(--body-inline-spacing) * -1);
-		// animation: polka-dot-movement 100s linear infinite;
-		// @include mixins.polka-dot-background();
-		// @keyframes polka-dot-movement {
-		// 	from {
-		// 		background-position: 0 0, calc(var(--spacer-400) / 4) calc(var(--spacer-400) / 4);
-		// 	}
-		// 	to {
-		// 		background-position: 100% 0, calc(var(--spacer-400) / 4 - 100%) calc(var(--spacer-400) / 4);
-		// 	}
-		// }
-	}
-	.coming-soon p {
-		display: block;
-		// padding: var(--spacer-400);
-		margin: auto;
-		// background: var(--color-7);
-		// font-size: var(--font-size-700);
-		// font-weight: 700;
+		align-items: flex-end;
+		justify-content: flex-end;
+		padding-block: calc(var(--spacer-400) * 1);
 	}
 </style>

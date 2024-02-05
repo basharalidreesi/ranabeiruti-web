@@ -54,6 +54,7 @@ const ImageMetadataGroqPartial = (`
 		palette,
 		"extension": ^.asset -> extension,
 	},
+	"url": asset -> url,
 `);
 
 const ImageGroqPartial = (`
@@ -382,6 +383,12 @@ export const SiteSettingsGroqQuery = (`
 				},
 			},
 		},
+		image {
+			"url": asset -> url,
+			transformationQuery,
+		},
+		keywords,
+		analytics,
 	}
 `);
 
