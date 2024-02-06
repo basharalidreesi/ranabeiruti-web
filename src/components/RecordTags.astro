@@ -31,12 +31,17 @@ const tagArray =  [...((tags === "all" || tags.includes("types")) && recordTypes
 				const tagType = tag.type;
 				const tagName = tag.name?.trim();
 				return (
-					<li data-type={tag.type}>
-						<Link to={
-							withLinks && recordType === "project" ? "projectsListing"
-							: withLinks && recordType === "publication" ? "publicationsListing"
-							: null
-						}>
+					<li>
+						<Link
+							to={
+								withLinks && recordType === "project" ? "projectsListing"
+								: withLinks && recordType === "publication" ? "publicationsListing"
+								: null
+							}
+							append={`?${tag.type}=${tag.type === "location" ? tag.locale : tag.slug.current}`}
+							data-type={tag.type}
+							data-slug={tag.type === "location" ? tag.locale : tag.slug.current}
+						>
 							{
 								(tagType === "type" || tagType === "collection" || tagType === "subject") ? (tagName)
 								: tagType === "location" ? ([tagName, LOCALES.find((locale) => locale.value === tag.locale)?.title]?.filter(Boolean)?.join(", "))

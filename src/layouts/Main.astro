@@ -95,6 +95,7 @@ const pageImage = image && image.url ? `${image.url}${image.transformationQuery 
 		flex-flow: column nowrap;
 		min-height: 100vh;
 		min-height: 100dvh;
+		--body-inline-spacing: calc(var(--spacer-400) + env(safe-area-inset-left, 0px));
 	}
 	main {
 		flex: 1;

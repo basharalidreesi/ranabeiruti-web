@@ -33,10 +33,12 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 ---
 
 <div class="page">
-	<section class="page-body">
-		<h2 class="display-none">Body</h2>
-		<PageBuilder source={hasBody && source.page.body} />
-	</section>
+	{hasBody && (
+		<section class="page-body">
+			<h2 class="display-none">Body</h2>
+			<PageBuilder source={hasBody && source.page.body} />
+		</section>
+	)}
 	{(hasCredits || hasRelated) && (
 		<footer class="page-footer">
 			{hasCredits && (
@@ -94,8 +96,11 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 		flex-flow: column nowrap;
 		padding-block-start: var(--spacer-400);
 	}
+	.page-footer {
+		margin-block-start: auto;
+	}
 	.page-body {
-		flex: 1;
+		// flex: 1;
 		display: grid;
 		grid-template-columns: [all-start] 10% [content-start] 1fr [content-end] 10% [all-end];
 		column-gap: var(--spacer-400);
@@ -109,6 +114,9 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 		& > *.breakout {
 			grid-column: all;
 		}
+		&:last-child {
+			margin-block-end: env(safe-area-inset-bottom, 0px);
+		}
 		@media (max-width: 1024px) {
 			display: flex;
 			flex-direction: column;
@@ -121,6 +129,9 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 		margin-block-end: var(--spacer-400);
 		padding-block-start: var(--spacer-400);
 		border-block-start: 1px solid var(--color-5);
+		&:last-child {
+			margin-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
+		}
 		@media (max-width: 1024px) {
 			margin-inline: 0;
 		}
@@ -128,6 +139,7 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 	.page-related {
 		margin-inline: calc(var(--body-inline-spacing) * -1);
 		padding-block-start: var(--spacer-400);
+		padding-block-end: env(safe-area-inset-bottom, 0px);
 		background: var(--color-1);
 	}
 	.page-related-headers {
@@ -242,6 +254,7 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 			flex-direction: column;
 			row-gap: var(--spacer-50);
 			scroll-snap-align: center;
+			text-wrap: pretty;
 			text-wrap: balance;
 			@include mixins.hover-image();
 		}
@@ -294,7 +307,7 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 	const seekNextButton = document.querySelector(`.page-related-next`) as HTMLElement;
 	const firstRelatedRecordObserver = seekPreviousButon && new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
-			seekPreviousButon.style.visibility = entry.intersectionRatio === 1 ? "hidden" : "visible";
+			seekPreviousButon.style.setProperty("visibility", entry.intersectionRatio === 1 ? "hidden" : "visible");
 		});
 	}, {
 		threshold: 1,
@@ -302,7 +315,7 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 	});
 	const lastRelatedRecordObserver = seekNextButton && new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
-			seekNextButton.style.visibility = entry.intersectionRatio === 1 ? "hidden" : "visible";
+			seekNextButton.style.setProperty("visibility", entry.intersectionRatio === 1 ? "hidden" : "visible");
 		});
 	}, {
 		threshold: 1,

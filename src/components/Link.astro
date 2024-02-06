@@ -7,15 +7,18 @@ import type { HTMLAttributes } from "astro/types";
 type Props = HTMLAttributes<"a"> & ({
 	href: string;
 	to?: never;
+	append?: never;
 } | {
 	href?: never;
 	to: Exclude<RecordProps, StoryProps> | ListingProps | "homepage" | "projectsListing" | "publicationsListing" | "pressListing";
+	append?: string;
 });
 
 const {
 	class: className,
 	href,
 	to,
+	append = "",
 	title,
 	role,
 	...rest
@@ -42,7 +45,7 @@ const resolvedLink =
 ---
 
 {resolvedLink && (
-	<a class={className} href={resolvedLink} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || (typeof to === "object" && to?.title)} role={role} {...rest}>
+	<a class={className} href={resolvedLink + append} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || (typeof to === "object" && to?.title)} role={role} {...rest}>
 		<slot />
 	</a>
 ) || (

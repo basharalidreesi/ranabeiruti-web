@@ -7,8 +7,10 @@ import RecordTags from "@components/RecordTags.astro";
 import RecordImage from "@components/RecordImage.astro";
 import RecordRelated from "@components/RecordRelated.astro";
 import type { RecordProps, TagNames } from "@lib/types.astro";
+import type { ProjectProps } from "@projects/[slug].astro";
+import type { PublicationProps } from "@publications/[slug].astro";
 
-type DatasetGroupingMethods = "period" | "aesthetic";
+type DatasetGroupingMethods = "period" | TagNames;
 
 type DatasetRecordGroup = {
 	marker: string;
@@ -21,7 +23,7 @@ export type DatasetRecordGroups = {
 	[key: string]: DatasetRecordGroup;
 };
 
-export function assignRecordToGroup(record: RecordProps, params: { group: DatasetRecordGroups; method: DatasetGroupingMethods; key: string; marker: string; description: string; }) {
+export function assignRecordToGroup(record: RecordProps, params: { group: DatasetRecordGroups; method: DatasetGroupingMethods; key: string; marker: string; description?: string; }) {
 	const {
 		group,
 		method,
@@ -47,7 +49,9 @@ type Props = {
 	originalSet?: RecordProps[];
 	keys?: string[];
 	densities?: ("1" | "2" | "3")[];
-	filters?: TagNames[];
+	filters?: {
+		[key in TagNames]?: DatasetRecordGroups;
+	};
 	background?: "none" | "polka-dot";
 };
 
@@ -59,6 +63,12 @@ const {
 	filters,
 	background = "none",
 } = Astro.props;
+
+function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagNames) {
+	return record && tagType && record[tagType] && record[tagType].length !== 0
+		? record[tagType].map((tag) => tag.type === "location" ? tag.locale : tag.slug.current)?.join(" ")
+		: "";
+};
 ---
 
 {keys && keys.length !== 0 && (
@@ -67,14 +77,14 @@ const {
 		data-density={densities[0]}
 		data-has-multiple-densities={densities?.length > 1 ? "true" : "false"}
 		data-has-multiple-keys={keys.length > 1 ? "true" : "false"}
-		data-has-filters={filters && filters.length !== 0 ? "true" : "false"}
+		data-has-filters={filters && Object.keys(filters).length !== 0 ? "true" : "false"}
 		data-background={background}
 	>
-		{(densities?.length > 1 || (filters && filters.length !== 0)) && (
+		{(densities?.length > 1 || (filters && Object.keys(filters).length !== 0)) && (
 			<div class="listing-headers">
-				{filters && filters.length !== 0 && (
+				{filters && Object.keys(filters).length !== 0 && (
 					<div class="filter-switches listing-header">
-						{filters.map((filter) => (
+						{Object.keys(filters).map((filter) => (
 							<div class="filter-switch listing-header-item">
 								<input type="checkbox" name="switch-filter-to" id={`switch-filter-to-${filter}`} value={filter} autocomplete="off" />
 								<label for={`switch-filter-to-${filter}`}>{`${filter.charAt(0)?.toUpperCase()}${filter.slice(1)}`}</label>
@@ -113,7 +123,7 @@ const {
 							</h2>
 						</div>
 					)}
-					<div class="record-group" data-method={correspondingObject.method}>
+					<div class="record-group" data-method={correspondingObject.method} id={key}>
 						{correspondingObject.records?.map((record) => {
 							const originalIndex = originalSet?.findIndex((item) => item === record) || 0;
 							const alignment =
@@ -132,6 +142,10 @@ const {
 									data-start-date={(record.type === "project" || record.type === "story") ? record.date.startDate : record.date}
 									data-end-date={(record.type === "project" || record.type === "story") ? (record.date.endDate || record.date.startDate) : record.date}
 									data-half={originalIndex <= originalSet.filter((record) => record.type !== "story")?.length / 2 ? "upper" : "lower"}
+									data-types={(record.type === "project" || record.type === "publication") && getRecordTags(record, "types")}
+									data-subjects={(record.type === "project" || record.type === "publication") && getRecordTags(record, "subjects")}
+									data-collections={(record.type === "project" || record.type === "publication") && getRecordTags(record, "collections")}
+									data-locations={(record.type === "project" || record.type === "publication") && getRecordTags(record, "locations")}
 								>
 									<RecordTitle source={record} level={3} withLink={true} />
 									<RecordDate source={record} />
@@ -163,7 +177,7 @@ const {
 <style lang="scss" is:global>
 	@use "@styles/mixins";
 	.listing {
-		flex: 1;
+		// flex: 1;
 		display: grid;
 		grid-template-columns: [all-start] 0 [left-start] var(--left) [left-end] var(--spacer-left) [content-start] 1fr [content-end] var(--spacer-right) [right-start] var(--right) [right-end] 0 [all-end];
 		margin-block-start: var(--listing-inner-spacing);
@@ -190,6 +204,7 @@ const {
 		}
 		&[data-density="1"] {
 			--listing-inner-spacing: calc(var(--spacer-400) * 3);
+			padding-block-end: env(safe-area-inset-bottom, 0px);
 			@media (max-width: 896px) {
 				--listing-inner-spacing: calc(var(--spacer-400) * 2);
 			}
@@ -205,10 +220,11 @@ const {
 		}
 		&[data-density="2"] {
 			--listing-inner-spacing: var(--spacer-400);
+			margin-block-end: env(safe-area-inset-bottom, 0px);
 		}
 		&[data-density="3"] {
 			--listing-inner-spacing: calc(var(--spacer-400) / 2);
-			margin-block-end: var(--listing-inner-spacing);
+			margin-block-end: calc(var(--listing-inner-spacing) + env(safe-area-inset-bottom, 0px));
 		}
 	}
 	.listing-headers {
@@ -363,6 +379,7 @@ const {
 		& {
 			position: relative;
 			line-height: 1.3;
+			text-wrap: pretty;
 			text-wrap: balance;
 			row-gap: var(--record-inner-spacing);
 			background: var(--color-7);
@@ -701,6 +718,126 @@ const {
 </style>
 
 <script>
+	import type { TagNames } from "@lib/types.astro";
+
+	var upcomingRecords = []
+	var ongoingRecords = [];
+	const upcomingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#upcoming`);
+	const ongoingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#ongoing`);
+	const recordsWithStartDates = document.querySelectorAll(`.record-group[data-method="period"] .record[data-start-date]`);
+	recordsWithStartDates.forEach((record) => {
+		const startDateString = record.getAttribute("data-start-date");
+		const endDateString = record.getAttribute("data-end-date");
+		const startDate = new Date(startDateString);
+		const endDate = endDateString && new Date(endDateString) || null;
+		const now = new Date();
+		if (startDate > now) {
+			updateRecordGroupLength(record, -1);
+			upcomingRecords.push(record);
+			record.remove();
+			return;
+		};
+		if (endDate && startDate < now && endDate > now) {
+			updateRecordGroupLength(record, -1);
+			ongoingRecords.push(record);
+			record.remove();
+			return;
+		};
+	});
+	upcomingRecords.forEach((record) => {
+		upcomingRecordsGroup.appendChild(record);
+		updateRecordGroupLength(record, 1);
+		return;
+	});
+	ongoingRecords.forEach((record) => {
+		ongoingRecordsGroup.appendChild(record);
+		updateRecordGroupLength(record, 1);
+		return;
+	});
+
+	function filterRecordsByURLSearchParams() {
+		const urlParams = new URLSearchParams(window.location.search);
+		const types = urlParams.get("type")?.split(",")?.filter(Boolean);
+		const subjects = urlParams.get("subject")?.split(",")?.filter(Boolean);
+		const collections = urlParams.get("collection")?.split(",")?.filter(Boolean);
+		const locations = urlParams.get("location")?.split(",")?.filter(Boolean);
+		if (!urlParams || !urlParams.size || ((!types || types.length === 0) && (!subjects || subjects.length === 0) && (!collections || collections.length === 0) && (!locations || locations.length === 0))) {
+			const hiddenRecords = document.querySelectorAll(`.record[hidden]`);
+			hiddenRecords?.forEach((hiddenRecord) => {
+				updateRecordGroupLength(hiddenRecord, 1);
+				hiddenRecord.removeAttribute("hidden");
+			});
+			console.info("Filters cleared");
+			return;
+		};
+		const buildSelectorsForParam = (key: TagNames, params: string[]) => {
+			return key && params && params.length !== 0
+				? params.filter(Boolean)?.map((param) => `[data-${key}~="${param}"]`)?.join("")
+				: "";
+		};
+		try {
+			const selectorChain = (`${buildSelectorsForParam("types", types)}${buildSelectorsForParam("subjects", subjects)}${buildSelectorsForParam("collections", collections)}${buildSelectorsForParam("locations", locations)}`);
+			const negativeQuery = (`.record:not(${selectorChain})`);
+			const positiveQuery = (`.record${selectorChain}`);
+			const negativeMatches: NodeListOf<HTMLElement> = document.querySelectorAll(negativeQuery);
+			const positiveMatches: NodeListOf<HTMLElement> = document.querySelectorAll(positiveQuery);
+			negativeMatches?.forEach((negativeMatch) => {
+				const isCurrentlyHidden = negativeMatch.getAttribute("hidden") ? true : false;
+				if (isCurrentlyHidden) { return; };
+				updateRecordGroupLength(negativeMatch, -1);
+				negativeMatch.setAttribute("hidden", "true");
+			});
+			positiveMatches?.forEach((positiveMatch) => {
+				const isCurrentlyHidden = positiveMatch.getAttribute("hidden") ? true : false;
+				if (!isCurrentlyHidden) { return; };
+				updateRecordGroupLength(positiveMatch, 1);
+				positiveMatch.removeAttribute("hidden");
+			});
+			console.info(`Filtering for \`${selectorChain}\``);
+			return;
+		} catch {
+			console.info("No matches found");
+		};
+	};
+	filterRecordsByURLSearchParams();
+
+	const tagLinks = document.querySelectorAll(`.record-tags a`);
+	tagLinks?.forEach((tagLink) => {
+		tagLink.addEventListener("click", handleTagLinkClick);
+	});
+	function handleTagLinkClick(event) {
+		event.preventDefault();
+		const urlParams = new URLSearchParams(window.location.search);
+		const paramKey = event.target.getAttribute("data-type");
+		const paramValue = event.target.getAttribute("data-slug");
+		if (urlParams.has(paramKey)) {
+			const currentParamValues = urlParams.get(paramKey)?.split(",");
+			if (currentParamValues.includes(paramValue) && currentParamValues.length === 1) {
+				urlParams.delete(paramKey, paramValue);
+				console.info(`Key \`${paramKey}\` deleted`);
+			} else if (currentParamValues.includes(paramValue) && currentParamValues.length > 1) {
+				urlParams.set(paramKey, currentParamValues.filter((value) => value !== paramValue)?.join());
+				console.info(`Value \`${paramValue}\` removed from key \`${paramKey}\``);
+			} else {
+				urlParams.set(paramKey, [...currentParamValues, paramValue]?.join());
+				console.info(`Value \`${paramValue}\` added to key \`${paramKey}\``);	
+			}
+		} else {
+			urlParams.append(paramKey, paramValue);
+			console.info(`Value \`${paramValue}\` added to key \`${paramKey}\``);
+		};
+		const newUrlParams = urlParams.toString();
+		history.replaceState({}, "", `${window.location.pathname}${newUrlParams ? "?" : ""}${newUrlParams}`);
+		filterRecordsByURLSearchParams();
+	};
+
+	function updateRecordGroupLength(record: Element, modifier: 1 | -1) {
+		if (!record || !modifier) { return; };
+		const group = record.closest(".listing-row[data-length]");
+		const currentLength = parseInt(group?.getAttribute("data-length"));
+		return group?.setAttribute("data-length", (currentLength + modifier)?.toString());
+	};
+
 	const densitySwitches = document.querySelectorAll(`input[name="switch-density-to"]`);
 	densitySwitches?.forEach((densitySwitch) => {
 		return densitySwitch.addEventListener("change", handleDensitySwitch);

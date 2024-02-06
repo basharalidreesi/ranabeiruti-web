@@ -48,7 +48,7 @@
 
 // misc
 .display-none, [hidden] {
-	display: none;
+	display: none !important;
 }
 .display-hidden {
 	clip: rect(0 0 0 0);

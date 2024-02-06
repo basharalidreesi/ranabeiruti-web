@@ -2,14 +2,11 @@
 import Main from "@layouts/Main.astro";
 ---
 
-<Main title="404">
+<Main title="Coming Soon">
 	<div class="content">
 		<div>
 			<p>
-				404
-			</p>
-			<p>
-				Page not found
+				Coming soon
 			</p>
 		</div>
 	</div>
@@ -21,6 +18,7 @@ import Main from "@layouts/Main.astro";
 		display: flex;
 		align-items: flex-end;
 		justify-content: flex-end;
-		padding-block: calc(var(--spacer-400) * 1);
+		padding-block-start: var(--spacer-400);
+		padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
 	}
 </style>

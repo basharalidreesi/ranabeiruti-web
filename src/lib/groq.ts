@@ -403,14 +403,12 @@ export const HomepageGroqQuery = (`
 						current,
 					},
 					title,
-					subtitle,
 				},
 				_type == "publication" => {
 					slug {
 						current,
 					},
 					title,
-					subtitle,
 				},
 				_type == "news" => {
 					slug {
@@ -439,12 +437,20 @@ export const HomepageGroqQuery = (`
 						${ImageGroqPartial}
 					},
 				},
+				_type == "project" || _type == "publication" => {
+					^.doesUseDocumentSubtitle == true => {
+						"subtitle": subtitle,
+					},
+					^.doesUseDocumentSubtitle != true => {
+						"subtitle": ^.subtitle,
+					},
+				},
 			},
 			displayMode,
 		},
-		page {
-			${PageBuilderBodyGroqPartial}
-		},
+		// page {
+		// 	${PageBuilderBodyGroqPartial}
+		// },
 	}
 `);
 

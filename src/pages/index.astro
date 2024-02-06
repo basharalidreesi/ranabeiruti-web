@@ -94,7 +94,9 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			)}
 		</section>
 	)}
-	<Page source={homepage} />
+	{homepage.page && homepage.page.body && homepage.page.body.length !== 0 && (
+		<Page source={homepage} />
+	)}
 </Main>
 
 <style lang="scss" is:global>
@@ -105,6 +107,12 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		margin-block-start: calc((var(--header-height) + var(--header-offset)) * -1);
 		height: 100vh;
 		height: 100svh;
+	}
+	.featured-items::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		box-shadow: 0 0 calc(var(--spacer-400) * 2) var(--color-5);
 	}
 	.featured-items-carousel {
 		display: flex;
@@ -159,7 +167,6 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			height: calc(1em + var(--spacer-50) + var(--spacer-100) * 2);
 			padding: var(--spacer-100);
 			border-radius: 100%;
-			// background: var(--color-7);
 			border: 1px solid currentColor;
 			fill: transparent;
 			stroke: currentColor;
@@ -178,8 +185,8 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			position: absolute;
 			bottom: 0;
 			right: 0;
-			// padding-block: calc(var(--header-height) - var(--header-offset) - 0.25em);
-			padding-block: var(--spacer-400);
+			padding-block-start: var(--spacer-400);
+			padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
 			padding-inline-start: calc(var(--spacer-400) + var(--spacer-100));
 			padding-inline-end: calc(var(--body-inline-spacing) + var(--spacer-100));
 			z-index: 50;
@@ -187,7 +194,8 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			color: var(--image-title-color);
 			@include mixins.hover-text($withOpacity: true, $opacity: 0.666);
 			@media (max-width: 640px) {
-				padding-block: calc((var(--header-height) - 1em) / 2);
+				padding-block-start: calc((var(--header-height) - 1em) / 2);
+				padding-block-end: calc(((var(--header-height) - 1em) / 2) + env(safe-area-inset-bottom, 0px));
 			}
 		}
 		button {
@@ -222,29 +230,20 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		height: 100%;
 		scroll-snap-align: center;
 		&[data-has-image="true"][data-display="constrained"] {
-			padding-inline: var(--body-inline-spacing);
-			padding-block-start: calc(var(--header-height) + var(--header-offset));
-		}
-		&[data-has-image="true"][data-display="constrained"] {
 			display: flex;
 			flex-direction: column;
-			// row-gap: calc(var(--header-height) - var(--header-offset) - 0.25em - 0.15em);
 			row-gap: var(--spacer-400);
-			// padding-block-end: calc(var(--header-height) - var(--header-offset) - 0.25em);
-			padding-block-end: var(--spacer-400);
-			background: var(--color-6);
-			@media (max-width: 640px) {
-				// row-gap: var(--spacer-400);
-				// padding-block-end: calc((var(--header-height) - 1em) / 2);
-			}
+			padding-inline: var(--body-inline-spacing);
+			padding-block-start: calc(var(--header-height) + var(--header-offset));
+			padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
+			background: var(--color-7);
 		}
 		&[data-has-image="false"] {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			// padding-block-end: calc(var(--header-height) + var(--header-offset));
-			// padding-block-end: var(--spacer-400);
-			padding-block: calc(var(--header-height) + var(--header-offset));
+			padding-block-start: calc(var(--header-height) + var(--header-offset));
+			padding-block-end: calc(var(--header-height) + var(--header-offset) + env(safe-area-inset-bottom, 0px));
 		}
 		&[data-has-image="false"] {
 			margin-inline: var(--spacer-400);
@@ -312,6 +311,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		.featured-item[data-has-image="true"] & {
 			& {
 				line-height: 1.3;
+				text-wrap: pretty;
 				text-wrap: balance;
 			}
 			.record-title-baseline {
@@ -338,13 +338,9 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 		.featured-item[data-has-image="true"][data-display="expansive"] & {
 			& {
 				position: absolute;
-				// bottom: calc(var(--header-height) - var(--header-offset) - 0.25em);
-				bottom: var(--spacer-400);
+				bottom: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
 				left: var(--body-inline-spacing);
 				right: var(--body-inline-spacing);
-				@media (max-width: 640px) {
-					// bottom: calc((var(--header-height) - 1em) / 2);
-				}
 				color: var(--title-color);
 			}
 			h3 {
@@ -357,18 +353,12 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			&::before {
 				content: "";
 				position: absolute;
-				// bottom: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1);
-				bottom: calc(var(--spacer-400) * -1);
-				// top: calc((var(--header-height) - var(--header-offset) - 0.25em) * -1 - var(--spacer-400));
+				bottom: calc((var(--spacer-400) + env(safe-area-inset-bottom, 0px)) * -1);
 				top: calc(var(--spacer-400) * -2);
 				left: calc(var(--body-inline-spacing) * -1);
 				right: calc(var(--body-inline-spacing) * -1);
 				background: linear-gradient(to top, var(--background-color) var(--header-offset), transparent);
 				opacity: 0.333;
-				@media (max-width: 640px) {
-					// bottom: calc(((var(--header-height) - 1em) / 2) * -1);
-					// top: calc(((var(--header-height) - 1em) / 2) * -1 - var(--spacer-400));
-				}
 			}
 		}
 		.featured-item[data-has-image="true"][data-display="constrained"] & {
@@ -392,6 +382,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 			min-width: 0;
 			min-height: 0;
 			line-height: 1.3;
+			text-wrap: pretty;
 			text-wrap: balance;
 		}
 		.record-date {
@@ -439,7 +430,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 
 	var currentIntersection: Element = null;
 	function observeFeaturedItemIntersections() {
-		let observer = new IntersectionObserver((entries) => {
+		const observer = new IntersectionObserver((entries) => {
 			entries.forEach((entry) => {
 				if (entry.isIntersecting) {
 					currentIntersection = entry.target;
@@ -502,7 +493,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 	// };
 
 	function observeCarouselIntersections() {
-		let observer = new IntersectionObserver(([entry]) => {
+		const observer = new IntersectionObserver(([entry]) => {
 			if (entry.isIntersecting) {
 				header.setAttribute("data-mode", "clear");
 			} else {

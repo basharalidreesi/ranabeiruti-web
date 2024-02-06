@@ -5,6 +5,7 @@ import type { ProjectProps } from "@projects/[slug].astro";
 import sanityClient from "@root/sanity";
 import type { StoryProps } from "@lib/types.astro";
 import Listing, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Listing.astro";
+import { LOCALES } from "@lib/locales";
 
 export type ProjectsListingProps = {
 	id: "projectsListing";
@@ -32,6 +33,10 @@ const projectsAndStoriesByPeriod: DatasetRecordGroups = {
 	"ongoing": { marker: "Now", records: [], description: "Ongoing projects", method: "period", },
 	"upcoming": { marker: "Upcoming", records: [], description: "Upcoming projects", method: "period", },
 };
+const projectsByType: DatasetRecordGroups = {};
+const projectsByCollection: DatasetRecordGroups = {};
+const projectsBySubject: DatasetRecordGroups = {};
+const projectsByLocation: DatasetRecordGroups = {};
 
 listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type === "story") || (projectOrStory.type === "project" && projectOrStory.isListed))?.forEach((projectOrStory) => {
 	assignRecordToGroup(projectOrStory, {
@@ -41,6 +46,32 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 		marker: projectOrStory.date.sortDate === "ongoing" ? "Now" : projectOrStory.date.sortDate.split("-")[0],
 		description: projectOrStory.date.sortDate === "ongoing" ? "Ongoing projects" : `Projects from ${projectOrStory.date.sortDate.split("-")[0]}`,
 	});
+	if (projectOrStory.type === "project") {
+		projectOrStory.types && projectOrStory.types.length !== 0 && projectOrStory.types?.forEach((type) => assignRecordToGroup(projectOrStory, {
+			group: projectsByType,
+			method: "types",
+			key: type.slug.current,
+			marker: type.name,
+		}));
+		projectOrStory.collections && projectOrStory.collections.length !== 0 && projectOrStory.collections?.forEach((collection) => assignRecordToGroup(projectOrStory, {
+			group: projectsByCollection,
+			method: "collections",
+			key: collection.slug.current,
+			marker: collection.name,
+		}));
+		projectOrStory.subjects && projectOrStory.subjects.length !== 0 && projectOrStory.subjects?.forEach((subject) => assignRecordToGroup(projectOrStory, {
+			group: projectsBySubject,
+			method: "subjects",
+			key: subject.slug.current,
+			marker: subject.name,
+		}));
+		projectOrStory.locations && projectOrStory.locations.length !== 0 && projectOrStory.locations?.forEach((location) => assignRecordToGroup(projectOrStory, {
+			group: projectsByLocation,
+			method: "locations",
+			key: location.locale,
+			marker: LOCALES.find((locale) => location.locale === locale.value)?.title,
+		}));
+	};
 });
 ---
 
@@ -58,7 +89,12 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 		originalSet={listing.allProjectsAndStories}
 		keys={["ongoing", "upcoming", ...Object.keys(projectsAndStoriesByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()]?.filter(Boolean)}
 		densities={["1", "2", "3"]}
-		filters={["types", "subjects", "collections", "locations"]}
+		filters={{
+			types: projectsByType,
+			subjects: projectsBySubject,
+			collections: projectsByCollection,
+			locations: projectsByLocation,
+		}}
 	/> -->
 </Main>
 
