@@ -1,19 +1,12 @@
 @charset "UTF-8";
 
-@mixin tag($hover: true, $border-color: var(--color-3)) {
-	display: inline-block;
-	padding-block: 0.1875rem;
-	padding-inline: 0.5625rem;
+@mixin tag($border-color: var(--color-3)) {
+	// display: inline-block;
+	padding-block: 0.333em;
+	padding-inline: 0.666em;
 	border-radius: 9999px;
 	border: 1px solid $border-color;
 	transition: background-color 0.125s;
-	@if $hover == true {
-		@media (any-hover: hover) {
-			&:hover {
-				background-color: var(--color-6);
-			}
-		}
-	}
 }
 
 @mixin hover-text($hover-color: var(--color-3), $withOpacity: false, $opacity: 0.5) {

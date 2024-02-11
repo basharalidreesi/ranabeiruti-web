@@ -9,6 +9,7 @@ import RecordRelated from "@components/RecordRelated.astro";
 import type { RecordProps, TagNames } from "@lib/types.astro";
 import type { ProjectProps } from "@projects/[slug].astro";
 import type { PublicationProps } from "@publications/[slug].astro";
+import Link from "./Link.astro";
 
 type DatasetGroupingMethods = "period" | TagNames;
 
@@ -79,19 +80,10 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		data-has-multiple-keys={keys.length > 1 ? "true" : "false"}
 		data-has-filters={filters && Object.keys(filters).length !== 0 ? "true" : "false"}
 		data-background={background}
+		data-ready="false"
 	>
 		{(densities?.length > 1 || (filters && Object.keys(filters).length !== 0)) && (
 			<div class="listing-headers">
-				{filters && Object.keys(filters).length !== 0 && (
-					<div class="filter-switches listing-header">
-						{Object.keys(filters).map((filter) => (
-							<div class="filter-switch listing-header-item">
-								<input type="checkbox" name="switch-filter-to" id={`switch-filter-to-${filter}`} value={filter} autocomplete="off" />
-								<label for={`switch-filter-to-${filter}`}>{`${filter.charAt(0)?.toUpperCase()}${filter.slice(1)}`}</label>
-							</div>
-						))}
-					</div>
-				)}
 				{densities && densities.length > 1 && (
 					<div class="density-switches listing-header">
 						{densities.sort().map((density, index) => (
@@ -99,7 +91,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 								<input type="radio" name="switch-density-to" id={`switch-density-to-${density}`} value={density} autocomplete="off" checked={index === 0} />
 								<label for={`switch-density-to-${density}`}>
 									{
-										density === "1" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>Timeline</title><path d="M7.3,8.9V6 M4.8,6V3.1 M2.2,6h7.7 M2.2,8.9h7.7V3.1H2.2V8.9z"></path></svg>)
+										density === "1" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>Timeline</title><path class="d1-var1" d="M7.3,8.9V6 M4.8,6V3.1 M2.2,6h7.7 M2.2,8.9h7.7V3.1H2.2V8.9z"></path><path class="d1-var2" d="M2.2,8.9h7.7V3.1H2.2V8.9z"></path></svg>)
 										: density === "2" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>Grid</title><path d="M2.2,3.1h7.7v5.8H2.2V3.1z M2.2,6h7.7 M6,3.1v5.8"></path></svg>)
 										: density === "3" ? (<svg viewBox="0 0 12 12" width="12" height="12" xmlns="http://www.w3.org/2000/svg"><title>List</title><path d="M2.2,7.5h7.7 M2.2,4.6h7.7 M2.2,6h7.7 M2.2,3.1h7.7v5.8H2.2V3.1z"></path></svg>)
 										: null
@@ -109,7 +101,65 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 						))}
 					</div>
 				)}
+				{filters && Object.keys(filters).length !== 0 && (
+					<div class="filter-switches listing-header">
+						{Object.keys(filters).filter((filter) => Object.keys(filters[filter])?.length !== 0)?.map((tagName) => (
+							<div class="filter-switch listing-header-item" data-length={Object.keys(filters[tagName])?.length || "0"}>
+								<input type="checkbox" name="switch-filter-to" id={`switch-filter-to-${tagName}`} value={tagName} autocomplete="off" />
+								<label for={`switch-filter-to-${tagName}`}>{`${tagName.charAt(0)?.toUpperCase()}${tagName.slice(1)}`}</label>
+							</div>
+						))}
+					</div>
+					<div class="filter-lists">
+						{Object.keys(filters).map((tagName) => {
+							const tagType = (
+								tagName === "types" ? "type"
+								: tagName === "subjects" ? "subject"
+								: tagName === "collections" ? "collection"
+								: tagName === "locations" ? "location"
+								: null
+							);
+							const correspondingTagObject = filters[tagName];
+							return correspondingTagObject && Object.keys(correspondingTagObject) && Object.keys(correspondingTagObject).length !== 0 && (
+								<ul class="filter-list" data-type={tagType} hidden="true">
+									{Object.keys(correspondingTagObject).sort((a, b) => filters[tagName][b]?.records?.length - filters[tagName][a]?.records?.length).map((key) => {
+										const correspondingFilterObject = filters[tagName][key];
+										return (
+											<li class="filter" data-length={correspondingFilterObject.records?.length}>
+												<Link href={`?${tagType}=${key}`} data-type={tagType} data-slug={key}>
+													{correspondingFilterObject.marker}
+												</Link>
+											</li>
+										);
+									})}
+								</ul>
+							);
+						})}
+					</div>
+				)}
 			</div>
+			<ul class="active-filters">
+				{Object.keys(filters).map((tagName) => {
+					const tagType = (
+						tagName === "types" ? "type"
+						: tagName === "subjects" ? "subject"
+						: tagName === "collections" ? "collection"
+						: tagName === "locations" ? "location"
+						: null
+					);
+					const correspondingTagObject = filters[tagName];
+					return correspondingTagObject && Object.keys(correspondingTagObject) && Object.keys(correspondingTagObject).length !== 0 && Object.keys(correspondingTagObject).map((key) => {
+						const correspondingFilterObject = filters[tagName][key];
+						return (
+							<li class="active-filter" hidden="true">
+								<Link href={`?${tagType}=${key}`} data-marker={`${tagType.charAt(0)?.toUpperCase()}${tagType.slice(1)}: `} data-type={tagType} data-slug={key}>
+									{correspondingFilterObject.marker}
+								</Link>
+							</li>
+						);
+					})
+				})}
+			</ul>
 		)}
 		{keys?.map((key) => {
 			const correspondingObject = source[key];
@@ -172,10 +222,20 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			);
 		})}
 	</div>
+	<noscript>
+		<style>
+			.listing {
+				visibility: visible !important;
+			}
+		</style>
+	</noscript>
 )}
 
 <style lang="scss" is:global>
 	@use "@styles/mixins";
+	.listing[data-ready="false"] {
+		visibility: hidden;
+	}
 	.listing {
 		// flex: 1;
 		display: grid;
@@ -189,12 +249,13 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		}
 		--spacer-left: var(--spacer-400);
 		--spacer-right: var(--spacer-400);
+		--listing-headers-height: calc(1em + var(--spacer-350) + var(--spacer-350) + 1px + 1px);
 		@media (max-width: 1024px) {
-			--right: 0;
-			--spacer-right: 0;
+			--right: 0px;
+			--spacer-right: 0px;
 			&:not([data-has-multiple-keys="true"]) {
-				--left: 0;
-				--spacer-left: 0;
+				--left: 0px;
+				--spacer-left: 0px;
 			}
 		}
 		@media (max-width: 896px) {
@@ -229,16 +290,19 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 	}
 	.listing-headers {
 		& {
-			@media (min-width: 513px) {
+			@media (min-width: 641px) {
 				position: sticky;
-				min-height: calc(1em + var(--spacer-350) + var(--spacer-350) + 1px + 1px);
+				top: calc(var(--header-height));
 			}
-			top: calc(var(--header-height));
+			@media (max-width: 640px) {
+				position: relative;
+			}
+			min-height: var(--listing-headers-height);
 			grid-column: all;
 			display: flex;
+			flex-wrap: wrap;
 			justify-content: space-between;
 			column-gap: var(--spacer-400);
-			min-height: 0;
 			height: fit-content;
 			margin-block-start: calc(var(--listing-inner-spacing) * -1);
 			margin-block-end: var(--listing-inner-spacing);
@@ -253,6 +317,10 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		.listing-header {
 			display: flex;
 			column-gap: var(--spacer-350);
+			row-gap: var(--spacer-200);
+			@media (max-width: 384px) {
+				column-gap: var(--spacer-100);
+			}
 		}
 		.listing-header-item {
 			position: relative;
@@ -267,12 +335,50 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		label {
 			cursor: pointer;
 		}
-		.density-switches {
-			@media (min-width: 513px) {
-				position: absolute;
-				right: 0;
-				top: var(--spacer-350);
+		.filter-switches {
+			@media (max-width: 640px) {
+				flex-flow: column wrap;
+				height: calc(1em * 2 + (var(--spacer-200) + 0.15em));
 			}
+		}
+		.filter-lists {
+			flex-basis: 100%;
+			min-width: 0;
+		}
+		.filter-list {
+			list-style: none;
+			display: flex;
+			flex-wrap: wrap;
+			column-gap: var(--spacer-400);
+			row-gap: var(--spacer-300);
+			margin-block-start: var(--spacer-350);
+			padding: var( --spacer-300);
+			border-radius: 0.375em;
+			border: 1px solid var(--color-5);
+			background: var(--color-6);
+		}
+		.filter {
+			position: relative;
+			display: flex;
+			column-gap: var(--spacer-100);
+			@include mixins.hover-text();
+			&[data-length="0"] {
+				display: none;
+			}
+		}
+		.filter::before {
+			content: attr(data-length);
+			opacity: 0.333;
+		}
+		.filter a::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+		}
+		.density-switches {
+			position: absolute;
+			right: 0;
+			top: var(--spacer-350);
 		}
 		.density-switch input:not(:checked) + label svg {
 			opacity: 0.5;
@@ -290,10 +396,27 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			* {
 				vector-effect: non-scaling-stroke;
 			}
+			@media (min-width: 641px) {
+				.d1-var2 {
+					display: none;
+				}
+			}
+			@media (max-width: 640px) {
+				.d1-var1 {
+					display: none;
+				}
+			}
+		}
+		.filter-switch[data-length="0"] {
+			pointer-events: none;
+			color: var(--color-4);
 		}
 		.filter-switch label::before {
 			font-family: var(--font-family-mono);
 			margin-inline-end: calc(var(--spacer-50) * 1.3);
+			@media (max-width: 384px) {
+				margin-inline-end: calc(var(--spacer-50));
+			}
 		}
 		.filter-switch input:checked + label::before {
 			content: "×";
@@ -303,6 +426,73 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			content: "+";
 			content: "+" / "";
 			opacity: 0.375;
+		}
+	}
+	.active-filters {
+		& {
+			grid-column: all;
+			list-style: none;
+			position: sticky;
+			top: var(--header-height);
+			display: flex;
+			align-items: flex-start;
+			justify-content: flex-start;
+			column-gap: var(--spacer-100);
+			margin-inline: calc(var(--body-inline-spacing) * -1);
+			margin-block-start: calc(var(--listing-inner-spacing) * -1);
+			padding-inline-start: calc(var(--body-inline-spacing) + var(--left) + var(--spacer-left));
+			padding-inline-end: calc(var(--body-inline-spacing) + var(--right) + var(--spacer-right));
+			white-space: nowrap;
+			overflow-x: auto;
+			-webkit-mask-image: linear-gradient(to right, transparent, black calc(var(--body-inline-spacing) + var(--left) + var(--spacer-left)), black calc(100% - var(--body-inline-spacing) - var(--right) - var(--spacer-right)), transparent);
+			mask-image: linear-gradient(to right, transparent, black calc(var(--body-inline-spacing) + var(--left) + var(--spacer-left)), black calc(100% - var(--body-inline-spacing) - var(--right) - var(--spacer-right)), transparent);
+			// pointer-events: none;
+			z-index: 4;
+			@include mixins.no-scrollbar();
+			@media (min-width: 641px) {
+				top: calc(var(--header-height) + var(--listing-headers-height));
+			}
+		}
+		.active-filter {
+			order: 0;
+			position: relative;
+			padding-block: var(--spacer-350);
+			// pointer-events: all;
+			.listing[data-density="3"] & {
+				padding-block-end: calc(var(--spacer-350) - (var(--listing-inner-spacing) / 1));
+			}
+		}
+		.active-filter a {
+			display: block;
+			background: var(--color-1);
+			color: var(--color-7);
+			@include mixins.tag($border-color: var(--color-1));
+			@include mixins.hover-text($withOpacity: true, $opacity: 0.75);
+			@media (any-hover: hover) {
+				&:hover::after {
+					color: var(--color-7);
+				}
+			}
+		}
+		// .active-filter a::before {
+		// 	content: attr(data-marker);
+		// 	color: var(--color-3);
+		// }
+		.active-filter a::before {
+			content: "";
+			position: absolute;
+			left: calc(var(--spacer-100) / -2);
+			right: calc(var(--spacer-100) / -2);
+			top: 0;
+			bottom: 0;
+			z-index: 1;
+		}
+		.active-filter a::after {
+			content: "×";
+			content: "×" / "";
+			margin-inline-start: calc(var(--spacer-50) * 1.6);
+			font-family: var(--font-family-mono);
+			color: var(--color-3);
 		}
 	}
 	.listing-row {
@@ -341,9 +531,9 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		}
 		.listing[data-has-filters="true"] &,
 		.listing[data-has-other-densities="true"] & {
-			@media (min-width: 513px) {
+			@media (min-width: 641px) {
 				h2 {
-					top: calc(var(--header-height) + (1em + (var(--spacer-350) * 2) + 1px) + var(--spacer-350) + 0.15em);
+					top: calc(var(--header-height) + var(--listing-headers-height) + var(--spacer-350) + 0.333em + 1px);
 				}
 			}
 		}
@@ -571,7 +761,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			.record-subtitle {
 				display: block;
 				margin-block-start: calc(var(--record-inner-spacing) * 0.7);
-				@media (max-width: 512px) {
+				@media (max-width: 640px) {
 					display: none;
 				}
 			}
@@ -586,6 +776,17 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			}
 			.record-title-baseline {
 				font-weight: 700;
+			}
+		}
+		.listing[data-density="3"] .record:not([data-type="news"]):not([data-type="press"]) & {
+			.record-title-separator {
+				position: absolute;
+				opacity: 0;
+				font-size: 0px;
+			}
+			.record-subtitle {
+				display: block;
+				margin-block-start: var(--spacer-50);
 			}
 		}
 	}
@@ -663,6 +864,12 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			@include mixins.link();
 			@include mixins.hover-text();
 		}
+		a::after {
+			content: "";
+			position: absolute;
+			inset: -0.5em;
+			z-index: 1;
+		}
 		.listing[data-density="1"] &,
 		.listing[data-density="2"] & {
 			ul {
@@ -725,7 +932,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 	const upcomingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#upcoming`);
 	const ongoingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#ongoing`);
 	const recordsWithStartDates = document.querySelectorAll(`.record-group[data-method="period"] .record[data-start-date]`);
-	recordsWithStartDates.forEach((record) => {
+	recordsWithStartDates?.forEach((record) => {
 		const startDateString = record.getAttribute("data-start-date");
 		const endDateString = record.getAttribute("data-end-date");
 		const startDate = new Date(startDateString);
@@ -744,12 +951,12 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			return;
 		};
 	});
-	upcomingRecords.forEach((record) => {
+	upcomingRecords?.forEach((record) => {
 		upcomingRecordsGroup.appendChild(record);
 		updateRecordGroupLength(record, 1);
 		return;
 	});
-	ongoingRecords.forEach((record) => {
+	ongoingRecords?.forEach((record) => {
 		ongoingRecordsGroup.appendChild(record);
 		updateRecordGroupLength(record, 1);
 		return;
@@ -761,21 +968,30 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		const subjects = urlParams.get("subject")?.split(",")?.filter(Boolean);
 		const collections = urlParams.get("collection")?.split(",")?.filter(Boolean);
 		const locations = urlParams.get("location")?.split(",")?.filter(Boolean);
-		if (!urlParams || !urlParams.size || ((!types || types.length === 0) && (!subjects || subjects.length === 0) && (!collections || collections.length === 0) && (!locations || locations.length === 0))) {
-			const hiddenRecords = document.querySelectorAll(`.record[hidden]`);
-			hiddenRecords?.forEach((hiddenRecord) => {
-				updateRecordGroupLength(hiddenRecord, 1);
-				hiddenRecord.removeAttribute("hidden");
-			});
-			console.info("Filters cleared");
-			return;
-		};
 		const buildSelectorsForParam = (key: TagNames, params: string[]) => {
 			return key && params && params.length !== 0
 				? params.filter(Boolean)?.map((param) => `[data-${key}~="${param}"]`)?.join("")
 				: "";
 		};
 		try {
+			updateActiveFiltersList({
+				action: "add",
+				types: types,
+				subjects: subjects,
+				collections: collections,
+				locations: locations,
+			});
+			if (!urlParams || ((!types || types.length === 0) && (!subjects || subjects.length === 0) && (!collections || collections.length === 0) && (!locations || locations.length === 0))) {
+				const hiddenRecords = document.querySelectorAll(`.record[hidden]`);
+				hiddenRecords?.forEach((hiddenRecord) => {
+					updateRecordGroupLength(hiddenRecord, 1);
+					updateFilterListLengths(hiddenRecord, 1);
+					updateFilterSwitchLengths();
+					hiddenRecord.removeAttribute("hidden");
+				});
+				console.info("Filters cleared");
+				return;
+			};
 			const selectorChain = (`${buildSelectorsForParam("types", types)}${buildSelectorsForParam("subjects", subjects)}${buildSelectorsForParam("collections", collections)}${buildSelectorsForParam("locations", locations)}`);
 			const negativeQuery = (`.record:not(${selectorChain})`);
 			const positiveQuery = (`.record${selectorChain}`);
@@ -785,23 +1001,28 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 				const isCurrentlyHidden = negativeMatch.getAttribute("hidden") ? true : false;
 				if (isCurrentlyHidden) { return; };
 				updateRecordGroupLength(negativeMatch, -1);
+				updateFilterListLengths(negativeMatch, -1);
+				updateFilterSwitchLengths();
 				negativeMatch.setAttribute("hidden", "true");
 			});
 			positiveMatches?.forEach((positiveMatch) => {
 				const isCurrentlyHidden = positiveMatch.getAttribute("hidden") ? true : false;
 				if (!isCurrentlyHidden) { return; };
 				updateRecordGroupLength(positiveMatch, 1);
+				updateFilterListLengths(positiveMatch, 1);
+				updateFilterSwitchLengths();
 				positiveMatch.removeAttribute("hidden");
 			});
 			console.info(`Filtering for \`${selectorChain}\``);
 			return;
-		} catch {
+		} catch(error) {
+			console.error(error);
 			console.info("No matches found");
 		};
 	};
 	filterRecordsByURLSearchParams();
 
-	const tagLinks = document.querySelectorAll(`.record-tags a`);
+	const tagLinks = document.querySelectorAll(`.record-tags a, .filter a, .active-filter a`);
 	tagLinks?.forEach((tagLink) => {
 		tagLink.addEventListener("click", handleTagLinkClick);
 	});
@@ -814,9 +1035,23 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			const currentParamValues = urlParams.get(paramKey)?.split(",");
 			if (currentParamValues.includes(paramValue) && currentParamValues.length === 1) {
 				urlParams.delete(paramKey, paramValue);
+				updateActiveFiltersList({
+					action: "remove",
+					types: paramKey === "type" ? [paramValue] : null,
+					subjects: paramKey === "subject" ? [paramValue] : null,
+					collections: paramKey === "collection" ? [paramValue] : null,
+					locations: paramKey === "location" ? [paramValue] : null,
+				});
 				console.info(`Key \`${paramKey}\` deleted`);
 			} else if (currentParamValues.includes(paramValue) && currentParamValues.length > 1) {
 				urlParams.set(paramKey, currentParamValues.filter((value) => value !== paramValue)?.join());
+				updateActiveFiltersList({
+					action: "remove",
+					types: paramKey === "type" ? [paramValue] : null,
+					subjects: paramKey === "subject" ? [paramValue] : null,
+					collections: paramKey === "collection" ? [paramValue] : null,
+					locations: paramKey === "location" ? [paramValue] : null,
+				});
 				console.info(`Value \`${paramValue}\` removed from key \`${paramKey}\``);
 			} else {
 				urlParams.set(paramKey, [...currentParamValues, paramValue]?.join());
@@ -838,6 +1073,65 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		return group?.setAttribute("data-length", (currentLength + modifier)?.toString());
 	};
 
+	function updateFilterListLengths(record: Element, modifier: -1 | 1) {
+		const recordTypes = record.getAttribute("data-types")?.split(" ") || [];
+		const recordSubjects = record.getAttribute("data-subjects")?.split(" ") || [];
+		const recordCollections = record.getAttribute("data-collections")?.split(" ") || [];
+		const recordLocations = record.getAttribute("data-locations")?.split(" ") || [];
+		const updateFilterList = (type, slug) => {
+			const correspondingFilter = document.querySelector(`.filter a[data-type="${type}"][data-slug="${slug}"]`);
+			const parentListItem = correspondingFilter?.closest(".filter");
+			const currentLength = parseInt(parentListItem?.getAttribute("data-length")) || 0;
+			return parentListItem?.setAttribute("data-length", (currentLength + modifier)?.toString());
+		};
+		recordTypes?.forEach((recordType) => {
+			return updateFilterList("type", recordType);
+		});
+		recordSubjects?.forEach((recordSubject) => {
+			return updateFilterList("subject", recordSubject);
+		});
+		recordCollections?.forEach((recordCollection) => {
+			return updateFilterList("collection", recordCollection);
+		});
+		recordLocations?.forEach((recordLocation) => {
+			return updateFilterList("location", recordLocation);
+		});
+		updateListingHeadersHeight();
+		return;
+	};
+
+	var activeFilterCounter = 0;
+	function updateActiveFiltersList(params) {
+		const {
+			action,
+			types,
+			subjects,
+			collections,
+			locations,
+		}: {
+			action: "add" | "remove";
+			types?: string[];
+			subjects?: string[];
+			collections?: string[];
+			locations?: string[];
+		} = params;
+		const updateCorrespondingFilter = (type, slug) => {
+			const correspondingActiveFilter: HTMLElement = document.querySelector(`.active-filter a[data-type="${type}"][data-slug="${slug}"]`)?.closest(".active-filter");
+			if (action === "add") {
+				if (correspondingActiveFilter.getAttribute("hidden") !== "true") { return; };
+				activeFilterCounter++;
+				correspondingActiveFilter.removeAttribute("hidden");
+				correspondingActiveFilter.style.setProperty("order", activeFilterCounter?.toString());
+				return;
+			};
+			return correspondingActiveFilter.setAttribute("hidden", "true");
+		};
+		types?.forEach((type) => updateCorrespondingFilter("type", type));
+		subjects?.forEach((subject) => updateCorrespondingFilter("subject", subject));
+		collections?.forEach((collection) => updateCorrespondingFilter("collection", collection));
+		locations?.forEach((location) => updateCorrespondingFilter("location", location));
+	};
+
 	const densitySwitches = document.querySelectorAll(`input[name="switch-density-to"]`);
 	densitySwitches?.forEach((densitySwitch) => {
 		return densitySwitch.addEventListener("change", handleDensitySwitch);
@@ -847,4 +1141,75 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 		const parentListing = (event.target as HTMLInputElement).closest(".listing");
 		return parentListing.setAttribute("data-density", selectedDensityValue);
 	};
+
+	const filterSwitches = document.querySelectorAll(`input[name="switch-filter-to"]`);
+	filterSwitches?.forEach((filterSwitch) => {
+		return filterSwitch.addEventListener("change", handleFilterSwitch);
+	});
+	function handleFilterSwitch(event: Event) {
+		const filterSwitch = event.target as HTMLInputElement;
+		const filterSwitchState = filterSwitch.checked;
+		const selectedFilterValue = (event.target as HTMLInputElement).value;
+		const selectedFilterType = (
+			selectedFilterValue === "types" ? "type"
+			: selectedFilterValue === "subjects" ? "subject"
+			: selectedFilterValue === "collections" ? "collection"
+			: selectedFilterValue === "locations" ? "location"
+			: null
+		);
+		if (!selectedFilterType) { return; };
+		const correspondingFilterList = document.querySelector(`.filter-list[data-type="${selectedFilterType}"]`);
+		const otherFilterSwitches = document.querySelectorAll(`input[name="switch-filter-to"]:not([value="${selectedFilterValue}"])`);
+		const otherFilterLists = document.querySelectorAll(`.filter-list:not([data-type="${selectedFilterType}"])`);
+		if (filterSwitchState === true) {
+			correspondingFilterList.removeAttribute("hidden");
+		} else {
+			correspondingFilterList.setAttribute("hidden", "true");
+		};
+		otherFilterSwitches?.forEach((otherFilterSwitch: HTMLInputElement) => otherFilterSwitch.checked = false );
+		otherFilterLists?.forEach((otherFilterList) => otherFilterList.setAttribute("hidden", "true") );
+		updateListingHeadersHeight();
+	};
+
+	function updateFilterSwitchLengths() {
+		const filterLists = document.querySelectorAll(".filter-list");
+		return filterLists?.forEach((filterList) => {
+			const filterCount = filterList.querySelectorAll(`.filter:not([data-length="0"])`)?.length || 0;
+			const correspondingFilterSwitch: HTMLInputElement = document.querySelector(`input[name="switch-filter-to"][value="${filterList.getAttribute("data-type")}s"]`);
+			const correspondingFilterSwitchContainer = correspondingFilterSwitch?.closest(".filter-switch");
+			correspondingFilterSwitchContainer.setAttribute("data-length", filterCount?.toString());
+			if (filterCount === 0) {
+				filterList.setAttribute("hidden", "true");
+				correspondingFilterSwitch.checked = false;
+			};
+			return;
+		});
+	};
+
+	window.addEventListener("resize", () => {
+		debounce(handleWindowResize, 350);
+	});
+	function handleWindowResize() {
+		updateListingHeadersHeight();
+	};
+
+	function updateListingHeadersHeight() {
+		const listingHeaders: HTMLElement = document.querySelector(".listing-headers");
+		const parentListing: HTMLElement = listingHeaders.closest(".listing");
+		parentListing?.style.removeProperty("--listing-headers-height");
+		const listingHeadersHeight = listingHeaders.offsetHeight;
+		return listingHeaders && parentListing && listingHeadersHeight && parentListing.style.setProperty("--listing-headers-height", `${listingHeadersHeight}px`);
+	};
+
+	var dTimer = 0;
+	function debounce(callback, delay) {
+		clearTimeout(dTimer);
+		return dTimer = window.setTimeout(callback, delay);
+	};
+
+	function declareListingReadiness() {
+		const listing = document.querySelector(".listing");
+		return listing?.setAttribute("data-ready", "true");
+	};
+	declareListingReadiness();
 </script>

@@ -4,6 +4,7 @@ import { PublicationsListingGroqQuery } from "@lib/groq";
 import sanityClient from "@root/sanity";
 import type { PublicationProps } from "@publications/[slug].astro";
 import Listing, { assignRecordToGroup, type DatasetRecordGroups } from "@components/Listing.astro";
+import { LOCALES } from "@lib/locales";
 
 export type PublicationsListingProps = {
 	id: "publicationsListing";
@@ -28,6 +29,10 @@ export async function getStaticPaths() {
 const listing = Astro.props;
 
 const allPublications: DatasetRecordGroups = {};
+const publicationsByType: DatasetRecordGroups = {};
+const publicationsByCollection: DatasetRecordGroups = {};
+const publicationsBySubject: DatasetRecordGroups = {};
+const publicationsByLocation: DatasetRecordGroups = {};
 
 listing.allPublications.forEach((publication) => {
 	assignRecordToGroup(publication, {
@@ -37,6 +42,30 @@ listing.allPublications.forEach((publication) => {
 		description: "All publications",
 		method: "period",
 	});
+	publication.types && publication.types.length !== 0 && publication.types?.forEach((type) => assignRecordToGroup(publication, {
+		group: publicationsByType,
+		method: "types",
+		key: type.slug.current,
+		marker: type.name,
+	}));
+	publication.subjects && publication.subjects.length !== 0 && publication.subjects?.forEach((subject) => assignRecordToGroup(publication, {
+		group: publicationsBySubject,
+		method: "subjects",
+		key: subject.slug.current,
+		marker: subject.name,
+	}));
+	publication.collections && publication.collections.length !== 0 && publication.collections?.forEach((collection) => assignRecordToGroup(publication, {
+		group: publicationsByCollection,
+		method: "collections",
+		key: collection.slug.current,
+		marker: collection.name,
+	}));
+	publication.locations && publication.locations.length !== 0 && publication.locations?.forEach((location) => assignRecordToGroup(publication, {
+		group: publicationsByLocation,
+		method: "locations",
+		key: location.locale,
+		marker: LOCALES.find((locale) => location.locale === locale.value)?.title,
+	}));
 });
 ---
 
@@ -54,6 +83,12 @@ listing.allPublications.forEach((publication) => {
 		originalSet={listing.allPublications}
 		keys={Object.keys(allPublications)}
 		densities={["2"]}
+		filters={{
+			types: publicationsByType,
+			subjects: publicationsBySubject,
+			collections: publicationsByCollection,
+			locations: publicationsByLocation,
+		}}
 	/> -->
 </Main>
 
@@ -63,6 +98,7 @@ listing.allPublications.forEach((publication) => {
 		display: flex;
 		align-items: flex-end;
 		justify-content: flex-end;
-		padding-block: calc(var(--spacer-400) * 1);
+		padding-block-start: var(--spacer-400);
+		padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
 	}
 </style>

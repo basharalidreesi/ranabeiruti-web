@@ -19,6 +19,7 @@ type Props = {
 	class?: string;
 	sizes?: string;
 	style?: {};
+	alt?: string;
 };
 
 const {
@@ -26,6 +27,7 @@ const {
 	class: className,
 	sizes = "100vw",
 	style = {},
+	alt = "",
 	...rest
 } = Astro.props;
 
@@ -86,7 +88,7 @@ const srcset = [
 			height={source.metadata?.dimensions?.height}
 			loading="lazy"
 			src={urlFor(source, sourceSets[2500].width)}
-			alt=""
+			alt={alt}
 		/>
 	</picture>
 )}

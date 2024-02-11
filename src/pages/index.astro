@@ -276,7 +276,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 				display: block;
 				height: calc(var(--header-height) + var(--header-offset) + var(--spacer-400));
 				background: linear-gradient(to bottom, var(--background-color) var(--header-offset), transparent);
-				opacity: 0.333;
+				opacity: 0.25;
 			}
 			&::before {
 				top: 0;
@@ -358,7 +358,7 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 				left: calc(var(--body-inline-spacing) * -1);
 				right: calc(var(--body-inline-spacing) * -1);
 				background: linear-gradient(to top, var(--background-color) var(--header-offset), transparent);
-				opacity: 0.333;
+				opacity: 0.25;
 			}
 		}
 		.featured-item[data-has-image="true"][data-display="constrained"] & {
@@ -436,9 +436,9 @@ const homepage: HomepageProps = await sanityClient.fetch(HomepageGroqQuery);
 					currentIntersection = entry.target;
 					const titleColor = window.getComputedStyle(entry.target).getPropertyValue("--title-color");
 					entry.target.setAttribute("aria-current", "location");
-					header.style.setProperty("--clear-header-color", titleColor ? titleColor : null);
-					seekerButtonsContainer.style.setProperty("--image-title-color", titleColor ? titleColor : null);
-					seekDownButtonContainer.style.setProperty("--image-title-color", titleColor ? titleColor : null);
+					header?.style.setProperty("--clear-header-color", titleColor ? titleColor : null);
+					seekerButtonsContainer?.style.setProperty("--image-title-color", titleColor ? titleColor : null);
+					seekDownButtonContainer?.style.setProperty("--image-title-color", titleColor ? titleColor : null);
 				} else {
 					entry.target.removeAttribute("aria-current");
 				}

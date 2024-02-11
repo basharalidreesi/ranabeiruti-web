@@ -53,17 +53,17 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 			key: type.slug.current,
 			marker: type.name,
 		}));
-		projectOrStory.collections && projectOrStory.collections.length !== 0 && projectOrStory.collections?.forEach((collection) => assignRecordToGroup(projectOrStory, {
-			group: projectsByCollection,
-			method: "collections",
-			key: collection.slug.current,
-			marker: collection.name,
-		}));
 		projectOrStory.subjects && projectOrStory.subjects.length !== 0 && projectOrStory.subjects?.forEach((subject) => assignRecordToGroup(projectOrStory, {
 			group: projectsBySubject,
 			method: "subjects",
 			key: subject.slug.current,
 			marker: subject.name,
+		}));
+		projectOrStory.collections && projectOrStory.collections.length !== 0 && projectOrStory.collections?.forEach((collection) => assignRecordToGroup(projectOrStory, {
+			group: projectsByCollection,
+			method: "collections",
+			key: collection.slug.current,
+			marker: collection.name,
 		}));
 		projectOrStory.locations && projectOrStory.locations.length !== 0 && projectOrStory.locations?.forEach((location) => assignRecordToGroup(projectOrStory, {
 			group: projectsByLocation,
@@ -104,6 +104,7 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 		display: flex;
 		align-items: flex-end;
 		justify-content: flex-end;
-		padding-block: calc(var(--spacer-400) * 1);
+		padding-block-start: var(--spacer-400);
+		padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
 	}
 </style>
