@@ -117,14 +117,14 @@
 }
 
 @mixin boxed-area() {
-	border: 1px solid var(--color-4);
+	border: 1px solid var(--color-5);
 	box-shadow:
-		-0.5rem 0.5rem 0px -1px var(--color-7),
-		-0.5rem 0.5rem var(--color-4),
-		-1rem 1rem 0px -1px var(--color-7),
-		-1rem 1rem var(--color-4);
-	margin-left: 1rem;
-	margin-bottom: 1rem;
+		calc(var(--spacer-100) * -1) var(--spacer-100) 0px -1px var(--color-7),
+		calc(var(--spacer-100) * -1) var(--spacer-100) var(--color-5),
+		calc(var(--spacer-100) * -2) calc(var(--spacer-100) * 2) 0px -1px var(--color-7),
+		calc(var(--spacer-100) * -2) calc(var(--spacer-100) * 2) var(--color-5);
+	margin-left: calc(var(--spacer-100) * 2);
+	margin-bottom: calc(var(--spacer-100) * 2);
 	@media (min-width: 1025px) {
 		.column:first-of-type & {
 			margin-left: 0;
@@ -134,7 +134,7 @@
 
 @mixin no-scrollbar() {
 	scrollbar-width: none; /* Firefox */
-	-ms-overflow-style: none;  /* Internet Explorer 10+ */
+	-ms-overflow-style: none; /* Internet Explorer 10+ */
 	&::-webkit-scrollbar { /* WebKit */
 		width: 0;
 		height: 0;
