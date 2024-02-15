@@ -1,6 +1,12 @@
 ---
+const { node } = Astro.props;
 ---
 
-<h3 class="heading">
-	<slot />
-</h3>
+{node && node.children && !(node.children.length === 1 && !node.children[0].text)
+	? (
+		<h3 class="heading">
+			<slot />
+		</h3>
+	)
+	: null
+}
