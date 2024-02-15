@@ -448,9 +448,9 @@ export const HomepageGroqQuery = (`
 			},
 			displayMode,
 		},
-		// page {
-		// 	${PageBuilderBodyGroqPartial}
-		// },
+		page {
+			${PageBuilderBodyGroqPartial}
+		},
 	}
 `);
 
