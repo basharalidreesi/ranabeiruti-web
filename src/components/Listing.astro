@@ -190,7 +190,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 									data-has-image={record.type !== "story" && record.image?.asset ? "true" : "false"}
 									data-orientation={record.type !== "story" && record.image?.asset ? (record.image?.metadata?.dimensions?.aspectRatio > 1.1 ? "landscape" : "portrait") : (record.type === "news" ? "landscape" : "portrait")}
 									data-start-date={(record.type === "project" || record.type === "story") ? record.date.startDate : record.date}
-									data-end-date={(record.type === "project" || record.type === "story") ? (record.date.endDate || record.date.startDate) : record.date}
+									data-end-date={(record.type === "project" || record.type === "story") ? (record.date.hasDuration && record.date.endDate && !record.date.isOngoing ? record.date.endDate : record.date.startDate) : record.date}
 									data-half={originalIndex <= originalSet.filter((record) => record.type !== "story")?.length / 2 ? "upper" : "lower"}
 									data-types={(record.type === "project" || record.type === "publication") && getRecordTags(record, "types")}
 									data-subjects={(record.type === "project" || record.type === "publication") && getRecordTags(record, "subjects")}
@@ -213,7 +213,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 											: null
 										}
 									/>
-									<!-- <RecordRelated source={record} /> -->
+									<RecordRelated source={record} />
 								</article>
 							);
 						})}
@@ -570,7 +570,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			position: relative;
 			line-height: 1.3;
 			text-wrap: pretty;
-			text-wrap: balance;
+			// text-wrap: balance;
 			row-gap: var(--record-inner-spacing);
 			background: var(--color-7);
 			scroll-margin-block-start: calc(var(--header-height) + var(--spacer-400));
@@ -929,35 +929,35 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 
 	var upcomingRecords = []
 	var ongoingRecords = [];
-	const upcomingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#upcoming`);
-	const ongoingRecordsGroup = document.querySelector(`.record-group[data-method="period"]#ongoing`);
+	const now = new Date();
 	const recordsWithStartDates = document.querySelectorAll(`.record-group[data-method="period"] .record[data-start-date]`);
 	recordsWithStartDates?.forEach((record) => {
 		const startDateString = record.getAttribute("data-start-date");
-		const endDateString = record.getAttribute("data-end-date");
+		// const endDateString = record.getAttribute("data-end-date");
 		const startDate = new Date(startDateString);
-		const endDate = endDateString && new Date(endDateString) || null;
-		const now = new Date();
+		// const endDate = endDateString && new Date(endDateString) || null;
 		if (startDate > now) {
 			updateRecordGroupLength(record, -1);
 			upcomingRecords.push(record);
 			record.remove();
 			return;
 		};
-		if (endDate && startDate < now && endDate > now) {
+		if (record.closest(`.record-group[data-method="period"][id="ongoing"]`)) {
 			updateRecordGroupLength(record, -1);
 			ongoingRecords.push(record);
 			record.remove();
 			return;
 		};
 	});
+	const upcomingRecordsGroup = document.querySelector(`.record-group[data-method="period"][id="upcoming"]`);
 	upcomingRecords?.forEach((record) => {
-		upcomingRecordsGroup.appendChild(record);
+		upcomingRecordsGroup?.appendChild(record);
 		updateRecordGroupLength(record, 1);
 		return;
 	});
+	const ongoingRecordsGroup = document.querySelector(`.record-group[data-method="period"][id="${now?.getFullYear()?.toString()}"]`);
 	ongoingRecords?.forEach((record) => {
-		ongoingRecordsGroup.appendChild(record);
+		ongoingRecordsGroup?.appendChild(record);
 		updateRecordGroupLength(record, 1);
 		return;
 	});
@@ -1195,7 +1195,8 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 
 	function updateListingHeadersHeight() {
 		const listingHeaders: HTMLElement = document.querySelector(".listing-headers");
-		const parentListing: HTMLElement = listingHeaders.closest(".listing");
+		if (!listingHeaders) { return; };
+		const parentListing: HTMLElement = listingHeaders?.closest(".listing");
 		parentListing?.style.removeProperty("--listing-headers-height");
 		const listingHeadersHeight = listingHeaders.offsetHeight;
 		return listingHeaders && parentListing && listingHeadersHeight && parentListing.style.setProperty("--listing-headers-height", `${listingHeadersHeight}px`);

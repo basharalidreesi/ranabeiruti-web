@@ -77,6 +77,12 @@ const PortableTextBlockGroqPartial = (`
 				},
 			},
 		},
+		children[]{
+			...,
+			_type == "emailAddress" => {
+				emailAddress,
+			},
+		},
 	},
 `);
 
@@ -137,23 +143,25 @@ const PortableTextDocumentReferenceGroqPartial = (`
 						current,
 					},
 				},
+				_type == "project" || _type == "publication" || _type == "press" => {
+					"description": pt::text(description[]),
+				},
 				_type == "project" || _type == "publication" => {
 					subtitle,
-					types[] -> {
-						"type": "type",
-						slug {
-							current,
-						},
-						name,
-					},
-					collections[] -> {
-						"type": "collection",
-						slug {
-							current,
-						},
-						name,
-					},
-					"description": pt::text(description[]),
+					// types[] -> {
+					// 	"type": "type",
+					// 	slug {
+					// 		current,
+					// 	},
+					// 	name,
+					// },
+					// collections[] -> {
+					// 	"type": "collection",
+					// 	slug {
+					// 		current,
+					// 	},
+					// 	name,
+					// },
 				},
 				_type == "project" => {
 					date {
@@ -167,7 +175,6 @@ const PortableTextDocumentReferenceGroqPartial = (`
 				_type == "press" => {
 					url,
 					publisher,
-					"description": pt::text(description[]),
 				},
 				_type == "news" => {
 					"body": pt::text(body[]),
@@ -181,6 +188,7 @@ const PortableTextDocumentReferenceGroqPartial = (`
 			"columnRatio": ^.ratio,
 			"rowRatios": math::sum(^.^.columns[].ratio),
 		},
+		label,
 	},
 `);
 
@@ -367,6 +375,9 @@ const ProjectOrPublicationExtendedGroqPartial = (`
 export const SiteSettingsGroqQuery = (`
 	*[_id == "settings"][0] {
 		title,
+		author,
+		social,
+		email,
 		description,
 		navigationItems[] -> {
 			"type": _type,

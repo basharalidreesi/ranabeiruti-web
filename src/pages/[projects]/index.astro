@@ -79,12 +79,7 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 	<h1 class="display-none">
 		{listing.title}
 	</h1>
-	<div class="coming-soon">
-		<p>
-			Coming soon
-		</p>
-	</div>
-	<!-- <Listing
+	<Listing
 		source={projectsAndStoriesByPeriod}
 		originalSet={listing.allProjectsAndStories}
 		keys={["ongoing", "upcoming", ...Object.keys(projectsAndStoriesByPeriod).filter((key) => !["ongoing", "upcoming"].includes(key)).sort().reverse()]?.filter(Boolean)}
@@ -95,16 +90,5 @@ listing.allProjectsAndStories?.filter((projectOrStory) => (projectOrStory.type =
 			collections: projectsByCollection,
 			locations: projectsByLocation,
 		}}
-	/> -->
+	/>
 </Main>
-
-<style lang="scss">
-	.coming-soon {
-		flex: 1;
-		display: flex;
-		align-items: flex-end;
-		justify-content: flex-end;
-		padding-block-start: var(--spacer-400);
-		padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
-	}
-</style>

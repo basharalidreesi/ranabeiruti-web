@@ -29,8 +29,8 @@ export type PublicationProps = {
 };
 
 export async function getStaticPaths() {
-	// const publications: PublicationProps[] = await sanityClient.fetch(PublicationsGroqQuery);
-	const publications: PublicationProps[] = [];
+	const publications: PublicationProps[] = await sanityClient.fetch(PublicationsGroqQuery);
+	// const publications: PublicationProps[] = [];
 	const publicationsListing: PublicationsListingProps = await sanityClient.fetch(PublicationsListingGroqQuery);
 	return publications?.map((publication) => {
 		return {

@@ -1,0 +1,13 @@
+---
+import Email from "@components/Email.astro";
+
+const { node } = Astro.props;
+
+const {
+	emailAddress,
+} = node;
+---
+
+{emailAddress && (
+	<Email source={emailAddress} />
+)}

@@ -41,7 +41,7 @@ const {
 						"middle": "center",
 						"bottom": "flex-end",
 						"baseline": "baseline",
-				}[source.captionVerticalAlignment] || null,
+				}[(source.captionPlacement === "left" || source.captionPlacement === "right") && source.captionVerticalAlignment] || null,
 			}}>
 				<RichText source={source.caption} />
 			</figcaption>

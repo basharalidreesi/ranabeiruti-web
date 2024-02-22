@@ -13,15 +13,20 @@ const reference: RecordProps = node?.reference;
 ---
 
 {reference && (
-	<article class="document-reference boxed-area" data-type={reference.type}>
+	<article class="document-reference" data-type={reference.type}>
+		{node.label && node.label.trim()?.length !== 0 && (
+			<div class="document-reference-label">
+				{node.label}
+			</div>
+		)}
 		<RecordTitle source={reference} withLink={true} level={4} />
 		<RecordDate source={reference} />
 		<RecordDescription source={reference} />
-		<RecordImage source={reference} sizes={`(min-width: 1025px) ${((node.columnRatio || 1) / (node.rowRatios || 1) * (node.isBreakoutRow ? 100 : 80)) + "vw"}, 100vw`} />
-		<RecordTags source={reference} tags={["types", "collections"]} />
 		{reference.type === "news" && (
 			<RecordBody source={reference} />
 		)}
+		<RecordImage source={reference} sizes={`(min-width: 1025px) ${((node.columnRatio || 1) / (node.rowRatios || 1) * (node.isBreakoutRow ? 100 : 80)) + "vw"}, 100vw`} />
+		<RecordTags source={reference} tags={["types", "collections"]} />
 	</article>
 )}
 
@@ -33,13 +38,20 @@ const reference: RecordProps = node?.reference;
 			display: flex;
 			flex-direction: column;
 			row-gap: var(--record-inner-spacing);
-			padding: var(--spacer-200);
+			padding: var(--spacer-300);
+			background: var(--color-6);
+			box-shadow: 0 0 0 1px var(--color-5);
 			--record-inner-spacing: var(--spacer-100);
-			@include mixins.boxed-area();
-			@include mixins.hoverable-area();
 			@media (max-width: 640px) {
-				--record-inner-spacing: var(--spacer-50);
+				// --record-inner-spacing: var(--spacer-50);
 			}
+		}
+		.document-reference-label {
+			order: 0;
+			font-weight: 700;
+		}
+		.document-reference-label + .record-image {
+			margin-block-start: 0.15em;
 		}
 		.record-image {
 			order: 1;
@@ -48,7 +60,7 @@ const reference: RecordProps = node?.reference;
 		.record-title {
 			order: 2;
 			text-wrap: pretty;
-			text-wrap: balance;
+			// text-wrap: balance;
 		}
 		.record-title-baseline {
 			font-weight: 700;

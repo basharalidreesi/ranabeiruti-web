@@ -73,12 +73,7 @@ listing.allPublications.forEach((publication) => {
 	<h1 class="display-none">
 		{listing.title}
 	</h1>
-	<div class="coming-soon">
-		<p>
-			Coming soon
-		</p>
-	</div>
-	<!-- <Listing
+	<Listing
 		source={allPublications}
 		originalSet={listing.allPublications}
 		keys={Object.keys(allPublications)}
@@ -89,16 +84,5 @@ listing.allPublications.forEach((publication) => {
 			collections: publicationsByCollection,
 			locations: publicationsByLocation,
 		}}
-	/> -->
+	/>
 </Main>
-
-<style lang="scss">
-	.coming-soon {
-		flex: 1;
-		display: flex;
-		align-items: flex-end;
-		justify-content: flex-end;
-		padding-block-start: var(--spacer-400);
-		padding-block-end: calc(var(--spacer-400) + env(safe-area-inset-bottom, 0px));
-	}
-</style>

@@ -10,6 +10,9 @@ export type NavigationItemProps = Exclude<RecordProps, StoryProps> | ListingProp
 
 export type SiteSettingsProps = {
 	title: string;
+	author: string;
+	social: string;
+	email: string;
 	description: string;
 	navigationItems: NavigationItemProps[];
 	image: {
@@ -42,7 +45,7 @@ const {
 } = Astro.props;
 
 const pageTitle = [Astro.url.pathname === "/" ? null : title, settings.title]?.filter(Boolean)?.join(" • ");
-const pageAuthor = "Rana Beiruti";
+const pageAuthor =  settings.author;
 const pageDescription = description || settings.description;
 const pageKeywords = settings.keywords?.join(", ");
 const pageThemeColor = "#ffffff";
@@ -85,11 +88,11 @@ const pageImage = image && image.url ? `${image.url}${image.transformationQuery 
 		<main>
 			<slot />
 		</main>
-		<footer></footer>
 	</body>
 </html>
 
 <style lang="scss" is:global>
+	@use "@styles/mixins";
 	body {
 		display: flex;
 		flex-flow: column nowrap;
@@ -97,10 +100,13 @@ const pageImage = image && image.url ? `${image.url}${image.transformationQuery 
 		min-height: 100dvh;
 		--body-inline-spacing: calc(var(--spacer-400) + env(safe-area-inset-left, 0px));
 	}
-	main {
+	body > main {
+		position: relative;
 		flex: 1;
 		display: flex;
 		flex-flow: column nowrap;
 		margin-inline: var(--body-inline-spacing);
+		background: var(--color-7);
+		z-index: 1;
 	}
 </style>

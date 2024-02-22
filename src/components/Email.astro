@@ -1,0 +1,39 @@
+---
+import Link from "@components/Link.astro";
+
+type Props = {
+	source: string;
+};
+
+const {
+	source,
+} = Astro.props;
+
+const encoded = btoa(source);
+---
+
+{source && (
+	<Link class="email" data-encoded={encoded && encoded?.trim()?.length !== 0 ? "true" : "false"} href={`mailto:${encoded || source}`}>{encoded || source}</Link>
+)}
+
+<style lang="scss">
+	@use "@styles/mixins";
+	.email {
+		@include mixins.link();
+		@include mixins.hover-text();
+	}
+</style>
+
+<script>
+	const emails = document.querySelectorAll(`.email[data-encoded="true"]`);
+	emails?.forEach((email) => {
+		const encodedHref = email.getAttribute("href")?.replaceAll("mailto:", "");
+		const encodedTextContent = email.textContent;
+		const decodedHref = atob(encodedHref);
+		const decodedTextContent = atob(encodedTextContent);
+		email.setAttribute("href", `mailto:${decodedHref}`);
+		email.textContent = decodedTextContent;
+		email.setAttribute("data-encoded", "false");
+		console.info("Decoded email address");
+	});
+</script>

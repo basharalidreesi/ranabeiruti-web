@@ -35,8 +35,8 @@ export type ProjectProps = {
 };
 
 export async function getStaticPaths() {
-	// const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
-	const projects: ProjectProps[] = [];
+	const projects: ProjectProps[] = await sanityClient.fetch(ProjectsGroqQuery);
+	// const projects: ProjectProps[] = [];
 	const projectsListing: ProjectsListingProps = await sanityClient.fetch(ProjectsListingSlugGroqQuery);
 	return projects?.map((project) => {
 		return {

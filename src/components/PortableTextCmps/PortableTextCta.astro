@@ -12,7 +12,7 @@ const {
 ---
 
 {label && type && ((type === "internal" && internalTarget) || (type === "external" && externalTarget)) && (
-	<div class="cta boxed-area">
+	<div class="cta">
 		<Link {...(((type === "external" && externalTarget) && { href: externalTarget }) || ((type === "internal" && internalTarget) && { to: internalTarget }))}>
 			{label}
 		</Link>
@@ -24,10 +24,10 @@ const {
 	.cta {
 		position: relative;
 		width: fit-content;
-		padding: var(--spacer-200);
+		padding: var(--spacer-300);
 		font-weight: 700;
-		@include mixins.boxed-area();
-		@include mixins.hoverable-area();
+		background: var(--color-6);
+		box-shadow: 0 0 0 1px var(--color-5);
 	}
 	.cta a::after {
 		content: "";

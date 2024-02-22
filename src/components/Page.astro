@@ -6,7 +6,6 @@ import type { PublicationProps } from "@publications/[slug].astro";
 import RecordTitle from "./RecordTitle.astro";
 import RecordImage from "./RecordImage.astro";
 import type { HomepageProps } from "@root/pages/index.astro";
-import TitleAndSubtitle from "./TitleAndSubtitle.astro";
 
 export type PageProps = {
 	body: PageBuilderProps[];
@@ -37,9 +36,6 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 	{hasBody && (
 		<section class="page-body">
 			<h2 class="display-none">Body</h2>
-			<!-- <div class="page-banner" hidden="true">
-				<TitleAndSubtitle title={source.title} subtitle={(source.type === "project" || source.type === "publication") && source.subtitle} />
-			</div> -->
 			<PageBuilder source={hasBody && source.page.body} />
 		</section>
 	)}
@@ -259,7 +255,7 @@ const relatedRecords = [...(hasRelatedProjects && source.relatedProjects || []),
 			row-gap: var(--spacer-50);
 			scroll-snap-align: center;
 			text-wrap: pretty;
-			text-wrap: balance;
+			// text-wrap: balance;
 			@include mixins.hover-image();
 		}
 		.record-image {

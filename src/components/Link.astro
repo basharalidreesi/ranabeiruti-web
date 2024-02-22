@@ -45,9 +45,7 @@ const resolvedLink =
 ---
 
 {resolvedLink && (
-	<a class={className} href={resolvedLink + append} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || (typeof to === "object" && to?.title)} role={role} {...rest}>
-		<slot />
-	</a>
+	<a class={className} href={resolvedLink + append} target={resolvedLink.startsWith("http") && "_blank"} rel={resolvedLink.startsWith("http") && "noindex nofollow"} title={title || (typeof to === "object" && to?.title)} role={role} {...rest}><slot /></a>
 ) || (
 	<slot />
 )}

@@ -40,13 +40,14 @@
 }
 
 @mixin ellipsis() {
-	overflow: hidden;
-	overflow: clip;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	overflow: hidden;
+	overflow: clip;
 }
 
 @mixin ellipsis-multiline($lines: 3) {
+	display: block;
 	display: -webkit-box;
 	-webkit-line-clamp: $lines;
 	-webkit-box-orient: vertical;

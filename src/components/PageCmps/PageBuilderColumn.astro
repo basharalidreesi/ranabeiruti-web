@@ -33,7 +33,8 @@ const {
 		align-self: var(--column-vertical-alignment);
 	}
 	@media (max-width: 896px) {
-		.column:empty {
+		.column:empty,
+		.column:has(.rich-text:only-child:empty) {
 			display: none;
 		}
 	}
