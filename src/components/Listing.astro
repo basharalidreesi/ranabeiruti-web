@@ -1181,6 +1181,7 @@ function getRecordTags(record: ProjectProps | PublicationProps, tagType: TagName
 			if (filterCount === 0) {
 				filterList.setAttribute("hidden", "true");
 				correspondingFilterSwitch.checked = false;
+				updateListingHeadersHeight();
 			};
 			return;
 		});
